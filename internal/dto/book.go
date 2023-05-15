@@ -1,9 +1,11 @@
 package dto
 
-import "library/internal/entity"
+import (
+	"library/internal/entity"
+)
 
 type BookRequest struct {
-	ID      string
+	ID      string   `json:"id"`
 	Name    string   `json:"name" validate:"required"`
 	Genre   string   `json:"genre" validate:"required"`
 	ISBN    string   `json:"isbn" validate:"required"`
@@ -18,22 +20,20 @@ type BookResponse struct {
 	Authors []string `json:"authors"`
 }
 
-func ParseFromBook(src entity.Book) (dst BookResponse) {
-	dst = BookResponse{
-		ID:      src.ID,
-		Name:    *src.Name,
-		Genre:   *src.Genre,
-		ISBN:    *src.ISBN,
-		Authors: src.Authors,
+func ParseFromBook(data entity.Book) (res BookResponse) {
+	res = BookResponse{
+		ID:      data.ID,
+		Name:    *data.Name,
+		Genre:   *data.Genre,
+		ISBN:    *data.ISBN,
+		Authors: data.Authors,
 	}
-
 	return
 }
 
-func ParseFromBooks(src []entity.Book) (dst []BookResponse) {
-	for _, data := range src {
-		dst = append(dst, ParseFromBook(data))
+func ParseFromBooks(data []entity.Book) (res []BookResponse) {
+	for _, data := range data {
+		res = append(res, ParseFromBook(data))
 	}
-
 	return
 }

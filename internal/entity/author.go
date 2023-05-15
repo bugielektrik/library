@@ -1,5 +1,6 @@
 package entity
 
+// Author represents an author entity
 type Author struct {
 	ID        string  `db:"id"`
 	FullName  *string `db:"full_name"`

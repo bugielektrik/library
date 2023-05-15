@@ -3,25 +3,27 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"library/internal/entity"
 	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-
-	"library/internal/entity"
 )
 
+// BookRepository is a postgres implementation of the BookRepository interface
 type BookRepository struct {
 	db *sqlx.DB
 }
 
+// NewBookRepository creates a new instance of the BookRepository struct
 func NewBookRepository(db *sqlx.DB) *BookRepository {
 	return &BookRepository{
 		db: db,
 	}
 }
-func (s *BookRepository) CreateRow(data entity.Book) (dest string, err error) {
+
+// CreateRow creates a new row in the postgres database
+func (s *BookRepository) CreateRow(data entity.Book) (id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -31,14 +33,17 @@ func (s *BookRepository) CreateRow(data entity.Book) (dest string, err error) {
 		RETURNING id`
 
 	args := []any{data.Name, data.Genre, data.ISBN}
-	err = s.db.QueryRowContext(ctx, query, args...).Scan(&dest)
+
+	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
 	return
 }
 
+// GetRowByID retrieves a row from the postgres database by ID
 func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	query := `
 		SELECT id, name, genre ,codeisbn
 		FROM books
@@ -51,12 +56,13 @@ func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
 	return
 }
 
+// SelectRows retrieves all rows from the postgres database
 func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	query := `
-		SELECT  id, name, genre, codeisbn
+		SELECT id, name, genre, codeisbn
 		FROM books
 		ORDER BY id`
 
@@ -65,19 +71,21 @@ func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
 	return
 }
 
-func (s *BookRepository) UpdateRow(data entity.Book) (err error) {
+// UpdateRow updates an existing row in the postgres database
+func (s *BookRepository) UpdateRow(id string, data entity.Book) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
-		args = append(args, data.ID)
+		args = append(args, id)
 		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
 
 		query := fmt.Sprintf("UPDATE books SET %s WHERE id=$%d", strings.Join(sets, ", "), len(args))
 		_, err = s.db.ExecContext(ctx, query, args...)
 	}
+
 	return
 }
 
@@ -86,6 +94,7 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 		args = append(args, data.Name)
 		sets = append(sets, fmt.Sprintf("name=$%d", len(args)))
 	}
+
 	if data.Genre != nil {
 		args = append(args, data.Genre)
 		sets = append(sets, fmt.Sprintf("genre=$%d", len(args)))
@@ -95,9 +104,11 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 		args = append(args, data.ISBN)
 		sets = append(sets, fmt.Sprintf("codeISBN=$%d", len(args)))
 	}
+
 	return
 }
 
+// DeleteRow deletes a row from the postgres database by ID
 func (s *BookRepository) DeleteRow(id string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

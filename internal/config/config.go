@@ -43,9 +43,9 @@ type (
 	}
 )
 
-// Init populates Config struct with values from config file
+// New populates Config struct with values from config file
 // located at filepath and environment variables.
-func Init() (cfg Config, err error) {
+func New() (cfg Config, err error) {
 	root, err := os.Getwd()
 	if err != nil {
 		return
