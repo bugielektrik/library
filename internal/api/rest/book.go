@@ -41,7 +41,7 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.bookService.Create(req)
+	res, err := h.bookService.Create(r.Context(), req)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 func (h *BookHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.bookService.GetByID(id)
+	res, err := h.bookService.GetByID(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -66,7 +66,7 @@ func (h *BookHandler) getByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	res, err := h.bookService.GetAll()
+	res, err := h.bookService.GetAll(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -85,7 +85,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.bookService.Update(id, req); err != nil {
+	if err := h.bookService.Update(r.Context(), id, req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -94,7 +94,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.bookService.Delete(id); err != nil {
+	if err := h.bookService.Delete(r.Context(), id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

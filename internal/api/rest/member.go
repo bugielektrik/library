@@ -41,7 +41,7 @@ func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.memberService.Create(req)
+	res, err := h.memberService.Create(r.Context(), req)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.memberService.GetByID(id)
+	res, err := h.memberService.GetByID(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -66,7 +66,7 @@ func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MemberHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	res, err := h.memberService.GetAll()
+	res, err := h.memberService.GetAll(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -85,7 +85,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.memberService.Update(id, req); err != nil {
+	if err := h.memberService.Update(r.Context(), id, req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -94,7 +94,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.memberService.Delete(id); err != nil {
+	if err := h.memberService.Delete(r.Context(), id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

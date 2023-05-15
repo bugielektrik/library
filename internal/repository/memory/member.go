@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"database/sql"
 	"library/internal/entity"
 	"sync"
@@ -19,7 +20,7 @@ func NewMemberRepository() *MemberRepository {
 	}
 }
 
-func (r *MemberRepository) CreateRow(data entity.Member) (string, error) {
+func (r *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -30,7 +31,7 @@ func (r *MemberRepository) CreateRow(data entity.Member) (string, error) {
 	return id, nil
 }
 
-func (r *MemberRepository) GetRowByID(id string) (data entity.Member, err error) {
+func (r *MemberRepository) GetRowByID(ctx context.Context, id string) (data entity.Member, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -43,7 +44,7 @@ func (r *MemberRepository) GetRowByID(id string) (data entity.Member, err error)
 	return
 }
 
-func (r *MemberRepository) SelectRows() ([]entity.Member, error) {
+func (r *MemberRepository) SelectRows(ctx context.Context) ([]entity.Member, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -55,7 +56,7 @@ func (r *MemberRepository) SelectRows() ([]entity.Member, error) {
 	return rows, nil
 }
 
-func (r *MemberRepository) UpdateRow(id string, data entity.Member) error {
+func (r *MemberRepository) UpdateRow(ctx context.Context, id string, data entity.Member) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -67,7 +68,7 @@ func (r *MemberRepository) UpdateRow(id string, data entity.Member) error {
 	return nil
 }
 
-func (r *MemberRepository) DeleteRow(id string) error {
+func (r *MemberRepository) DeleteRow(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()
 

@@ -1,17 +1,18 @@
 package service
 
 import (
+	"context"
 	"library/internal/dto"
 	"library/internal/entity"
 	"library/internal/repository"
 )
 
 type MemberService interface {
-	Create(req dto.MemberRequest) (res dto.MemberResponse, err error)
-	GetByID(id string) (res dto.MemberResponse, err error)
-	GetAll() (res []dto.MemberResponse, err error)
-	Update(id string, req dto.MemberRequest) (err error)
-	Delete(id string) (err error)
+	Create(ctx context.Context, req dto.MemberRequest) (res dto.MemberResponse, err error)
+	GetByID(ctx context.Context, id string) (res dto.MemberResponse, err error)
+	GetAll(ctx context.Context) (res []dto.MemberResponse, err error)
+	Update(ctx context.Context, id string, req dto.MemberRequest) (err error)
+	Delete(ctx context.Context, id string) (err error)
 }
 
 type memberService struct {
@@ -24,13 +25,13 @@ func NewMemberService(m repository.MemberRepository) MemberService {
 	}
 }
 
-func (s *memberService) Create(req dto.MemberRequest) (res dto.MemberResponse, err error) {
+func (s *memberService) Create(ctx context.Context, req dto.MemberRequest) (res dto.MemberResponse, err error) {
 	data := entity.Member{
 		FullName: &req.FullName,
 		Books:    req.Books,
 	}
 
-	data.ID, err = s.memberRepository.CreateRow(data)
+	data.ID, err = s.memberRepository.CreateRow(ctx, data)
 	if err != nil {
 		return
 	}
@@ -39,8 +40,8 @@ func (s *memberService) Create(req dto.MemberRequest) (res dto.MemberResponse, e
 	return
 }
 
-func (s *memberService) GetByID(id string) (res dto.MemberResponse, err error) {
-	data, err := s.memberRepository.GetRowByID(id)
+func (s *memberService) GetByID(ctx context.Context, id string) (res dto.MemberResponse, err error) {
+	data, err := s.memberRepository.GetRowByID(ctx, id)
 	if err != nil {
 		return
 	}
@@ -49,8 +50,8 @@ func (s *memberService) GetByID(id string) (res dto.MemberResponse, err error) {
 	return
 }
 
-func (s *memberService) GetAll() (res []dto.MemberResponse, err error) {
-	data, err := s.memberRepository.SelectRows()
+func (s *memberService) GetAll(ctx context.Context) (res []dto.MemberResponse, err error) {
+	data, err := s.memberRepository.SelectRows(ctx)
 	if err != nil {
 		return
 	}
@@ -59,14 +60,14 @@ func (s *memberService) GetAll() (res []dto.MemberResponse, err error) {
 	return
 }
 
-func (s *memberService) Update(id string, req dto.MemberRequest) (err error) {
+func (s *memberService) Update(ctx context.Context, id string, req dto.MemberRequest) (err error) {
 	data := entity.Member{
 		FullName: &req.FullName,
 		Books:    req.Books,
 	}
-	return s.memberRepository.UpdateRow(id, data)
+	return s.memberRepository.UpdateRow(ctx, id, data)
 }
 
-func (s *memberService) Delete(id string) (err error) {
-	return s.memberRepository.DeleteRow(id)
+func (s *memberService) Delete(ctx context.Context, id string) (err error) {
+	return s.memberRepository.DeleteRow(ctx, id)
 }

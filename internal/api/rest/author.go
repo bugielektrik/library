@@ -41,7 +41,7 @@ func (h *AuthorHandler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.authorService.Create(req)
+	res, err := h.authorService.Create(r.Context(), req)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func (h *AuthorHandler) create(w http.ResponseWriter, r *http.Request) {
 func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.authorService.GetByID(id)
+	res, err := h.authorService.GetByID(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -66,7 +66,7 @@ func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthorHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	res, err := h.authorService.GetAll()
+	res, err := h.authorService.GetAll(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -85,7 +85,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.authorService.Update(id, req); err != nil {
+	if err := h.authorService.Update(r.Context(), id, req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -94,7 +94,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.authorService.Delete(id); err != nil {
+	if err := h.authorService.Delete(r.Context(), id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -1,17 +1,18 @@
 package service
 
 import (
+	"context"
 	"library/internal/dto"
 	"library/internal/entity"
 	"library/internal/repository"
 )
 
 type AuthorService interface {
-	Create(req dto.AuthorRequest) (res dto.AuthorResponse, err error)
-	GetByID(id string) (res dto.AuthorResponse, err error)
-	GetAll() (res []dto.AuthorResponse, err error)
-	Update(id string, req dto.AuthorRequest) (err error)
-	Delete(id string) (err error)
+	Create(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error)
+	GetByID(ctx context.Context, id string) (res dto.AuthorResponse, err error)
+	GetAll(ctx context.Context) (res []dto.AuthorResponse, err error)
+	Update(ctx context.Context, id string, req dto.AuthorRequest) (err error)
+	Delete(ctx context.Context, id string) (err error)
 }
 
 type authorService struct {
@@ -24,14 +25,14 @@ func NewAuthorService(a repository.AuthorRepository) AuthorService {
 	}
 }
 
-func (s *authorService) Create(req dto.AuthorRequest) (res dto.AuthorResponse, err error) {
+func (s *authorService) Create(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error) {
 	data := entity.Author{
 		FullName:  &req.FullName,
 		Pseudonym: &req.Pseudonym,
 		Specialty: &req.Specialty,
 	}
 
-	data.ID, err = s.authorRepository.CreateRow(data)
+	data.ID, err = s.authorRepository.CreateRow(ctx, data)
 	if err != nil {
 		return
 	}
@@ -40,8 +41,8 @@ func (s *authorService) Create(req dto.AuthorRequest) (res dto.AuthorResponse, e
 	return
 }
 
-func (s *authorService) GetByID(id string) (res dto.AuthorResponse, err error) {
-	data, err := s.authorRepository.GetRowByID(id)
+func (s *authorService) GetByID(ctx context.Context, id string) (res dto.AuthorResponse, err error) {
+	data, err := s.authorRepository.GetRowByID(ctx, id)
 	if err != nil {
 		return
 	}
@@ -50,8 +51,8 @@ func (s *authorService) GetByID(id string) (res dto.AuthorResponse, err error) {
 	return
 }
 
-func (s *authorService) GetAll() (res []dto.AuthorResponse, err error) {
-	data, err := s.authorRepository.SelectRows()
+func (s *authorService) GetAll(ctx context.Context) (res []dto.AuthorResponse, err error) {
+	data, err := s.authorRepository.SelectRows(ctx)
 	if err != nil {
 		return
 	}
@@ -60,15 +61,15 @@ func (s *authorService) GetAll() (res []dto.AuthorResponse, err error) {
 	return
 }
 
-func (s *authorService) Update(id string, req dto.AuthorRequest) (err error) {
+func (s *authorService) Update(ctx context.Context, id string, req dto.AuthorRequest) (err error) {
 	data := entity.Author{
 		FullName:  &req.FullName,
 		Pseudonym: &req.Pseudonym,
 		Specialty: &req.Specialty,
 	}
-	return s.authorRepository.UpdateRow(id, data)
+	return s.authorRepository.UpdateRow(ctx, id, data)
 }
 
-func (s *authorService) Delete(id string) (err error) {
-	return s.authorRepository.DeleteRow(id)
+func (s *authorService) Delete(ctx context.Context, id string) (err error) {
+	return s.authorRepository.DeleteRow(ctx, id)
 }

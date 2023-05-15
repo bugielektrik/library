@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"database/sql"
 	"library/internal/entity"
 	"sync"
@@ -19,7 +20,7 @@ func NewBookRepository() *BookRepository {
 	}
 }
 
-func (r *BookRepository) CreateRow(data entity.Book) (string, error) {
+func (r *BookRepository) CreateRow(ctx context.Context, data entity.Book) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -30,7 +31,7 @@ func (r *BookRepository) CreateRow(data entity.Book) (string, error) {
 	return id, nil
 }
 
-func (r *BookRepository) GetRowByID(id string) (data entity.Book, err error) {
+func (r *BookRepository) GetRowByID(ctx context.Context, id string) (data entity.Book, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -43,7 +44,7 @@ func (r *BookRepository) GetRowByID(id string) (data entity.Book, err error) {
 	return
 }
 
-func (r *BookRepository) SelectRows() ([]entity.Book, error) {
+func (r *BookRepository) SelectRows(ctx context.Context) ([]entity.Book, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -55,7 +56,7 @@ func (r *BookRepository) SelectRows() ([]entity.Book, error) {
 	return rows, nil
 }
 
-func (r *BookRepository) UpdateRow(id string, data entity.Book) error {
+func (r *BookRepository) UpdateRow(ctx context.Context, id string, data entity.Book) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -67,7 +68,7 @@ func (r *BookRepository) UpdateRow(id string, data entity.Book) error {
 	return nil
 }
 
-func (r *BookRepository) DeleteRow(id string) error {
+func (r *BookRepository) DeleteRow(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()
 

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"library/internal/entity"
 	"library/internal/repository/memory"
 	"library/internal/repository/postgres"
@@ -8,27 +9,27 @@ import (
 )
 
 type AuthorRepository interface {
-	CreateRow(data entity.Author) (id string, err error)
-	GetRowByID(id string) (dest entity.Author, err error)
-	SelectRows() (dest []entity.Author, err error)
-	UpdateRow(id string, data entity.Author) (err error)
-	DeleteRow(id string) (err error)
+	CreateRow(ctx context.Context, data entity.Author) (id string, err error)
+	GetRowByID(ctx context.Context, id string) (dest entity.Author, err error)
+	SelectRows(ctx context.Context) (dest []entity.Author, err error)
+	UpdateRow(ctx context.Context, id string, data entity.Author) (err error)
+	DeleteRow(ctx context.Context, id string) (err error)
 }
 
 type BookRepository interface {
-	CreateRow(data entity.Book) (id string, err error)
-	GetRowByID(id string) (dest entity.Book, err error)
-	SelectRows() (dest []entity.Book, err error)
-	UpdateRow(id string, data entity.Book) (err error)
-	DeleteRow(id string) (err error)
+	CreateRow(ctx context.Context, data entity.Book) (id string, err error)
+	GetRowByID(ctx context.Context, id string) (dest entity.Book, err error)
+	SelectRows(ctx context.Context) (dest []entity.Book, err error)
+	UpdateRow(ctx context.Context, id string, data entity.Book) (err error)
+	DeleteRow(ctx context.Context, id string) (err error)
 }
 
 type MemberRepository interface {
-	CreateRow(data entity.Member) (id string, err error)
-	GetRowByID(id string) (dest entity.Member, err error)
-	SelectRows() (dest []entity.Member, err error)
-	UpdateRow(id string, data entity.Member) (err error)
-	DeleteRow(id string) (err error)
+	CreateRow(ctx context.Context, data entity.Member) (id string, err error)
+	GetRowByID(ctx context.Context, id string) (dest entity.Member, err error)
+	SelectRows(ctx context.Context) (dest []entity.Member, err error)
+	UpdateRow(ctx context.Context, id string, data entity.Member) (err error)
+	DeleteRow(ctx context.Context, id string) (err error)
 }
 
 type Repository struct {

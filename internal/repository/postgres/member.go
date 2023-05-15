@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"library/internal/entity"
 	"strings"
-	"time"
 
 	"github.com/jmoiron/sqlx"
+
+	"library/internal/entity"
 )
 
 type MemberRepository struct {
@@ -20,10 +20,7 @@ func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	}
 }
 
-func (s *MemberRepository) CreateRow(data entity.Member) (id string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (id string, err error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
@@ -36,10 +33,7 @@ func (s *MemberRepository) CreateRow(data entity.Member) (id string, err error) 
 	return
 }
 
-func (s *MemberRepository) GetRowByID(id string) (dest entity.Member, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *MemberRepository) GetRowByID(ctx context.Context, id string) (dest entity.Member, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -52,10 +46,7 @@ func (s *MemberRepository) GetRowByID(id string) (dest entity.Member, err error)
 	return
 }
 
-func (s *MemberRepository) SelectRows() (dest []entity.Member, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *MemberRepository) SelectRows(ctx context.Context) (dest []entity.Member, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -66,10 +57,7 @@ func (s *MemberRepository) SelectRows() (dest []entity.Member, err error) {
 	return
 }
 
-func (s *MemberRepository) UpdateRow(id string, data entity.Member) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *MemberRepository) UpdateRow(ctx context.Context, id string, data entity.Member) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -97,10 +85,7 @@ func (s *MemberRepository) prepareArgs(data entity.Member) (sets []string, args 
 	return
 }
 
-func (s *MemberRepository) DeleteRow(id string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *MemberRepository) DeleteRow(ctx context.Context, id string) (err error) {
 	query := `
 		DELETE 
 		FROM members

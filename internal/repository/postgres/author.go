@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"library/internal/entity"
 	"strings"
-	"time"
 
 	"github.com/jmoiron/sqlx"
+
+	"library/internal/entity"
 )
 
 type AuthorRepository struct {
@@ -20,10 +20,7 @@ func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
 	}
 }
 
-func (s *AuthorRepository) CreateRow(data entity.Author) (id string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (id string, err error) {
 	query := `
 		INSERT INTO authors (full_name, pseudonym, specialty)
 		VALUES ($1, $2, $3)
@@ -36,10 +33,7 @@ func (s *AuthorRepository) CreateRow(data entity.Author) (id string, err error) 
 	return
 }
 
-func (s *AuthorRepository) GetRowByID(id string) (dest entity.Author, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *AuthorRepository) GetRowByID(ctx context.Context, id string) (dest entity.Author, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -52,10 +46,7 @@ func (s *AuthorRepository) GetRowByID(id string) (dest entity.Author, err error)
 	return
 }
 
-func (s *AuthorRepository) SelectRows() (dest []entity.Author, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []entity.Author, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -66,10 +57,7 @@ func (s *AuthorRepository) SelectRows() (dest []entity.Author, err error) {
 	return
 }
 
-func (s *AuthorRepository) UpdateRow(id string, data entity.Author) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data entity.Author) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -102,10 +90,7 @@ func (s *AuthorRepository) prepareArgs(data entity.Author) (sets []string, args 
 	return
 }
 
-func (s *AuthorRepository) DeleteRow(id string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *AuthorRepository) DeleteRow(ctx context.Context, id string) (err error) {
 	query := `
 		DELETE 
 		FROM authors

@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"library/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"library/config"
 	"library/internal/api/rest"
 	"library/internal/repository"
 	"library/internal/service"

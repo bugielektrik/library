@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"library/internal/entity"
 	"strings"
-	"time"
 
 	"github.com/jmoiron/sqlx"
+
+	"library/internal/entity"
 )
 
 type BookRepository struct {
@@ -20,10 +20,7 @@ func NewBookRepository(db *sqlx.DB) *BookRepository {
 	}
 }
 
-func (s *BookRepository) CreateRow(data entity.Book) (id string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *BookRepository) CreateRow(ctx context.Context, data entity.Book) (id string, err error) {
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
 		VALUES ($1, $2, $3)
@@ -36,10 +33,7 @@ func (s *BookRepository) CreateRow(data entity.Book) (id string, err error) {
 	return
 }
 
-func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *BookRepository) GetRowByID(ctx context.Context, id string) (dest entity.Book, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -52,10 +46,7 @@ func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
 	return
 }
 
-func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *BookRepository) SelectRows(ctx context.Context) (dest []entity.Book, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -66,10 +57,7 @@ func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
 	return
 }
 
-func (s *BookRepository) UpdateRow(id string, data entity.Book) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *BookRepository) UpdateRow(ctx context.Context, id string, data entity.Book) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -107,10 +95,7 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 	return
 }
 
-func (s *BookRepository) DeleteRow(id string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *BookRepository) DeleteRow(ctx context.Context, id string) (err error) {
 	query := `
 		DELETE 
 		FROM books
