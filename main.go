@@ -1,6 +1,8 @@
 package main
 
-import "library/internal/app"
+import (
+	"library/app"
+)
 
 func main() {
 	app.Run()

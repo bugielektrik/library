@@ -10,10 +10,12 @@ import (
 	"library/internal/service"
 )
 
+// MemberHandler represents the member handler
 type MemberHandler struct {
 	memberService service.MemberService
 }
 
+// MemberRoutes creates a new instance of the router
 func MemberRoutes(s service.MemberService) chi.Router {
 	handler := MemberHandler{
 		memberService: s,
@@ -33,11 +35,12 @@ func MemberRoutes(s service.MemberService) chi.Router {
 	return r
 }
 
+// create creates a new member
 func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := dto.MemberRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(req)
 		return
 	}
 
@@ -52,6 +55,7 @@ func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// getByID retrieves an member by ID
 func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -65,6 +69,7 @@ func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// getAll retrieves all members
 func (h *MemberHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	res, err := h.memberService.GetAll()
 	if err != nil {
@@ -76,22 +81,23 @@ func (h *MemberHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// update updates an existing member
 func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	req := dto.MemberRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err = h.memberService.Update(id, req); err != nil {
+	if err := h.memberService.Update(id, req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
+// delete deletes a member
 func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

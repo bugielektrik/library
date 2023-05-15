@@ -28,7 +28,7 @@ func (s *MemberRepository) CreateRow(data entity.Member) (id string, err error) 
 	defer cancel()
 
 	query := `
-		INSERT INTO members (fullName, booklist)
+		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
 		RETURNING id`
 
@@ -45,7 +45,7 @@ func (s *MemberRepository) GetRowByID(id string) (dest entity.Member, err error)
 	defer cancel()
 
 	query := `
-		SELECT id, fullName, booklist
+		SELECT id, full_name, books
 		FROM members
 		WHERE id=$1`
 
@@ -62,7 +62,7 @@ func (s *MemberRepository) SelectRows() (dest []entity.Member, err error) {
 	defer cancel()
 
 	query := `
-		SELECT id, fullName, booklist 
+		SELECT id, full_name, books
 		FROM members
 		ORDER BY id`
 
@@ -92,12 +92,12 @@ func (s *MemberRepository) UpdateRow(id string, data entity.Member) (err error) 
 func (s *MemberRepository) prepareArgs(data entity.Member) (sets []string, args []any) {
 	if data.FullName != nil {
 		args = append(args, data.FullName)
-		sets = append(sets, fmt.Sprintf("fullName=$%d", len(args)))
+		sets = append(sets, fmt.Sprintf("full_name=$%d", len(args)))
 	}
 
-	if data.Books != nil {
+	if len(data.Books) > 0 {
 		args = append(args, data.Books)
-		sets = append(sets, fmt.Sprintf("bookList=$%d", len(args)))
+		sets = append(sets, fmt.Sprintf("books=$%d", len(args)))
 	}
 
 	return

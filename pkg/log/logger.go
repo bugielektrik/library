@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Init(version, description string) *zap.Logger {
+func New(version, description string) *zap.Logger {
 	var log *zap.Logger
 	var err error
 	var wrappedCore = zap.WrapCore((&apmzap.Core{

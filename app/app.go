@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	"library/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,9 +14,9 @@ import (
 	"go.uber.org/zap"
 
 	"library/internal/api/rest"
-	"library/internal/config"
 	"library/internal/repository"
 	"library/internal/service"
+	"library/pkg/log"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 // Run initializes whole application.
 func Run() {
 	// Dependencies
-	logger := setupLogger()
+	logger := log.New(version, description)
 
 	configs, err := config.New()
 	if err != nil {
@@ -59,7 +59,8 @@ func Run() {
 	go func() {
 		// service connections
 		if err = rests.Run(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			logger.Error("ERR_INIT_REST", zap.Error(err))
+			return
 		}
 	}()
 

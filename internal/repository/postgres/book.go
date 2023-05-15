@@ -28,11 +28,11 @@ func (s *BookRepository) CreateRow(data entity.Book) (id string, err error) {
 	defer cancel()
 
 	query := `
-		INSERT INTO books (name,genre,codeisbn)
+		INSERT INTO books (name, genre, isbn, authors)
 		VALUES ($1, $2, $3)
 		RETURNING id`
 
-	args := []any{data.Name, data.Genre, data.ISBN}
+	args := []any{data.Name, data.Genre, data.ISBN, data.Authors}
 
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
@@ -45,7 +45,7 @@ func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
 	defer cancel()
 
 	query := `
-		SELECT id, name, genre ,codeisbn
+		SELECT id, name, genre, isbn, authors
 		FROM books
 		WHERE id=$1`
 
@@ -62,7 +62,7 @@ func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
 	defer cancel()
 
 	query := `
-		SELECT id, name, genre, codeisbn
+		SELECT id, name, genre, isbn, authors
 		FROM books
 		ORDER BY id`
 
@@ -102,7 +102,12 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 
 	if data.ISBN != nil {
 		args = append(args, data.ISBN)
-		sets = append(sets, fmt.Sprintf("codeISBN=$%d", len(args)))
+		sets = append(sets, fmt.Sprintf("isbn=$%d", len(args)))
+	}
+
+	if len(data.Authors) > 0 {
+		args = append(args, data.Authors)
+		sets = append(sets, fmt.Sprintf("authors=$%d", len(args)))
 	}
 
 	return

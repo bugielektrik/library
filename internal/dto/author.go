@@ -2,6 +2,7 @@ package dto
 
 import (
 	"library/internal/entity"
+	"net/http"
 )
 
 type AuthorRequest struct {
@@ -9,6 +10,11 @@ type AuthorRequest struct {
 	FullName  string `json:"fullName" validate:"required"`
 	Pseudonym string `json:"pseudonym" validate:"required"`
 	Specialty string `json:"specialty" validate:"required"`
+}
+
+func (a AuthorRequest) Bind(r *http.Request) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 type AuthorResponse struct {
