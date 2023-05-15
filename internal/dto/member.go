@@ -26,8 +26,8 @@ func ParseFromMember(data entity.Member) (res MemberResponse) {
 }
 
 func ParseFromMembers(data []entity.Member) (res []MemberResponse) {
-	for _, data := range data {
-		res = append(res, ParseFromMember(data))
+	for _, object := range data {
+		res = append(res, ParseFromMember(object))
 	}
 	return
 }

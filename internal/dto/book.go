@@ -32,8 +32,8 @@ func ParseFromBook(data entity.Book) (res BookResponse) {
 }
 
 func ParseFromBooks(data []entity.Book) (res []BookResponse) {
-	for _, data := range data {
-		res = append(res, ParseFromBook(data))
+	for _, object := range data {
+		res = append(res, ParseFromBook(object))
 	}
 	return
 }

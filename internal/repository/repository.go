@@ -7,7 +7,6 @@ import (
 	"library/pkg/database"
 )
 
-// AuthorRepository represents the author repository
 type AuthorRepository interface {
 	CreateRow(data entity.Author) (id string, err error)
 	GetRowByID(id string) (dest entity.Author, err error)
@@ -16,7 +15,6 @@ type AuthorRepository interface {
 	DeleteRow(id string) (err error)
 }
 
-// BookRepository represents the book repository
 type BookRepository interface {
 	CreateRow(data entity.Book) (id string, err error)
 	GetRowByID(id string) (dest entity.Book, err error)
@@ -25,7 +23,6 @@ type BookRepository interface {
 	DeleteRow(id string) (err error)
 }
 
-// MemberRepository represents the member repository
 type MemberRepository interface {
 	CreateRow(data entity.Member) (id string, err error)
 	GetRowByID(id string) (dest entity.Member, err error)
@@ -34,7 +31,6 @@ type MemberRepository interface {
 	DeleteRow(id string) (err error)
 }
 
-// Repository is an implementation of the Repository
 type Repository struct {
 	Author AuthorRepository
 	Book   BookRepository
@@ -60,7 +56,6 @@ func New(configs ...Configuration) (*Repository, error) {
 	return r, nil
 }
 
-// WithMemoryRepository applies a memory database to the Repository
 func WithMemoryRepository() Configuration {
 	return func(r *Repository) error {
 		r.Author = memory.NewAuthorRepository()
@@ -70,7 +65,6 @@ func WithMemoryRepository() Configuration {
 	}
 }
 
-// WithPostgresRepository applies a postgres database to the Repository
 func WithPostgresRepository(dataSourceName string) Configuration {
 	return func(r *Repository) error {
 		db, err := database.New(dataSourceName)

@@ -8,31 +8,28 @@ import (
 	"github.com/google/uuid"
 )
 
-// MemberRepository is an in-memory implementation of the MemberRepository interface
 type MemberRepository struct {
 	db map[string]entity.Member
 	sync.RWMutex
 }
 
-// NewMemberRepository creates a new instance of the MemberRepository struct
 func NewMemberRepository() *MemberRepository {
 	return &MemberRepository{
 		db: make(map[string]entity.Member),
 	}
 }
 
-// CreateRow creates a new row in the in-memory storage
 func (r *MemberRepository) CreateRow(data entity.Member) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
-	id := generateID()
+	id := r.generateID()
+	data.ID = id
 	r.db[id] = data
 
 	return id, nil
 }
 
-// GetRowByID retrieves a row from the in-memory storage by ID
 func (r *MemberRepository) GetRowByID(id string) (data entity.Member, err error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -46,7 +43,6 @@ func (r *MemberRepository) GetRowByID(id string) (data entity.Member, err error)
 	return
 }
 
-// SelectRows retrieves all rows from the in-memory storage
 func (r *MemberRepository) SelectRows() ([]entity.Member, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -59,7 +55,6 @@ func (r *MemberRepository) SelectRows() ([]entity.Member, error) {
 	return rows, nil
 }
 
-// UpdateRow updates an existing row in the in-memory storage
 func (r *MemberRepository) UpdateRow(id string, data entity.Member) error {
 	r.Lock()
 	defer r.Unlock()
@@ -72,7 +67,6 @@ func (r *MemberRepository) UpdateRow(id string, data entity.Member) error {
 	return nil
 }
 
-// DeleteRow deletes a row from the in-memory storage by ID
 func (r *MemberRepository) DeleteRow(id string) error {
 	r.Lock()
 	defer r.Unlock()
@@ -85,7 +79,6 @@ func (r *MemberRepository) DeleteRow(id string) error {
 	return nil
 }
 
-// generateID generates a unique ID for the row
-func generateID() string {
+func (r *MemberRepository) generateID() string {
 	return uuid.New().String()
 }

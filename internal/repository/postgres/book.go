@@ -10,19 +10,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// BookRepository is a postgres implementation of the BookRepository interface
 type BookRepository struct {
 	db *sqlx.DB
 }
 
-// NewBookRepository creates a new instance of the BookRepository struct
 func NewBookRepository(db *sqlx.DB) *BookRepository {
 	return &BookRepository{
 		db: db,
 	}
 }
 
-// CreateRow creates a new row in the postgres database
 func (s *BookRepository) CreateRow(data entity.Book) (id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -39,7 +36,6 @@ func (s *BookRepository) CreateRow(data entity.Book) (id string, err error) {
 	return
 }
 
-// GetRowByID retrieves a row from the postgres database by ID
 func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -56,7 +52,6 @@ func (s *BookRepository) GetRowByID(id string) (dest entity.Book, err error) {
 	return
 }
 
-// SelectRows retrieves all rows from the postgres database
 func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -71,7 +66,6 @@ func (s *BookRepository) SelectRows() (dest []entity.Book, err error) {
 	return
 }
 
-// UpdateRow updates an existing row in the postgres database
 func (s *BookRepository) UpdateRow(id string, data entity.Book) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -113,7 +107,6 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 	return
 }
 
-// DeleteRow deletes a row from the postgres database by ID
 func (s *BookRepository) DeleteRow(id string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

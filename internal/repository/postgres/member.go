@@ -10,19 +10,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// MemberRepository is a postgres implementation of the MemberRepository interface
 type MemberRepository struct {
 	db *sqlx.DB
 }
 
-// NewMemberRepository creates a new instance of the MemberRepository struct
 func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	return &MemberRepository{
 		db: db,
 	}
 }
 
-// CreateRow creates a new row in the postgres database
 func (s *MemberRepository) CreateRow(data entity.Member) (id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -39,7 +36,6 @@ func (s *MemberRepository) CreateRow(data entity.Member) (id string, err error) 
 	return
 }
 
-// GetRowByID retrieves a row from the postgres database by ID
 func (s *MemberRepository) GetRowByID(id string) (dest entity.Member, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -56,7 +52,6 @@ func (s *MemberRepository) GetRowByID(id string) (dest entity.Member, err error)
 	return
 }
 
-// SelectRows retrieves all rows from the postgres database
 func (s *MemberRepository) SelectRows() (dest []entity.Member, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -71,7 +66,6 @@ func (s *MemberRepository) SelectRows() (dest []entity.Member, err error) {
 	return
 }
 
-// UpdateRow updates an existing row in the postgres database
 func (s *MemberRepository) UpdateRow(id string, data entity.Member) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -103,7 +97,6 @@ func (s *MemberRepository) prepareArgs(data entity.Member) (sets []string, args 
 	return
 }
 
-// DeleteRow deletes a row from the postgres database by ID
 func (s *MemberRepository) DeleteRow(id string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

@@ -10,12 +10,10 @@ import (
 	"library/internal/service"
 )
 
-// AuthorHandler represents the author handler
 type AuthorHandler struct {
 	authorService service.AuthorService
 }
 
-// AuthorRoutes creates a new instance of the router
 func AuthorRoutes(s service.AuthorService) chi.Router {
 	handler := AuthorHandler{
 		authorService: s,
@@ -35,7 +33,6 @@ func AuthorRoutes(s service.AuthorService) chi.Router {
 	return r
 }
 
-// create creates a new author
 func (h *AuthorHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := dto.AuthorRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -55,7 +52,6 @@ func (h *AuthorHandler) create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// getByID retrieves an author by ID
 func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -69,7 +65,6 @@ func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// getAll retrieves all authors
 func (h *AuthorHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	res, err := h.authorService.GetAll()
 	if err != nil {
@@ -81,7 +76,6 @@ func (h *AuthorHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// update updates an existing author
 func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -97,7 +91,6 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// delete deletes a author
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

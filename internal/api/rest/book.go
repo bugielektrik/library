@@ -10,12 +10,10 @@ import (
 	"library/internal/service"
 )
 
-// BookHandler represents the book handler
 type BookHandler struct {
 	bookService service.BookService
 }
 
-// BookRoutes creates a new instance of the router
 func BookRoutes(s service.BookService) chi.Router {
 	handler := BookHandler{
 		bookService: s,
@@ -35,7 +33,6 @@ func BookRoutes(s service.BookService) chi.Router {
 	return r
 }
 
-// create creates a new book
 func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := dto.BookRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -55,7 +52,6 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// getByID retrieves an book by ID
 func (h *BookHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -69,7 +65,6 @@ func (h *BookHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// getAll retrieves all books
 func (h *BookHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	res, err := h.bookService.GetAll()
 	if err != nil {
@@ -81,7 +76,6 @@ func (h *BookHandler) getAll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// update updates an existing book
 func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -97,7 +91,6 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// delete deletes a book
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

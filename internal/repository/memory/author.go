@@ -8,20 +8,17 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuthorRepository is an in-memory implementation of the AuthorRepository interface
 type AuthorRepository struct {
 	db map[string]entity.Author
 	sync.RWMutex
 }
 
-// NewAuthorRepository creates a new instance of the AuthorRepository struct
 func NewAuthorRepository() *AuthorRepository {
 	return &AuthorRepository{
 		db: make(map[string]entity.Author),
 	}
 }
 
-// CreateRow creates a new row in the in-memory storage
 func (r *AuthorRepository) CreateRow(data entity.Author) (string, error) {
 	r.Lock()
 	defer r.Unlock()
@@ -33,7 +30,6 @@ func (r *AuthorRepository) CreateRow(data entity.Author) (string, error) {
 	return id, nil
 }
 
-// GetRowByID retrieves a row from the in-memory storage by ID
 func (r *AuthorRepository) GetRowByID(id string) (data entity.Author, err error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -47,7 +43,6 @@ func (r *AuthorRepository) GetRowByID(id string) (data entity.Author, err error)
 	return
 }
 
-// SelectRows retrieves all rows from the in-memory storage
 func (r *AuthorRepository) SelectRows() ([]entity.Author, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -60,7 +55,6 @@ func (r *AuthorRepository) SelectRows() ([]entity.Author, error) {
 	return rows, nil
 }
 
-// UpdateRow updates an existing row in the in-memory storage
 func (r *AuthorRepository) UpdateRow(id string, data entity.Author) error {
 	r.Lock()
 	defer r.Unlock()
@@ -73,7 +67,6 @@ func (r *AuthorRepository) UpdateRow(id string, data entity.Author) error {
 	return nil
 }
 
-// DeleteRow deletes a row from the in-memory storage by ID
 func (r *AuthorRepository) DeleteRow(id string) error {
 	r.Lock()
 	defer r.Unlock()
@@ -86,7 +79,6 @@ func (r *AuthorRepository) DeleteRow(id string) error {
 	return nil
 }
 
-// generateID generates a unique ID for the row
 func (r *AuthorRepository) generateID() string {
 	return uuid.New().String()
 }
