@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"library/internal/entity"
 	"library/internal/repository/memory"
 	"library/internal/repository/postgres"
@@ -9,25 +10,25 @@ import (
 )
 
 type AuthorRepository interface {
-	CreateRow(ctx context.Context, data entity.Author) (id string, err error)
-	GetRowByID(ctx context.Context, id string) (dest entity.Author, err error)
 	SelectRows(ctx context.Context) (dest []entity.Author, err error)
+	CreateRow(ctx context.Context, data entity.Author) (id string, err error)
+	GetRow(ctx context.Context, id string) (dest entity.Author, err error)
 	UpdateRow(ctx context.Context, id string, data entity.Author) (err error)
 	DeleteRow(ctx context.Context, id string) (err error)
 }
 
 type BookRepository interface {
-	CreateRow(ctx context.Context, data entity.Book) (id string, err error)
-	GetRowByID(ctx context.Context, id string) (dest entity.Book, err error)
 	SelectRows(ctx context.Context) (dest []entity.Book, err error)
+	CreateRow(ctx context.Context, data entity.Book) (id string, err error)
+	GetRow(ctx context.Context, id string) (dest entity.Book, err error)
 	UpdateRow(ctx context.Context, id string, data entity.Book) (err error)
 	DeleteRow(ctx context.Context, id string) (err error)
 }
 
 type MemberRepository interface {
-	CreateRow(ctx context.Context, data entity.Member) (id string, err error)
-	GetRowByID(ctx context.Context, id string) (dest entity.Member, err error)
 	SelectRows(ctx context.Context) (dest []entity.Member, err error)
+	CreateRow(ctx context.Context, data entity.Member) (id string, err error)
+	GetRow(ctx context.Context, id string) (dest entity.Member, err error)
 	UpdateRow(ctx context.Context, id string, data entity.Member) (err error)
 	DeleteRow(ctx context.Context, id string) (err error)
 }
@@ -79,9 +80,9 @@ func WithPostgresRepository(dataSourceName string) Configuration {
 			return err
 		}
 
-		r.Author = postgres.NewAuthorRepository(db)
-		r.Book = postgres.NewBookRepository(db)
-		r.Member = postgres.NewMemberRepository(db)
+		r.Author = postgres.NewAuthorRepository(dataSourceName)
+		r.Book = postgres.NewBookRepository(dataSourceName)
+		r.Member = postgres.NewMemberRepository(dataSourceName)
 		return nil
 	}
 }

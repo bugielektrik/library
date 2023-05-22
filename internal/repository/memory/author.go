@@ -3,10 +3,11 @@ package memory
 import (
 	"context"
 	"database/sql"
-	"library/internal/entity"
 	"sync"
 
 	"github.com/google/uuid"
+
+	"library/internal/entity"
 )
 
 type AuthorRepository struct {
@@ -20,6 +21,18 @@ func NewAuthorRepository() *AuthorRepository {
 	}
 }
 
+func (r *AuthorRepository) SelectRows(ctx context.Context) ([]entity.Author, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	rows := make([]entity.Author, 0, len(r.db))
+	for _, data := range r.db {
+		rows = append(rows, data)
+	}
+
+	return rows, nil
+}
+
 func (r *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
@@ -31,7 +44,7 @@ func (r *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (d
 	return id, nil
 }
 
-func (r *AuthorRepository) GetRowByID(ctx context.Context, id string) (data entity.Author, err error) {
+func (r *AuthorRepository) GetRow(ctx context.Context, id string) (data entity.Author, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -42,18 +55,6 @@ func (r *AuthorRepository) GetRowByID(ctx context.Context, id string) (data enti
 	}
 
 	return
-}
-
-func (r *AuthorRepository) SelectRows(ctx context.Context) ([]entity.Author, error) {
-	r.RLock()
-	defer r.RUnlock()
-
-	rows := make([]entity.Author, 0, len(r.db))
-	for _, data := range r.db {
-		rows = append(rows, data)
-	}
-
-	return rows, nil
 }
 
 func (r *AuthorRepository) UpdateRow(ctx context.Context, id string, data entity.Author) error {

@@ -1,4 +1,4 @@
-package rest
+package http
 
 import (
 	"encoding/json"
@@ -14,23 +14,34 @@ type BookHandler struct {
 	bookService service.BookService
 }
 
-func BookRoutes(s service.BookService) chi.Router {
-	handler := BookHandler{
-		bookService: s,
-	}
+func NewBookHandler(b service.BookService) *BookHandler {
+	return &BookHandler{bookService: b}
+}
 
+func (h *BookHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", handler.getAll)
-	r.Post("/", handler.create)
+	r.Get("/", h.list)
+	r.Post("/", h.create)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", handler.getByID)
-		r.Put("/", handler.update)
-		r.Delete("/", handler.delete)
+		r.Get("/", h.get)
+		r.Put("/", h.update)
+		r.Delete("/", h.delete)
 	})
 
 	return r
+}
+
+func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
+	res, err := h.bookService.List(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
 
 func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -52,21 +63,10 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func (h *BookHandler) getByID(w http.ResponseWriter, r *http.Request) {
+func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.bookService.GetByID(r.Context(), id)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
-}
-
-func (h *BookHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	res, err := h.bookService.GetAll(r.Context())
+	res, err := h.bookService.Get(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

@@ -1,4 +1,4 @@
-package rest
+package http
 
 import (
 	"encoding/json"
@@ -14,23 +14,34 @@ type MemberHandler struct {
 	memberService service.MemberService
 }
 
-func MemberRoutes(s service.MemberService) chi.Router {
-	handler := MemberHandler{
-		memberService: s,
-	}
+func NewMemberHandler(m service.MemberService) *MemberHandler {
+	return &MemberHandler{memberService: m}
+}
 
+func (h *MemberHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", handler.getAll)
-	r.Post("/", handler.create)
+	r.Get("/", h.list)
+	r.Post("/", h.create)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", handler.getByID)
-		r.Put("/", handler.update)
-		r.Delete("/", handler.delete)
+		r.Get("/", h.get)
+		r.Put("/", h.update)
+		r.Delete("/", h.delete)
 	})
 
 	return r
+}
+
+func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
+	res, err := h.memberService.List(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
 
 func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -52,21 +63,10 @@ func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.memberService.GetByID(r.Context(), id)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
-}
-
-func (h *MemberHandler) getAll(w http.ResponseWriter, r *http.Request) {
-	res, err := h.memberService.GetAll(r.Context())
+	res, err := h.memberService.Get(r.Context(), id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

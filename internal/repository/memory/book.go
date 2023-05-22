@@ -3,10 +3,11 @@ package memory
 import (
 	"context"
 	"database/sql"
-	"library/internal/entity"
 	"sync"
 
 	"github.com/google/uuid"
+
+	"library/internal/entity"
 )
 
 type BookRepository struct {
@@ -20,30 +21,6 @@ func NewBookRepository() *BookRepository {
 	}
 }
 
-func (r *BookRepository) CreateRow(ctx context.Context, data entity.Book) (string, error) {
-	r.Lock()
-	defer r.Unlock()
-
-	id := r.generateID()
-	data.ID = id
-	r.db[id] = data
-
-	return id, nil
-}
-
-func (r *BookRepository) GetRowByID(ctx context.Context, id string) (data entity.Book, err error) {
-	r.RLock()
-	defer r.RUnlock()
-
-	data, ok := r.db[id]
-	if !ok {
-		err = sql.ErrNoRows
-		return
-	}
-
-	return
-}
-
 func (r *BookRepository) SelectRows(ctx context.Context) ([]entity.Book, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -54,6 +31,29 @@ func (r *BookRepository) SelectRows(ctx context.Context) ([]entity.Book, error) 
 	}
 
 	return rows, nil
+}
+
+func (r *BookRepository) CreateRow(ctx context.Context, data entity.Book) (string, error) {
+	r.Lock()
+	defer r.Unlock()
+
+	id := r.generateID()
+	data.ID = id
+	r.db[id] = data
+
+	return id, nil
+}
+func (r *BookRepository) GetRow(ctx context.Context, id string) (data entity.Book, err error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	data, ok := r.db[id]
+	if !ok {
+		err = sql.ErrNoRows
+		return
+	}
+
+	return
 }
 
 func (r *BookRepository) UpdateRow(ctx context.Context, id string, data entity.Book) error {

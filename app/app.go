@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,9 +12,9 @@ import (
 	"go.uber.org/zap"
 
 	"library/config"
-	"library/internal/api/rest"
 	"library/internal/repository"
 	"library/internal/service"
+	"library/internal/transport/http"
 	"library/pkg/log"
 )
 
@@ -35,7 +34,7 @@ func Run() {
 		return
 	}
 
-	// Repositories, Services & API
+	// Repositories, Services & Handlers
 	repositories, err := repository.New(repository.WithMemoryRepository())
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
@@ -48,27 +47,26 @@ func Run() {
 		MemberRepository: repositories.Member,
 	})
 
-	rests := rest.New(rest.Dependencies{
+	httpServer := http.New(http.Dependencies{
 		Configs:       configs,
 		AuthorService: services.Author,
 		BookService:   services.Book,
 		MemberService: services.Member,
 	})
 
-	// Run our server in a goroutine so that it doesn't block.
+	// Run our httpServer in a goroutine so that it doesn't block.
 	go func() {
 		// service connections
-		if err = rests.Run(); err != nil && err != http.ErrServerClosed {
+		if err = httpServer.Run(); err != nil {
 			logger.Error("ERR_INIT_REST", zap.Error(err))
 			return
 		}
 	}()
-
 	logger.Info("Server started on http://localhost:" + configs.HTTP.Port)
 
 	// Graceful Shutdown
 	var wait time.Duration
-	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
+	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the httpServer gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
 	quit := make(chan os.Signal, 1) // create channel to signify a signal being sent
@@ -86,8 +84,8 @@ func Run() {
 
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	if err = rests.Shutdown(ctx); err != nil {
-		panic(err) // failure/timeout shutting down the server gracefully
+	if err = httpServer.Stop(ctx); err != nil {
+		panic(err) // failure/timeout shutting down the httpServer gracefully
 	}
 
 	fmt.Println("Running cleanup tasks...")

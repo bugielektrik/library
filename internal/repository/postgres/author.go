@@ -5,22 +5,44 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
-
 	"library/internal/entity"
+	"library/pkg/database"
 )
 
 type AuthorRepository struct {
-	db *sqlx.DB
+	dataSourceName string
 }
 
-func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
+func NewAuthorRepository(dataSourceName string) *AuthorRepository {
 	return &AuthorRepository{
-		db: db,
+		dataSourceName: dataSourceName,
 	}
 }
 
+func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []entity.Author, err error) {
+	db, err := database.New(s.dataSourceName)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	query := `
+		SELECT id, full_name, pseudonym, specialty
+		FROM authors
+		ORDER BY id`
+
+	err = db.SelectContext(ctx, &dest, query)
+
+	return
+}
+
 func (s *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (id string, err error) {
+	db, err := database.New(s.dataSourceName)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
 	query := `
 		INSERT INTO authors (full_name, pseudonym, specialty)
 		VALUES ($1, $2, $3)
@@ -28,12 +50,18 @@ func (s *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (i
 
 	args := []any{data.FullName, data.Pseudonym, data.Specialty}
 
-	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
+	err = db.QueryRowContext(ctx, query, args...).Scan(&id)
 
 	return
 }
 
-func (s *AuthorRepository) GetRowByID(ctx context.Context, id string) (dest entity.Author, err error) {
+func (s *AuthorRepository) GetRow(ctx context.Context, id string) (dest entity.Author, err error) {
+	db, err := database.New(s.dataSourceName)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -41,23 +69,18 @@ func (s *AuthorRepository) GetRowByID(ctx context.Context, id string) (dest enti
 
 	args := []any{id}
 
-	err = s.db.GetContext(ctx, &dest, query, args...)
-
-	return
-}
-
-func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []entity.Author, err error) {
-	query := `
-		SELECT id, full_name, pseudonym, specialty
-		FROM authors
-		ORDER BY id`
-
-	err = s.db.SelectContext(ctx, &dest, query)
+	err = db.GetContext(ctx, &dest, query, args...)
 
 	return
 }
 
 func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data entity.Author) (err error) {
+	db, err := database.New(s.dataSourceName)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -65,7 +88,7 @@ func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data entity
 		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
 
 		query := fmt.Sprintf("UPDATE authors SET %s WHERE id=$%d", strings.Join(sets, ", "), len(args))
-		_, err = s.db.ExecContext(ctx, query, args...)
+		_, err = db.ExecContext(ctx, query, args...)
 	}
 
 	return
@@ -91,6 +114,12 @@ func (s *AuthorRepository) prepareArgs(data entity.Author) (sets []string, args 
 }
 
 func (s *AuthorRepository) DeleteRow(ctx context.Context, id string) (err error) {
+	db, err := database.New(s.dataSourceName)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
 	query := `
 		DELETE 
 		FROM authors
@@ -98,7 +127,7 @@ func (s *AuthorRepository) DeleteRow(ctx context.Context, id string) (err error)
 
 	args := []any{id}
 
-	_, err = s.db.ExecContext(ctx, query, args...)
+	_, err = db.ExecContext(ctx, query, args...)
 
 	return
 }

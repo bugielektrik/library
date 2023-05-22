@@ -1,14 +1,37 @@
 package dto
 
 import (
+	"errors"
+	"net/http"
+
 	"library/internal/entity"
 )
 
 type AuthorRequest struct {
 	ID        string `json:"id"`
-	FullName  string `json:"fullName" validate:"required"`
-	Pseudonym string `json:"pseudonym" validate:"required"`
-	Specialty string `json:"specialty" validate:"required"`
+	FullName  string `json:"fullName"`
+	Pseudonym string `json:"pseudonym"`
+	Specialty string `json:"specialty"`
+}
+
+func (s *AuthorRequest) Bind(r *http.Request) error {
+	if s.FullName == "" {
+		return errors.New("phone: cannot be blank")
+	}
+
+	if s.Pseudonym == "" {
+		return errors.New("pseudonym: cannot be blank")
+	}
+
+	if s.Specialty == "" {
+		return errors.New("specialty: cannot be blank")
+	}
+
+	return nil
+}
+
+func (s AuthorRequest) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
 
 type AuthorResponse struct {
@@ -16,6 +39,10 @@ type AuthorResponse struct {
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
 	Specialty string `json:"specialty"`
+}
+
+func (s AuthorResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
 
 func ParseFromAuthor(data entity.Author) (res AuthorResponse) {

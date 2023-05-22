@@ -3,10 +3,11 @@ package memory
 import (
 	"context"
 	"database/sql"
-	"library/internal/entity"
 	"sync"
 
 	"github.com/google/uuid"
+
+	"library/internal/entity"
 )
 
 type MemberRepository struct {
@@ -20,6 +21,18 @@ func NewMemberRepository() *MemberRepository {
 	}
 }
 
+func (r *MemberRepository) SelectRows(ctx context.Context) ([]entity.Member, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	rows := make([]entity.Member, 0, len(r.db))
+	for _, data := range r.db {
+		rows = append(rows, data)
+	}
+
+	return rows, nil
+}
+
 func (r *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (string, error) {
 	r.Lock()
 	defer r.Unlock()
@@ -31,7 +44,7 @@ func (r *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (s
 	return id, nil
 }
 
-func (r *MemberRepository) GetRowByID(ctx context.Context, id string) (data entity.Member, err error) {
+func (r *MemberRepository) GetRow(ctx context.Context, id string) (data entity.Member, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -42,18 +55,6 @@ func (r *MemberRepository) GetRowByID(ctx context.Context, id string) (data enti
 	}
 
 	return
-}
-
-func (r *MemberRepository) SelectRows(ctx context.Context) ([]entity.Member, error) {
-	r.RLock()
-	defer r.RUnlock()
-
-	rows := make([]entity.Member, 0, len(r.db))
-	for _, data := range r.db {
-		rows = append(rows, data)
-	}
-
-	return rows, nil
 }
 
 func (r *MemberRepository) UpdateRow(ctx context.Context, id string, data entity.Member) error {
