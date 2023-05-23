@@ -2,15 +2,17 @@ package http
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
-	"github.com/go-chi/render"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	"github.com/go-chi/render"
 
 	"library/config"
+	"library/internal/transport/http/handler"
+
 	"library/internal/service"
 )
 
@@ -55,9 +57,9 @@ func New(d Dependencies) Server {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Mount("/api/author", NewAuthorHandler(d.AuthorService).Routes())
-	r.Mount("/api/book", NewBookHandler(d.BookService).Routes())
-	r.Mount("/api/member", NewMemberHandler(d.MemberService).Routes())
+	r.Mount("/api/author", handler.NewAuthorHandler(d.AuthorService).Routes())
+	r.Mount("/api/book", handler.NewBookHandler(d.BookService).Routes())
+	r.Mount("/api/member", handler.NewMemberHandler(d.MemberService).Routes())
 
 	return Server{&http.Server{
 		Handler:        r,

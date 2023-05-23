@@ -1,10 +1,11 @@
-package http
+package handler
 
 import (
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 
 	"library/internal/dto"
 	"library/internal/service"
@@ -36,31 +37,25 @@ func (h *BookHandler) Routes() chi.Router {
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.bookService.List(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	render.JSON(w, r, res)
 }
 
 func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := dto.BookRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(req)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	res, err := h.bookService.Create(r.Context(), req)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(res)
+	render.JSON(w, r, res)
 }
 
 func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
@@ -68,12 +63,10 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.bookService.Get(r.Context(), id)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	render.JSON(w, r, res)
 }
 
 func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -81,12 +74,12 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	req := dto.BookRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := h.bookService.Update(r.Context(), id, req); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -95,7 +88,7 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if err := h.bookService.Delete(r.Context(), id); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }

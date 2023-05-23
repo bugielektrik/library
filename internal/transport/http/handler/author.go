@@ -1,4 +1,4 @@
-package http
+package handler
 
 import (
 	"net/http"
@@ -19,7 +19,6 @@ func NewAuthorHandler(a service.AuthorService) *AuthorHandler {
 }
 
 func (h *AuthorHandler) Routes() chi.Router {
-
 	r := chi.NewRouter()
 
 	r.Get("/", h.list)
@@ -37,47 +36,25 @@ func (h *AuthorHandler) Routes() chi.Router {
 func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.authorService.List(r.Context())
 	if err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusInternalServerError,
-			Success: false,
-			Data:    err,
-		})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	render.Render(w, r, dto.Data{
-		Status:  http.StatusOK,
-		Success: true,
-		Data:    res,
-	})
+	render.JSON(w, r, res)
 }
 
 func (h *AuthorHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := dto.AuthorRequest{}
 	if err := render.Bind(r, &req); err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusBadRequest,
-			Success: false,
-			Data:    req,
-		})
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	res, err := h.authorService.Create(r.Context(), req)
 	if err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusInternalServerError,
-			Success: false,
-			Data:    err,
-		})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	render.Render(w, r, dto.Data{
-		Status:  http.StatusCreated,
-		Success: true,
-		Data:    res,
-	})
+	render.JSON(w, r, res)
 }
 
 func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
@@ -85,19 +62,10 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.authorService.Get(r.Context(), id)
 	if err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusInternalServerError,
-			Success: false,
-			Data:    err,
-		})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	render.Render(w, r, dto.Data{
-		Status:  http.StatusOK,
-		Success: true,
-		Data:    res,
-	})
+	render.JSON(w, r, res)
 }
 
 func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -105,20 +73,12 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	req := dto.AuthorRequest{}
 	if err := render.Bind(r, &req); err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusBadRequest,
-			Success: false,
-			Data:    req,
-		})
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := h.authorService.Update(r.Context(), id, req); err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusInternalServerError,
-			Success: false,
-			Data:    err,
-		})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -127,11 +87,7 @@ func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if err := h.authorService.Delete(r.Context(), id); err != nil {
-		render.Render(w, r, dto.Data{
-			Status:  http.StatusInternalServerError,
-			Success: false,
-			Data:    err,
-		})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }

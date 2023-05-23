@@ -30,19 +30,11 @@ func (s *AuthorRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-func (s AuthorRequest) Render(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
 type AuthorResponse struct {
 	ID        string `json:"id"`
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
 	Specialty string `json:"specialty"`
-}
-
-func (s AuthorResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	return nil
 }
 
 func ParseFromAuthor(data entity.Author) (res AuthorResponse) {
