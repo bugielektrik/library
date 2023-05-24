@@ -1,4 +1,4 @@
-package handler
+package rest
 
 import (
 	"encoding/json"
@@ -30,7 +30,6 @@ func (h *BookHandler) Routes() chi.Router {
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
 	})
-
 	return r
 }
 

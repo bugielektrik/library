@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 
+	"github.com/jmoiron/sqlx"
+
 	"library/internal/entity"
 	"library/internal/repository/memory"
 	"library/internal/repository/postgres"
@@ -34,6 +36,8 @@ type MemberRepository interface {
 }
 
 type Repository struct {
+	postgres *sqlx.DB
+
 	Author AuthorRepository
 	Book   BookRepository
 	Member MemberRepository
@@ -44,45 +48,49 @@ type Configuration func(r *Repository) error
 
 // New takes a variable amount of Configuration functions and returns a new Repository
 // Each Configuration will be called in the order they are passed in
-func New(configs ...Configuration) (*Repository, error) {
-	// create the Repository
-	r := &Repository{}
+func New(configs ...Configuration) (r *Repository, err error) {
+	// Create the Repository
+	r = &Repository{}
 	// Apply all Configurations passed in
-	for _, config := range configs {
+	for _, cfg := range configs {
 		// Pass the service into the configuration function
-		err := config(r)
-		if err != nil {
-			return nil, err
+		if err = cfg(r); err != nil {
+			return
 		}
 	}
-	return r, nil
+	return
+}
+
+func (r Repository) Close() {
+	if r.postgres != nil {
+		r.postgres.Close()
+	}
 }
 
 func WithMemoryRepository() Configuration {
-	return func(r *Repository) error {
+	return func(r *Repository) (err error) {
 		r.Author = memory.NewAuthorRepository()
 		r.Book = memory.NewBookRepository()
 		r.Member = memory.NewMemberRepository()
-		return nil
+		return
 	}
 }
 
 func WithPostgresRepository(dataSourceName string) Configuration {
-	return func(r *Repository) error {
-		db, err := database.New(dataSourceName)
+	return func(r *Repository) (err error) {
+		r.postgres, err = database.New(dataSourceName)
 		if err != nil {
-			return err
+			return
 		}
-		defer db.Close()
 
 		err = database.Migrate(dataSourceName)
 		if err != nil {
-			return err
+			return
 		}
 
-		r.Author = postgres.NewAuthorRepository(dataSourceName)
-		r.Book = postgres.NewBookRepository(dataSourceName)
-		r.Member = postgres.NewMemberRepository(dataSourceName)
-		return nil
+		r.Author = postgres.NewAuthorRepository(r.postgres)
+		r.Book = postgres.NewBookRepository(r.postgres)
+		r.Member = postgres.NewMemberRepository(r.postgres)
+		return
 	}
 }

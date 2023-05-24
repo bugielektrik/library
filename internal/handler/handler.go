@@ -1,8 +1,6 @@
-package http
+package handler
 
 import (
-	"context"
-	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -10,25 +8,22 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 
-	"library/config"
-	"library/internal/transport/http/handler"
-
+	"library/internal/handler/rest"
 	"library/internal/service"
 )
 
 type Dependencies struct {
-	Configs       config.Config
 	AuthorService service.AuthorService
 	BookService   service.BookService
 	MemberService service.MemberService
 }
 
-type Server struct {
-	*http.Server
+type Handler struct {
+	HTTP *chi.Mux
 }
 
-func New(d Dependencies) Server {
-	// Init a new r instance
+func New(d Dependencies) Handler {
+	// Init a new router instance
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -57,27 +52,13 @@ func New(d Dependencies) Server {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Mount("/api/author", handler.NewAuthorHandler(d.AuthorService).Routes())
-	r.Mount("/api/book", handler.NewBookHandler(d.BookService).Routes())
-	r.Mount("/api/member", handler.NewMemberHandler(d.MemberService).Routes())
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Mount("/authors", rest.NewAuthorHandler(d.AuthorService).Routes())
+		r.Mount("/books", rest.NewBookHandler(d.BookService).Routes())
+		r.Mount("/members", rest.NewMemberHandler(d.MemberService).Routes())
+	})
 
-	return Server{&http.Server{
-		Handler:        r,
-		Addr:           ":" + d.Configs.HTTP.Port,
-		ReadTimeout:    d.Configs.HTTP.ReadTimeout,
-		WriteTimeout:   d.Configs.HTTP.WriteTimeout,
-		MaxHeaderBytes: d.Configs.HTTP.MaxHeaderMegabytes << 20,
-	}}
-}
-
-func (s Server) Run() (err error) {
-	if err = s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		return
+	return Handler{
+		HTTP: r,
 	}
-
-	return
-}
-
-func (s Server) Stop(ctx context.Context) (err error) {
-	return s.Shutdown(ctx)
 }

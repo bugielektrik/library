@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,10 +13,11 @@ import (
 	"go.uber.org/zap"
 
 	"library/config"
+	"library/internal/handler"
 	"library/internal/repository"
 	"library/internal/service"
-	"library/internal/transport/http"
 	"library/pkg/log"
+	"library/pkg/server"
 )
 
 const (
@@ -28,7 +30,7 @@ func Run() {
 	// Dependencies
 	logger := log.New(version, description)
 
-	configs, err := config.New()
+	cfg, err := config.New()
 	if err != nil {
 		logger.Error("ERR_INIT_CONFIG", zap.Error(err))
 		return
@@ -40,6 +42,7 @@ func Run() {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
 		return
 	}
+	defer repositories.Close()
 
 	services := service.New(service.Dependencies{
 		AuthorRepository: repositories.Author,
@@ -47,22 +50,23 @@ func Run() {
 		MemberRepository: repositories.Member,
 	})
 
-	httpServer := http.New(http.Dependencies{
-		Configs:       configs,
+	handlers := handler.New(handler.Dependencies{
 		AuthorService: services.Author,
 		BookService:   services.Book,
 		MemberService: services.Member,
 	})
 
-	// Run our httpServer in a goroutine so that it doesn't block.
-	go func() {
-		// service connections
-		if err = httpServer.Run(); err != nil {
-			logger.Error("ERR_INIT_REST", zap.Error(err))
-			return
-		}
-	}()
-	logger.Info("Server started on http://localhost:" + configs.HTTP.Port)
+	// Run our server in a goroutine so that it doesn't block.
+	servers, err := server.New(server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))
+	if err != nil {
+		logger.Error("ERR_INIT_SERVER", zap.Error(err))
+		return
+	}
+
+	if err = servers.Run(logger); err != nil {
+		logger.Error("ERR_RUN_SERVER", zap.Error(err))
+		return
+	}
 
 	// Graceful Shutdown
 	var wait time.Duration
@@ -84,7 +88,7 @@ func Run() {
 
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
-	if err = httpServer.Stop(ctx); err != nil {
+	if err = servers.Stop(ctx); err != nil {
 		panic(err) // failure/timeout shutting down the httpServer gracefully
 	}
 

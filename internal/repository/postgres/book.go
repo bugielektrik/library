@@ -5,44 +5,33 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jmoiron/sqlx"
+
 	"library/internal/entity"
-	"library/pkg/database"
 )
 
 type BookRepository struct {
-	dataSourceName string
+	db *sqlx.DB
 }
 
-func NewBookRepository(dataSourceName string) *BookRepository {
+func NewBookRepository(db *sqlx.DB) *BookRepository {
 	return &BookRepository{
-		dataSourceName: dataSourceName,
+		db: db,
 	}
 }
 
 func (s *BookRepository) SelectRows(ctx context.Context) (dest []entity.Book, err error) {
-	db, err := database.New(s.dataSourceName)
-	if err != nil {
-		return
-	}
-	defer db.Close()
-
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
 		ORDER BY id`
 
-	err = db.SelectContext(ctx, &dest, query)
+	err = s.db.SelectContext(ctx, &dest, query)
 
 	return
 }
 
 func (s *BookRepository) CreateRow(ctx context.Context, data entity.Book) (id string, err error) {
-	db, err := database.New(s.dataSourceName)
-	if err != nil {
-		return
-	}
-	defer db.Close()
-
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
 		VALUES ($1, $2, $3)
@@ -50,18 +39,12 @@ func (s *BookRepository) CreateRow(ctx context.Context, data entity.Book) (id st
 
 	args := []any{data.Name, data.Genre, data.ISBN, data.Authors}
 
-	err = db.QueryRowContext(ctx, query, args...).Scan(&id)
+	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
 	return
 }
 
 func (s *BookRepository) GetRow(ctx context.Context, id string) (dest entity.Book, err error) {
-	db, err := database.New(s.dataSourceName)
-	if err != nil {
-		return
-	}
-	defer db.Close()
-
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -69,18 +52,12 @@ func (s *BookRepository) GetRow(ctx context.Context, id string) (dest entity.Boo
 
 	args := []any{id}
 
-	err = db.GetContext(ctx, &dest, query, args...)
+	err = s.db.GetContext(ctx, &dest, query, args...)
 
 	return
 }
 
 func (s *BookRepository) UpdateRow(ctx context.Context, id string, data entity.Book) (err error) {
-	db, err := database.New(s.dataSourceName)
-	if err != nil {
-		return
-	}
-	defer db.Close()
-
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -88,7 +65,7 @@ func (s *BookRepository) UpdateRow(ctx context.Context, id string, data entity.B
 		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
 
 		query := fmt.Sprintf("UPDATE books SET %s WHERE id=$%d", strings.Join(sets, ", "), len(args))
-		_, err = db.ExecContext(ctx, query, args...)
+		_, err = s.db.ExecContext(ctx, query, args...)
 	}
 
 	return
@@ -119,12 +96,6 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 }
 
 func (s *BookRepository) DeleteRow(ctx context.Context, id string) (err error) {
-	db, err := database.New(s.dataSourceName)
-	if err != nil {
-		return
-	}
-	defer db.Close()
-
 	query := `
 		DELETE 
 		FROM books
@@ -132,7 +103,7 @@ func (s *BookRepository) DeleteRow(ctx context.Context, id string) (err error) {
 
 	args := []any{id}
 
-	_, err = db.ExecContext(ctx, query, args...)
+	_, err = s.db.ExecContext(ctx, query, args...)
 
 	return
 }
