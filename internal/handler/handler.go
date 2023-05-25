@@ -26,9 +26,11 @@ type Configuration func(r *Handler) error
 
 // New takes a variable amount of Configuration functions and returns a new Handler
 // Each Configuration will be called in the order they are passed in
-func New(configs ...Configuration) (r *Handler, err error) {
+func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
 	// Create the Handler
-	r = &Handler{}
+	r = &Handler{
+		Dependencies: d,
+	}
 	// Apply all Configurations passed in
 	for _, cfg := range configs {
 		// Pass the service into the configuration function
@@ -37,13 +39,6 @@ func New(configs ...Configuration) (r *Handler, err error) {
 		}
 	}
 	return
-}
-
-func WithDependencies(d Dependencies) Configuration {
-	return func(h *Handler) (err error) {
-		h.Dependencies = d
-		return
-	}
 }
 
 func WithHTTPHandler() Configuration {

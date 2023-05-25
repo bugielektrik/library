@@ -36,7 +36,8 @@ func Run() {
 	}
 
 	// Repositories, Services & Handlers
-	repositories, err := repository.New(repository.WithMemoryRepository())
+	repositories, err := repository.New(
+		repository.WithMemoryRepository())
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
 		return
@@ -51,12 +52,11 @@ func Run() {
 		})
 
 	handlers, err := handler.New(
-		handler.WithDependencies(
-			handler.Dependencies{
-				AuthorService: services.Author,
-				BookService:   services.Book,
-				MemberService: services.Member,
-			}),
+		handler.Dependencies{
+			AuthorService: services.Author,
+			BookService:   services.Book,
+			MemberService: services.Member,
+		},
 		handler.WithHTTPHandler())
 	if err != nil {
 		logger.Error("ERR_INIT_HANDLER", zap.Error(err))
