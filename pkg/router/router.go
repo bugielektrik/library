@@ -23,7 +23,7 @@ func New() *chi.Mux {
 
 	r.Use(middleware.CleanPath)
 
-	r.Use(middleware.Heartbeat("/ping"))
+	r.Use(middleware.Heartbeat("/"))
 
 	r.Use(middleware.Timeout(time.Second * 60))
 
