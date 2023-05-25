@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-
 	"os"
 	"os/signal"
 	"syscall"
@@ -44,17 +43,25 @@ func Run() {
 	}
 	defer repositories.Close()
 
-	services := service.New(service.Dependencies{
-		AuthorRepository: repositories.Author,
-		BookRepository:   repositories.Book,
-		MemberRepository: repositories.Member,
-	})
+	services := service.New(
+		service.Dependencies{
+			AuthorRepository: repositories.Author,
+			BookRepository:   repositories.Book,
+			MemberRepository: repositories.Member,
+		})
 
-	handlers := handler.New(handler.Dependencies{
-		AuthorService: services.Author,
-		BookService:   services.Book,
-		MemberService: services.Member,
-	})
+	handlers, err := handler.New(
+		handler.WithDependencies(
+			handler.Dependencies{
+				AuthorService: services.Author,
+				BookService:   services.Book,
+				MemberService: services.Member,
+			}),
+		handler.WithHTTPHandler())
+	if err != nil {
+		logger.Error("ERR_INIT_HANDLER", zap.Error(err))
+		return
+	}
 
 	// Run our server in a goroutine so that it doesn't block.
 	servers, err := server.New(server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))

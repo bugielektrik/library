@@ -1,15 +1,13 @@
 package handler
 
 import (
-	"time"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
-	"github.com/go-chi/render"
 
 	"library/internal/handler/rest"
 	"library/internal/service"
+	"library/pkg/router"
 )
 
 type Dependencies struct {
@@ -19,46 +17,46 @@ type Dependencies struct {
 }
 
 type Handler struct {
-	HTTP *chi.Mux
+	HTTP         http.Handler
+	Dependencies Dependencies
 }
 
-func New(d Dependencies) Handler {
-	// Init a new router instance
-	r := chi.NewRouter()
+// Configuration is an alias for a function that will take in a pointer to a Handler and modify it
+type Configuration func(r *Handler) error
 
-	r.Use(middleware.RequestID)
+// New takes a variable amount of Configuration functions and returns a new Handler
+// Each Configuration will be called in the order they are passed in
+func New(configs ...Configuration) (r *Handler, err error) {
+	// Create the Handler
+	r = &Handler{}
+	// Apply all Configurations passed in
+	for _, cfg := range configs {
+		// Pass the service into the configuration function
+		if err = cfg(r); err != nil {
+			return
+		}
+	}
+	return
+}
 
-	r.Use(middleware.RealIP)
+func WithDependencies(d Dependencies) Configuration {
+	return func(h *Handler) (err error) {
+		h.Dependencies = d
+		return
+	}
+}
 
-	r.Use(middleware.Logger)
+func WithHTTPHandler() Configuration {
+	return func(h *Handler) (err error) {
+		r := router.New()
 
-	r.Use(middleware.Recoverer)
+		r.Route("/api/v1", func(r chi.Router) {
+			r.Mount("/authors", rest.NewAuthorHandler(h.Dependencies.AuthorService).Routes())
+			r.Mount("/books", rest.NewBookHandler(h.Dependencies.BookService).Routes())
+			r.Mount("/members", rest.NewMemberHandler(h.Dependencies.MemberService).Routes())
+		})
 
-	r.Use(middleware.CleanPath)
-
-	r.Use(middleware.Heartbeat("/ping"))
-
-	r.Use(middleware.Timeout(time.Second * 60))
-
-	r.Use(middleware.AllowContentType("application/json"))
-
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
-
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Mount("/authors", rest.NewAuthorHandler(d.AuthorService).Routes())
-		r.Mount("/books", rest.NewBookHandler(d.BookService).Routes())
-		r.Mount("/members", rest.NewMemberHandler(d.MemberService).Routes())
-	})
-
-	return Handler{
-		HTTP: r,
+		h.HTTP = r
+		return
 	}
 }
