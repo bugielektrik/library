@@ -64,7 +64,8 @@ func Run() {
 	}
 
 	// Run our server in a goroutine so that it doesn't block.
-	servers, err := server.New(server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))
+	servers, err := server.New(
+		server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))
 	if err != nil {
 		logger.Error("ERR_INIT_SERVER", zap.Error(err))
 		return
