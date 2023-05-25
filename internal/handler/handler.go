@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 
 	"library/internal/handler/rest"
@@ -19,7 +17,7 @@ type Dependencies struct {
 type Handler struct {
 	dependencies Dependencies
 
-	HTTP http.Handler
+	HTTP *chi.Mux
 }
 
 // Configuration is an alias for a function that will take in a pointer to a Handler and modify it
@@ -44,15 +42,14 @@ func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
 
 func WithHTTPHandler() Configuration {
 	return func(h *Handler) (err error) {
-		r := router.New()
+		h.HTTP = router.New()
 
-		r.Route("/api/v1", func(r chi.Router) {
+		h.HTTP.Route("/api/v1", func(r chi.Router) {
 			r.Mount("/authors", rest.NewAuthorHandler(h.dependencies.AuthorService).Routes())
 			r.Mount("/books", rest.NewBookHandler(h.dependencies.BookService).Routes())
 			r.Mount("/members", rest.NewMemberHandler(h.dependencies.MemberService).Routes())
 		})
 
-		h.HTTP = r
 		return
 	}
 }

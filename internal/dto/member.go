@@ -1,6 +1,9 @@
 package dto
 
 import (
+	"errors"
+	"net/http"
+
 	"library/internal/entity"
 )
 
@@ -8,6 +11,14 @@ type MemberRequest struct {
 	ID       string   `json:"id"`
 	FullName string   `json:"fullName" validate:"required"`
 	Books    []string `json:"books" validate:"required"`
+}
+
+func (s *MemberRequest) Bind(r *http.Request) error {
+	if s.FullName == "" {
+		return errors.New("fullName: cannot be blank")
+	}
+
+	return nil
 }
 
 type MemberResponse struct {

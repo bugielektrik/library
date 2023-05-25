@@ -1,6 +1,9 @@
 package dto
 
 import (
+	"errors"
+	"net/http"
+
 	"library/internal/entity"
 )
 
@@ -10,6 +13,22 @@ type BookRequest struct {
 	Genre   string   `json:"genre" validate:"required"`
 	ISBN    string   `json:"isbn" validate:"required"`
 	Authors []string `json:"authors" validate:"required"`
+}
+
+func (s *BookRequest) Bind(r *http.Request) error {
+	if s.Name == "" {
+		return errors.New("name: cannot be blank")
+	}
+
+	if s.Genre == "" {
+		return errors.New("genre: cannot be blank")
+	}
+
+	if s.ISBN == "" {
+		return errors.New("isbn: cannot be blank")
+	}
+
+	return nil
 }
 
 type BookResponse struct {

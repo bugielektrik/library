@@ -26,7 +26,7 @@ const (
 
 // Run initializes whole application.
 func Run() {
-	// dependencies
+	// Dependencies
 	logger := log.New(version, description)
 
 	cfg, err := config.New()

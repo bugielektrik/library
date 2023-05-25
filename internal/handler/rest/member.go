@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,8 +14,8 @@ type MemberHandler struct {
 	memberService service.MemberService
 }
 
-func NewMemberHandler(m service.MemberService) *MemberHandler {
-	return &MemberHandler{memberService: m}
+func NewMemberHandler(a service.MemberService) *MemberHandler {
+	return &MemberHandler{memberService: a}
 }
 
 func (h *MemberHandler) Routes() chi.Router {
@@ -37,25 +36,26 @@ func (h *MemberHandler) Routes() chi.Router {
 func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.memberService.List(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.JSON(w, r, dto.InternalServerError(err))
 		return
 	}
-	render.JSON(w, r, res)
+	render.JSON(w, r, dto.OK(res))
 }
 
 func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := dto.MemberRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := render.Bind(r, &req); err != nil {
+		render.JSON(w, r, dto.BadRequest(err, req))
 		return
 	}
 
 	res, err := h.memberService.Create(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.JSON(w, r, dto.InternalServerError(err))
 		return
 	}
-	render.JSON(w, r, res)
+
+	render.JSON(w, r, dto.Created(res))
 }
 
 func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
@@ -63,23 +63,24 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.memberService.Get(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.JSON(w, r, dto.InternalServerError(err))
 		return
 	}
-	render.JSON(w, r, res)
+
+	render.JSON(w, r, dto.OK(res))
 }
 
 func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	req := dto.MemberRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	if err := render.Bind(r, &req); err != nil {
+		render.JSON(w, r, dto.BadRequest(err, req))
 		return
 	}
 
 	if err := h.memberService.Update(r.Context(), id, req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.JSON(w, r, dto.InternalServerError(err))
 		return
 	}
 }
@@ -88,7 +89,7 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if err := h.memberService.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		render.JSON(w, r, dto.InternalServerError(err))
 		return
 	}
 }

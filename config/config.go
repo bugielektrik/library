@@ -39,7 +39,7 @@ type (
 	}
 
 	DatabaseConfig struct {
-		URL string
+		DSN string
 	}
 )
 

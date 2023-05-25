@@ -8,7 +8,6 @@ import (
 )
 
 type AuthorRequest struct {
-	ID        string `json:"id"`
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
 	Specialty string `json:"specialty"`
