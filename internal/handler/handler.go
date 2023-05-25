@@ -17,8 +17,9 @@ type Dependencies struct {
 }
 
 type Handler struct {
-	HTTP         http.Handler
-	Dependencies Dependencies
+	dependencies Dependencies
+
+	HTTP http.Handler
 }
 
 // Configuration is an alias for a function that will take in a pointer to a Handler and modify it
@@ -29,7 +30,7 @@ type Configuration func(r *Handler) error
 func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
 	// Create the Handler
 	r = &Handler{
-		Dependencies: d,
+		dependencies: d,
 	}
 	// Apply all Configurations passed in
 	for _, cfg := range configs {
@@ -46,9 +47,9 @@ func WithHTTPHandler() Configuration {
 		r := router.New()
 
 		r.Route("/api/v1", func(r chi.Router) {
-			r.Mount("/authors", rest.NewAuthorHandler(h.Dependencies.AuthorService).Routes())
-			r.Mount("/books", rest.NewBookHandler(h.Dependencies.BookService).Routes())
-			r.Mount("/members", rest.NewMemberHandler(h.Dependencies.MemberService).Routes())
+			r.Mount("/authors", rest.NewAuthorHandler(h.dependencies.AuthorService).Routes())
+			r.Mount("/books", rest.NewBookHandler(h.dependencies.BookService).Routes())
+			r.Mount("/members", rest.NewMemberHandler(h.dependencies.MemberService).Routes())
 		})
 
 		h.HTTP = r
