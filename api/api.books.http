@@ -1,0 +1,36 @@
+### List of books from the store
+GET {{baseUrl}}/api/v1/books
+
+### Add a new book to the store
+POST {{baseUrl}}/api/v1/books
+Content-Type: application/json
+
+{
+    "name": "name",
+    "genre": "genre",
+    "isbn": "isbn",
+    "authors": [
+        "1",
+        "2"
+    ]
+}
+
+### Read the book from the store
+GET {{baseUrl}}/api/v1/books/1
+
+### Update the book in the store
+PUT {{baseUrl}}/api/v1/books/1
+Content-Type: application/json
+
+{
+    "name": "name",
+    "genre": "genre",
+    "isbn": "isbn",
+    "authors": [
+        "1",
+        "2"
+    ]
+}
+
+### Delete the book from the store
+DELETE {{baseUrl}}/api/v1/books/1
