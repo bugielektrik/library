@@ -16,7 +16,6 @@ func (e *Response) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// OK example
 func OK(data any) Response {
 	return Response{
 		Status:  http.StatusOK,
