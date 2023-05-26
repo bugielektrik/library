@@ -1,8 +1,8 @@
 ### List of authors from the store
-GET {{baseUrl}}/api/v1/authors
+GET http://localhost/api/v1/authors
 
 ### Add a new author to the store
-POST {{baseUrl}}/api/v1/authors
+POST http://localhost/api/v1/authors
 Content-Type: application/json
 
 {
@@ -12,10 +12,10 @@ Content-Type: application/json
 }
 
 ### Read the author from the store
-GET {{baseUrl}}/api/v1/authors/1
+GET http://localhost/api/v1/authors/1
 
 ### Update the author in the store
-PUT {{baseUrl}}/api/v1/authors/1
+PUT http://localhost/api/v1/authors/1
 Content-Type: application/json
 
 {
@@ -25,4 +25,4 @@ Content-Type: application/json
 }
 
 ### Delete the author from the store
-DELETE {{baseUrl}}/api/v1/authors/1
+DELETE http://localhost/api/v1/authors/1
