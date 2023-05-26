@@ -10,7 +10,7 @@ import (
 
 type BookService interface {
 	List(ctx context.Context) (res []dto.BookResponse, err error)
-	Create(ctx context.Context, req dto.BookRequest) (res dto.BookResponse, err error)
+	Add(ctx context.Context, req dto.BookRequest) (res dto.BookResponse, err error)
 	Get(ctx context.Context, id string) (res dto.BookResponse, err error)
 	Update(ctx context.Context, id string, req dto.BookRequest) (err error)
 	Delete(ctx context.Context, id string) (err error)
@@ -36,7 +36,7 @@ func (s *bookService) List(ctx context.Context) (res []dto.BookResponse, err err
 	return
 }
 
-func (s *bookService) Create(ctx context.Context, req dto.BookRequest) (res dto.BookResponse, err error) {
+func (s *bookService) Add(ctx context.Context, req dto.BookRequest) (res dto.BookResponse, err error) {
 	data := entity.Book{
 		Name:    &req.Name,
 		Genre:   &req.Genre,

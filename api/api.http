@@ -1,0 +1,100 @@
+GET http://localhost/api/v1/authors
+###
+
+POST http://localhost/api/v1/authors
+Content-Type: application/json
+
+{
+    "fullName": "fullName",
+    "pseudonym": "pseudonym",
+    "specialty": "specialty"
+}
+###
+
+GET http://localhost/api/v1/authors/1
+###
+
+PUT http://localhost/api/v1/authors/1
+Content-Type: application/json
+
+{
+    "fullName": "fullName",
+    "pseudonym": "pseudonym",
+    "specialty": "specialty"
+}
+###
+
+DELETE http://localhost/api/v1/authors/1
+###
+
+
+GET http://localhost/api/v1/books
+###
+
+POST http://localhost/api/v1/books
+Content-Type: application/json
+
+{
+    "name": "name",
+    "genre": "genre",
+    "isbn": "isbn",
+    "authors": [
+        "1",
+        "2"
+    ]
+}
+###
+
+GET http://localhost/api/v1/books/1
+###
+
+PUT http://localhost/api/v1/books/1
+Content-Type: application/json
+
+{
+    "name": "name",
+    "genre": "genre",
+    "isbn": "isbn",
+    "authors": [
+        "1",
+        "2"
+    ]
+}
+###
+
+DELETE http://localhost/api/v1/books/1
+###
+
+
+GET http://localhost/api/v1/members
+###
+
+POST http://localhost/api/v1/members
+Content-Type: application/json
+
+{
+    "fullName": "fullName",
+    "books": [
+        "1",
+        "2"
+    ]
+}
+###
+
+GET http://localhost/api/v1/members/1
+###
+
+PUT http://localhost/api/v1/members/1
+Content-Type: application/json
+
+{
+    "fullName": "fullName",
+    "books": [
+        "1",
+        "2"
+    ]
+}
+###
+
+DELETE http://localhost/api/v1/members/1
+###

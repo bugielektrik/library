@@ -37,7 +37,7 @@ func (s *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (i
 		VALUES ($1, $2)
 		RETURNING id`
 
-	args := []any{data.FullName, data.Books}
+	args := []any{data.FullName, data.Books.String()}
 
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
@@ -78,7 +78,7 @@ func (s *MemberRepository) prepareArgs(data entity.Member) (sets []string, args 
 	}
 
 	if len(data.Books) > 0 {
-		args = append(args, data.Books)
+		args = append(args, data.Books.String())
 		sets = append(sets, fmt.Sprintf("books=$%d", len(args)))
 	}
 

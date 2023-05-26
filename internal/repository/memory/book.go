@@ -43,6 +43,7 @@ func (r *BookRepository) CreateRow(ctx context.Context, data entity.Book) (strin
 
 	return id, nil
 }
+
 func (r *BookRepository) GetRow(ctx context.Context, id string) (data entity.Book, err error) {
 	r.RLock()
 	defer r.RUnlock()

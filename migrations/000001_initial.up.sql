@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS books
      name         VARCHAR NOT NULL,
      genre        VARCHAR NOT NULL,
      isbn         VARCHAR NOT NULL,
-     authors      VARCHAR NOT NULL
+     authors      VARCHAR ARRAY NOT NULL
   );
 
 CREATE TABLE IF NOT EXISTS members
@@ -25,5 +25,5 @@ CREATE TABLE IF NOT EXISTS members
      updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
      id           SERIAL PRIMARY KEY,
      full_name    VARCHAR NOT NULL,
-     books        VARCHAR NOT NULL
+     books        VARCHAR ARRAY NOT NULL
   );

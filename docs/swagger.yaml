@@ -1,0 +1,477 @@
+basePath: /api/v1
+definitions:
+  dto.AuthorRequest:
+    properties:
+      fullName:
+        type: string
+      pseudonym:
+        type: string
+      specialty:
+        type: string
+    type: object
+  dto.AuthorResponse:
+    properties:
+      fullName:
+        type: string
+      id:
+        type: string
+      pseudonym:
+        type: string
+      specialty:
+        type: string
+    type: object
+  dto.BookRequest:
+    properties:
+      authors:
+        items:
+          type: string
+        type: array
+      genre:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      name:
+        type: string
+    required:
+    - authors
+    - genre
+    - isbn
+    - name
+    type: object
+  dto.BookResponse:
+    properties:
+      authors:
+        items:
+          type: string
+        type: array
+      genre:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.MemberRequest:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      fullName:
+        type: string
+      id:
+        type: string
+    required:
+    - books
+    - fullName
+    type: object
+  dto.MemberResponse:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      fullName:
+        type: string
+      id:
+        type: string
+    type: object
+  dto.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /authors:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.AuthorResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: List of authors from the store
+      tags:
+      - authors
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AuthorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthorResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Add a new author to the store
+      tags:
+      - authors
+  /authors/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Delete the author from the store
+      tags:
+      - authors
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Read the author from the store
+      tags:
+      - authors
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AuthorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Update the author in the store
+      tags:
+      - authors
+  /books:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.BookResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: List of books from the store
+      tags:
+      - books
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Add a new book to the store
+      tags:
+      - books
+  /books/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Delete the book from the store
+      tags:
+      - books
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BookResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Read the book from the store
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Update the book in the store
+      tags:
+      - books
+  /members:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.MemberResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: List of members from the store
+      tags:
+      - members
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MemberResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Add a new member to the store
+      tags:
+      - members
+  /members/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Delete the member from the store
+      tags:
+      - members
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MemberResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Read the member from the store
+      tags:
+      - members
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Update the member in the store
+      tags:
+      - members
+swagger: "2.0"

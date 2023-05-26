@@ -49,7 +49,7 @@ type Configuration func(r *Repository) error
 // New takes a variable amount of Configuration functions and returns a new Repository
 // Each Configuration will be called in the order they are passed in
 func New(configs ...Configuration) (r *Repository, err error) {
-	// Create the Repository
+	// Add the Repository
 	r = &Repository{}
 	// Apply all Configurations passed in
 	for _, cfg := range configs {

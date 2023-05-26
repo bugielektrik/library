@@ -10,7 +10,7 @@ import (
 
 type MemberService interface {
 	List(ctx context.Context) (res []dto.MemberResponse, err error)
-	Create(ctx context.Context, req dto.MemberRequest) (res dto.MemberResponse, err error)
+	Add(ctx context.Context, req dto.MemberRequest) (res dto.MemberResponse, err error)
 	Get(ctx context.Context, id string) (res dto.MemberResponse, err error)
 	Update(ctx context.Context, id string, req dto.MemberRequest) (err error)
 	Delete(ctx context.Context, id string) (err error)
@@ -36,7 +36,7 @@ func (s *memberService) List(ctx context.Context) (res []dto.MemberResponse, err
 	return
 }
 
-func (s *memberService) Create(ctx context.Context, req dto.MemberRequest) (res dto.MemberResponse, err error) {
+func (s *memberService) Add(ctx context.Context, req dto.MemberRequest) (res dto.MemberResponse, err error) {
 	data := entity.Member{
 		FullName: &req.FullName,
 		Books:    req.Books,

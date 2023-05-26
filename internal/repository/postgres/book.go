@@ -32,12 +32,13 @@ func (s *BookRepository) SelectRows(ctx context.Context) (dest []entity.Book, er
 }
 
 func (s *BookRepository) CreateRow(ctx context.Context, data entity.Book) (id string, err error) {
+	fmt.Println(data.Authors.String())
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
-		VALUES ($1, $2, $3)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id`
 
-	args := []any{data.Name, data.Genre, data.ISBN, data.Authors}
+	args := []any{data.Name, data.Genre, data.ISBN, data.Authors.String()}
 
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
@@ -88,7 +89,7 @@ func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []an
 	}
 
 	if len(data.Authors) > 0 {
-		args = append(args, data.Authors)
+		args = append(args, data.Authors.String())
 		sets = append(sets, fmt.Sprintf("authors=$%d", len(args)))
 	}
 

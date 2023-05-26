@@ -10,7 +10,7 @@ import (
 
 type AuthorService interface {
 	List(ctx context.Context) (res []dto.AuthorResponse, err error)
-	Create(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error)
+	Add(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error)
 	Get(ctx context.Context, id string) (res dto.AuthorResponse, err error)
 	Update(ctx context.Context, id string, req dto.AuthorRequest) (err error)
 	Delete(ctx context.Context, id string) (err error)
@@ -36,7 +36,7 @@ func (s *authorService) List(ctx context.Context) (res []dto.AuthorResponse, err
 	return
 }
 
-func (s *authorService) Create(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error) {
+func (s *authorService) Add(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error) {
 	data := entity.Author{
 		FullName:  &req.FullName,
 		Pseudonym: &req.Pseudonym,
