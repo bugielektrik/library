@@ -11,10 +11,10 @@ import (
 )
 
 type AuthorHandler struct {
-	authorService service.AuthorService
+	authorService service.Author
 }
 
-func NewAuthorHandler(a service.AuthorService) *AuthorHandler {
+func NewAuthorHandler(a service.Author) *AuthorHandler {
 	return &AuthorHandler{authorService: a}
 }
 

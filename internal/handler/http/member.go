@@ -11,10 +11,10 @@ import (
 )
 
 type MemberHandler struct {
-	memberService service.MemberService
+	memberService service.Member
 }
 
-func NewMemberHandler(a service.MemberService) *MemberHandler {
+func NewMemberHandler(a service.Member) *MemberHandler {
 	return &MemberHandler{memberService: a}
 }
 
@@ -28,6 +28,7 @@ func (h *MemberHandler) Routes() chi.Router {
 		r.Get("/", h.get)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
+		r.Get("/books", h.listBook)
 	})
 
 	return r
@@ -149,4 +150,26 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.NoContent(w, r)
+}
+
+// List of books from the store
+//
+//	@Summary	List of books from the store
+//	@Tags		members
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		int	true	"path param"
+//	@Success	200	{array}		dto.BookResponse
+//	@Failure	500	{object}	dto.Response
+//	@Router		/members/{id}/books [get]
+func (h *MemberHandler) listBook(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	res, err := h.memberService.ListBook(r.Context(), id)
+	if err != nil {
+		render.JSON(w, r, dto.InternalServerError(err))
+		return
+	}
+
+	render.JSON(w, r, dto.OK(res))
 }

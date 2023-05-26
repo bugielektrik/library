@@ -8,25 +8,17 @@ import (
 	"library/internal/repository"
 )
 
-type AuthorService interface {
-	List(ctx context.Context) (res []dto.AuthorResponse, err error)
-	Add(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error)
-	Get(ctx context.Context, id string) (res dto.AuthorResponse, err error)
-	Update(ctx context.Context, id string, req dto.AuthorRequest) (err error)
-	Delete(ctx context.Context, id string) (err error)
+type Author struct {
+	authorRepository repository.Author
 }
 
-type authorService struct {
-	authorRepository repository.AuthorRepository
-}
-
-func NewAuthorService(a repository.AuthorRepository) AuthorService {
-	return &authorService{
+func NewAuthorService(a repository.Author) Author {
+	return Author{
 		authorRepository: a,
 	}
 }
 
-func (s *authorService) List(ctx context.Context) (res []dto.AuthorResponse, err error) {
+func (s *Author) List(ctx context.Context) (res []dto.AuthorResponse, err error) {
 	data, err := s.authorRepository.SelectRows(ctx)
 	if err != nil {
 		return
@@ -36,7 +28,7 @@ func (s *authorService) List(ctx context.Context) (res []dto.AuthorResponse, err
 	return
 }
 
-func (s *authorService) Add(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error) {
+func (s *Author) Add(ctx context.Context, req dto.AuthorRequest) (res dto.AuthorResponse, err error) {
 	data := entity.Author{
 		FullName:  &req.FullName,
 		Pseudonym: &req.Pseudonym,
@@ -52,7 +44,7 @@ func (s *authorService) Add(ctx context.Context, req dto.AuthorRequest) (res dto
 	return
 }
 
-func (s *authorService) Get(ctx context.Context, id string) (res dto.AuthorResponse, err error) {
+func (s *Author) Get(ctx context.Context, id string) (res dto.AuthorResponse, err error) {
 	data, err := s.authorRepository.GetRow(ctx, id)
 	if err != nil {
 		return
@@ -62,7 +54,7 @@ func (s *authorService) Get(ctx context.Context, id string) (res dto.AuthorRespo
 	return
 }
 
-func (s *authorService) Update(ctx context.Context, id string, req dto.AuthorRequest) (err error) {
+func (s *Author) Update(ctx context.Context, id string, req dto.AuthorRequest) (err error) {
 	data := entity.Author{
 		FullName:  &req.FullName,
 		Pseudonym: &req.Pseudonym,
@@ -71,6 +63,6 @@ func (s *authorService) Update(ctx context.Context, id string, req dto.AuthorReq
 	return s.authorRepository.UpdateRow(ctx, id, data)
 }
 
-func (s *authorService) Delete(ctx context.Context, id string) (err error) {
+func (s *Author) Delete(ctx context.Context, id string) (err error) {
 	return s.authorRepository.DeleteRow(ctx, id)
 }

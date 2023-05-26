@@ -11,7 +11,7 @@ import (
 	"library/pkg/database"
 )
 
-type AuthorRepository interface {
+type Author interface {
 	SelectRows(ctx context.Context) (dest []entity.Author, err error)
 	CreateRow(ctx context.Context, data entity.Author) (id string, err error)
 	GetRow(ctx context.Context, id string) (dest entity.Author, err error)
@@ -19,7 +19,7 @@ type AuthorRepository interface {
 	DeleteRow(ctx context.Context, id string) (err error)
 }
 
-type BookRepository interface {
+type Book interface {
 	SelectRows(ctx context.Context) (dest []entity.Book, err error)
 	CreateRow(ctx context.Context, data entity.Book) (id string, err error)
 	GetRow(ctx context.Context, id string) (dest entity.Book, err error)
@@ -27,7 +27,7 @@ type BookRepository interface {
 	DeleteRow(ctx context.Context, id string) (err error)
 }
 
-type MemberRepository interface {
+type Member interface {
 	SelectRows(ctx context.Context) (dest []entity.Member, err error)
 	CreateRow(ctx context.Context, data entity.Member) (id string, err error)
 	GetRow(ctx context.Context, id string) (dest entity.Member, err error)
@@ -38,9 +38,9 @@ type MemberRepository interface {
 type Repository struct {
 	postgres *sqlx.DB
 
-	Author AuthorRepository
-	Book   BookRepository
-	Member MemberRepository
+	Author Author
+	Book   Book
+	Member Member
 }
 
 // Configuration is an alias for a function that will take in a pointer to a Repository and modify it

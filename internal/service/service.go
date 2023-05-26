@@ -1,23 +1,29 @@
 package service
 
-import "library/internal/repository"
+import (
+	"library/internal/repository"
+)
 
 type Dependencies struct {
-	AuthorRepository repository.AuthorRepository
-	BookRepository   repository.BookRepository
-	MemberRepository repository.MemberRepository
+	AuthorRepository repository.Author
+	BookRepository   repository.Book
+	MemberRepository repository.Member
 }
 
 type Service struct {
-	Author AuthorService
-	Book   BookService
-	Member MemberService
+	Author Author
+	Book   Book
+	Member Member
 }
 
 func New(d Dependencies) Service {
+	authorService := NewAuthorService(d.AuthorRepository)
+	bookService := NewBookService(d.BookRepository, authorService)
+	memberService := NewMemberService(d.MemberRepository, bookService)
+
 	return Service{
-		Author: NewAuthorService(d.AuthorRepository),
-		Book:   NewBookService(d.BookRepository),
-		Member: NewMemberService(d.MemberRepository),
+		Author: authorService,
+		Book:   bookService,
+		Member: memberService,
 	}
 }

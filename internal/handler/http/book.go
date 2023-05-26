@@ -11,10 +11,10 @@ import (
 )
 
 type BookHandler struct {
-	bookService service.BookService
+	bookService service.Book
 }
 
-func NewBookHandler(a service.BookService) *BookHandler {
+func NewBookHandler(a service.Book) *BookHandler {
 	return &BookHandler{bookService: a}
 }
 
@@ -28,6 +28,7 @@ func (h *BookHandler) Routes() chi.Router {
 		r.Get("/", h.get)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
+		r.Get("/authors", h.listAuthor)
 	})
 
 	return r
@@ -149,4 +150,26 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.NoContent(w, r)
+}
+
+// List of authors from the store
+//
+//	@Summary	List of authors from the store
+//	@Tags		books
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path		int	true	"path param"
+//	@Success	200	{array}		dto.AuthorResponse
+//	@Failure	500	{object}	dto.Response
+//	@Router		/books/{id}/authors [get]
+func (h *BookHandler) listAuthor(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	res, err := h.bookService.ListAuthor(r.Context(), id)
+	if err != nil {
+		render.JSON(w, r, dto.InternalServerError(err))
+		return
+	}
+
+	render.JSON(w, r, dto.OK(res))
 }

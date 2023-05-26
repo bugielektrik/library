@@ -34,3 +34,6 @@ Content-Type: application/json
 
 ### Delete the book from the store
 DELETE http://localhost/api/v1/books/1
+
+### List of authors from the store
+GET http://localhost/api/v1/books/1/authors

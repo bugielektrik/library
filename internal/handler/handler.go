@@ -11,9 +11,9 @@ import (
 )
 
 type Dependencies struct {
-	AuthorService service.AuthorService
-	BookService   service.BookService
-	MemberService service.MemberService
+	AuthorService service.Author
+	BookService   service.Book
+	MemberService service.Member
 }
 
 type Handler struct {
