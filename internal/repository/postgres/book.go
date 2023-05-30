@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"library/internal/entity"
+	"library/internal/domain/book"
 )
 
 type BookRepository struct {
@@ -20,7 +20,7 @@ func NewBookRepository(db *sqlx.DB) *BookRepository {
 	}
 }
 
-func (s *BookRepository) SelectRows(ctx context.Context) (dest []entity.Book, err error) {
+func (s *BookRepository) SelectRows(ctx context.Context) (dest []book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -31,7 +31,7 @@ func (s *BookRepository) SelectRows(ctx context.Context) (dest []entity.Book, er
 	return
 }
 
-func (s *BookRepository) CreateRow(ctx context.Context, data entity.Book) (id string, err error) {
+func (s *BookRepository) CreateRow(ctx context.Context, data book.Entity) (id string, err error) {
 	fmt.Println(data.Authors.String())
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
@@ -45,7 +45,7 @@ func (s *BookRepository) CreateRow(ctx context.Context, data entity.Book) (id st
 	return
 }
 
-func (s *BookRepository) GetRow(ctx context.Context, id string) (dest entity.Book, err error) {
+func (s *BookRepository) GetRow(ctx context.Context, id string) (dest book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -58,7 +58,7 @@ func (s *BookRepository) GetRow(ctx context.Context, id string) (dest entity.Boo
 	return
 }
 
-func (s *BookRepository) UpdateRow(ctx context.Context, id string, data entity.Book) (err error) {
+func (s *BookRepository) UpdateRow(ctx context.Context, id string, data book.Entity) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -72,7 +72,7 @@ func (s *BookRepository) UpdateRow(ctx context.Context, id string, data entity.B
 	return
 }
 
-func (s *BookRepository) prepareArgs(data entity.Book) (sets []string, args []any) {
+func (s *BookRepository) prepareArgs(data book.Entity) (sets []string, args []any) {
 	if data.Name != nil {
 		args = append(args, data.Name)
 		sets = append(sets, fmt.Sprintf("name=$%d", len(args)))

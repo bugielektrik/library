@@ -1,19 +1,17 @@
-package dto
+package author
 
 import (
 	"errors"
 	"net/http"
-
-	"library/internal/entity"
 )
 
-type AuthorRequest struct {
+type Request struct {
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
 	Specialty string `json:"specialty"`
 }
 
-func (s *AuthorRequest) Bind(r *http.Request) error {
+func (s *Request) Bind(r *http.Request) error {
 	if s.FullName == "" {
 		return errors.New("phone: cannot be blank")
 	}
@@ -29,15 +27,15 @@ func (s *AuthorRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type AuthorResponse struct {
+type Response struct {
 	ID        string `json:"id"`
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
 	Specialty string `json:"specialty"`
 }
 
-func ParseFromAuthor(data entity.Author) (res AuthorResponse) {
-	res = AuthorResponse{
+func ParseFromEntity(data Entity) (res Response) {
+	res = Response{
 		ID:        data.ID,
 		FullName:  *data.FullName,
 		Pseudonym: *data.Pseudonym,
@@ -46,9 +44,9 @@ func ParseFromAuthor(data entity.Author) (res AuthorResponse) {
 	return
 }
 
-func ParseFromAuthors(data []entity.Author) (res []AuthorResponse) {
+func ParseFromEntities(data []Entity) (res []Response) {
 	for _, object := range data {
-		res = append(res, ParseFromAuthor(object))
+		res = append(res, ParseFromEntity(object))
 	}
 	return
 }

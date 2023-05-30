@@ -1,13 +1,11 @@
-package dto
+package book
 
 import (
 	"errors"
 	"net/http"
-
-	"library/internal/entity"
 )
 
-type BookRequest struct {
+type Request struct {
 	ID      string   `json:"id"`
 	Name    string   `json:"name" validate:"required"`
 	Genre   string   `json:"genre" validate:"required"`
@@ -15,7 +13,7 @@ type BookRequest struct {
 	Authors []string `json:"authors" validate:"required"`
 }
 
-func (s *BookRequest) Bind(r *http.Request) error {
+func (s *Request) Bind(r *http.Request) error {
 	if s.Name == "" {
 		return errors.New("name: cannot be blank")
 	}
@@ -31,7 +29,7 @@ func (s *BookRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type BookResponse struct {
+type Response struct {
 	ID      string   `json:"id"`
 	Name    string   `json:"name"`
 	Genre   string   `json:"genre"`
@@ -39,8 +37,8 @@ type BookResponse struct {
 	Authors []string `json:"authors"`
 }
 
-func ParseFromBook(data entity.Book) (res BookResponse) {
-	res = BookResponse{
+func ParseFromEntity(data Entity) (res Response) {
+	res = Response{
 		ID:      data.ID,
 		Name:    *data.Name,
 		Genre:   *data.Genre,
@@ -50,9 +48,9 @@ func ParseFromBook(data entity.Book) (res BookResponse) {
 	return
 }
 
-func ParseFromBooks(data []entity.Book) (res []BookResponse) {
+func ParseFromEntities(data []Entity) (res []Response) {
 	for _, object := range data {
-		res = append(res, ParseFromBook(object))
+		res = append(res, ParseFromEntity(object))
 	}
 	return
 }

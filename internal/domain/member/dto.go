@@ -1,19 +1,17 @@
-package dto
+package member
 
 import (
 	"errors"
 	"net/http"
-
-	"library/internal/entity"
 )
 
-type MemberRequest struct {
+type Request struct {
 	ID       string   `json:"id"`
 	FullName string   `json:"fullName" validate:"required"`
 	Books    []string `json:"books" validate:"required"`
 }
 
-func (s *MemberRequest) Bind(r *http.Request) error {
+func (s *Request) Bind(r *http.Request) error {
 	if s.FullName == "" {
 		return errors.New("fullName: cannot be blank")
 	}
@@ -21,14 +19,14 @@ func (s *MemberRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-type MemberResponse struct {
+type Response struct {
 	ID       string   `json:"id"`
 	FullName string   `json:"fullName"`
 	Books    []string `json:"books"`
 }
 
-func ParseFromMember(data entity.Member) (res MemberResponse) {
-	res = MemberResponse{
+func ParseFromEntity(data Entity) (res Response) {
+	res = Response{
 		ID:       data.ID,
 		FullName: *data.FullName,
 		Books:    data.Books,
@@ -36,9 +34,9 @@ func ParseFromMember(data entity.Member) (res MemberResponse) {
 	return
 }
 
-func ParseFromMembers(data []entity.Member) (res []MemberResponse) {
+func ParseFromEntities(data []Entity) (res []Response) {
 	for _, object := range data {
-		res = append(res, ParseFromMember(object))
+		res = append(res, ParseFromEntity(object))
 	}
 	return
 }

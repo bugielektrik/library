@@ -1,10 +1,10 @@
-package entity
+package book
 
 import (
 	"library/pkg/database/postgres"
 )
 
-type Book struct {
+type Entity struct {
 	ID      string         `db:"id"`
 	Name    *string        `db:"name"`
 	Genre   *string        `db:"genre"`

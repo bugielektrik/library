@@ -6,14 +6,14 @@ import (
 
 	_ "library/docs"
 	"library/internal/handler/http"
-	"library/internal/service"
-	"library/pkg/router"
+	"library/internal/service/library"
+	"library/internal/service/subscription"
+	"library/pkg/server/router"
 )
 
 type Dependencies struct {
-	AuthorService service.Author
-	BookService   service.Book
-	MemberService service.Member
+	LibraryService      library.Service
+	SubscriptionService subscription.Service
 }
 
 type Handler struct {
@@ -28,7 +28,7 @@ type Configuration func(r *Handler) error
 // New takes a variable amount of Configuration functions and returns a new Handler
 // Each Configuration will be called in the order they are passed in
 func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
-	// Add the Handler
+	// Create the handler
 	r = &Handler{
 		dependencies: d,
 	}
@@ -39,6 +39,7 @@ func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
 			return
 		}
 	}
+
 	return
 }
 
@@ -57,18 +58,24 @@ func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
 //	@host		localhost
 //	@BasePath	/api/v1
 
+// WithHTTPHandler applies a http handler to the Handler
 func WithHTTPHandler() Configuration {
 	return func(h *Handler) (err error) {
+		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
 		h.HTTP.Get("/swagger/*", httpSwagger.Handler(
-			httpSwagger.URL("http://localhost/swagger/doc.json"), //The url pointing to API definition
+			httpSwagger.URL("http://localhost/swagger/doc.json"),
 		))
 
+		libraryService := http.NewLibraryHandler(h.dependencies.LibraryService)
+		subscriptionService := http.NewSubscriptionHandler(h.dependencies.SubscriptionService)
+
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
-			r.Mount("/authors", http.NewAuthorHandler(h.dependencies.AuthorService).Routes())
-			r.Mount("/books", http.NewBookHandler(h.dependencies.BookService).Routes())
-			r.Mount("/members", http.NewMemberHandler(h.dependencies.MemberService).Routes())
+			r.Mount("/authors", libraryService.AuthorRoutes())
+			r.Mount("/books", libraryService.BookRoutes())
+
+			r.Mount("/members", subscriptionService.MemberRoutes())
 		})
 
 		return

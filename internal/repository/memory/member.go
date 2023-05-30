@@ -7,25 +7,25 @@ import (
 
 	"github.com/google/uuid"
 
-	"library/internal/entity"
+	"library/internal/domain/member"
 )
 
 type MemberRepository struct {
-	db map[string]entity.Member
+	db map[string]member.Entity
 	sync.RWMutex
 }
 
 func NewMemberRepository() *MemberRepository {
 	return &MemberRepository{
-		db: make(map[string]entity.Member),
+		db: make(map[string]member.Entity),
 	}
 }
 
-func (r *MemberRepository) SelectRows(ctx context.Context) ([]entity.Member, error) {
+func (r *MemberRepository) SelectRows(ctx context.Context) ([]member.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	rows := make([]entity.Member, 0, len(r.db))
+	rows := make([]member.Entity, 0, len(r.db))
 	for _, data := range r.db {
 		rows = append(rows, data)
 	}
@@ -33,7 +33,7 @@ func (r *MemberRepository) SelectRows(ctx context.Context) ([]entity.Member, err
 	return rows, nil
 }
 
-func (r *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (string, error) {
+func (r *MemberRepository) CreateRow(ctx context.Context, data member.Entity) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (s
 	return id, nil
 }
 
-func (r *MemberRepository) GetRow(ctx context.Context, id string) (data entity.Member, err error) {
+func (r *MemberRepository) GetRow(ctx context.Context, id string) (data member.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -57,7 +57,7 @@ func (r *MemberRepository) GetRow(ctx context.Context, id string) (data entity.M
 	return
 }
 
-func (r *MemberRepository) UpdateRow(ctx context.Context, id string, data entity.Member) error {
+func (r *MemberRepository) UpdateRow(ctx context.Context, id string, data member.Entity) error {
 	r.Lock()
 	defer r.Unlock()
 

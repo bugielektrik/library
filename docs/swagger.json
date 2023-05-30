@@ -36,14 +36,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AuthorResponse"
+                                "$ref": "#/definitions/author.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -66,7 +66,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorRequest"
+                            "$ref": "#/definitions/author.Request"
                         }
                     }
                 ],
@@ -74,19 +74,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorResponse"
+                            "$ref": "#/definitions/author.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -117,13 +117,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorResponse"
+                            "$ref": "#/definitions/author.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -153,7 +153,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorRequest"
+                            "$ref": "#/definitions/author.Request"
                         }
                     }
                 ],
@@ -164,13 +164,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -202,7 +202,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -226,14 +226,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.BookResponse"
+                                "$ref": "#/definitions/book.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -256,7 +256,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.BookRequest"
+                            "$ref": "#/definitions/book.Request"
                         }
                     }
                 ],
@@ -264,19 +264,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.BookResponse"
+                            "$ref": "#/definitions/book.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -307,13 +307,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.BookResponse"
+                            "$ref": "#/definitions/book.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -343,7 +343,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.BookRequest"
+                            "$ref": "#/definitions/book.Request"
                         }
                     }
                 ],
@@ -354,13 +354,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -392,7 +392,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -425,14 +425,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AuthorResponse"
+                                "$ref": "#/definitions/author.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -456,14 +456,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.MemberResponse"
+                                "$ref": "#/definitions/member.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -486,7 +486,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberRequest"
+                            "$ref": "#/definitions/member.Request"
                         }
                     }
                 ],
@@ -494,19 +494,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberResponse"
+                            "$ref": "#/definitions/member.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -537,13 +537,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberResponse"
+                            "$ref": "#/definitions/member.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -573,7 +573,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberRequest"
+                            "$ref": "#/definitions/member.Request"
                         }
                     }
                 ],
@@ -584,13 +584,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -622,7 +622,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -655,14 +655,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.BookResponse"
+                                "$ref": "#/definitions/book.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -670,7 +670,7 @@
         }
     },
     "definitions": {
-        "dto.AuthorRequest": {
+        "author.Request": {
             "type": "object",
             "properties": {
                 "fullName": {
@@ -684,7 +684,7 @@
                 }
             }
         },
-        "dto.AuthorResponse": {
+        "author.Response": {
             "type": "object",
             "properties": {
                 "fullName": {
@@ -701,7 +701,7 @@
                 }
             }
         },
-        "dto.BookRequest": {
+        "book.Request": {
             "type": "object",
             "required": [
                 "authors",
@@ -730,7 +730,7 @@
                 }
             }
         },
-        "dto.BookResponse": {
+        "book.Response": {
             "type": "object",
             "properties": {
                 "authors": {
@@ -753,7 +753,7 @@
                 }
             }
         },
-        "dto.MemberRequest": {
+        "member.Request": {
             "type": "object",
             "required": [
                 "books",
@@ -774,7 +774,7 @@
                 }
             }
         },
-        "dto.MemberResponse": {
+        "member.Response": {
             "type": "object",
             "properties": {
                 "books": {
@@ -791,7 +791,7 @@
                 }
             }
         },
-        "dto.Response": {
+        "status.Response": {
             "type": "object",
             "properties": {
                 "data": {},

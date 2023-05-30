@@ -43,14 +43,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AuthorResponse"
+                                "$ref": "#/definitions/author.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -73,7 +73,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorRequest"
+                            "$ref": "#/definitions/author.Request"
                         }
                     }
                 ],
@@ -81,19 +81,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorResponse"
+                            "$ref": "#/definitions/author.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -124,13 +124,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorResponse"
+                            "$ref": "#/definitions/author.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -160,7 +160,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.AuthorRequest"
+                            "$ref": "#/definitions/author.Request"
                         }
                     }
                 ],
@@ -171,13 +171,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -209,7 +209,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -233,14 +233,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.BookResponse"
+                                "$ref": "#/definitions/book.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -263,7 +263,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.BookRequest"
+                            "$ref": "#/definitions/book.Request"
                         }
                     }
                 ],
@@ -271,19 +271,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.BookResponse"
+                            "$ref": "#/definitions/book.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -314,13 +314,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.BookResponse"
+                            "$ref": "#/definitions/book.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -350,7 +350,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.BookRequest"
+                            "$ref": "#/definitions/book.Request"
                         }
                     }
                 ],
@@ -361,13 +361,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -399,7 +399,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -432,14 +432,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AuthorResponse"
+                                "$ref": "#/definitions/author.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -463,14 +463,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.MemberResponse"
+                                "$ref": "#/definitions/member.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -493,7 +493,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberRequest"
+                            "$ref": "#/definitions/member.Request"
                         }
                     }
                 ],
@@ -501,19 +501,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberResponse"
+                            "$ref": "#/definitions/member.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -544,13 +544,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberResponse"
+                            "$ref": "#/definitions/member.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -580,7 +580,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.MemberRequest"
+                            "$ref": "#/definitions/member.Request"
                         }
                     }
                 ],
@@ -591,13 +591,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -629,7 +629,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -662,14 +662,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.BookResponse"
+                                "$ref": "#/definitions/book.Response"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Response"
+                            "$ref": "#/definitions/status.Response"
                         }
                     }
                 }
@@ -677,7 +677,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.AuthorRequest": {
+        "author.Request": {
             "type": "object",
             "properties": {
                 "fullName": {
@@ -691,7 +691,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.AuthorResponse": {
+        "author.Response": {
             "type": "object",
             "properties": {
                 "fullName": {
@@ -708,7 +708,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.BookRequest": {
+        "book.Request": {
             "type": "object",
             "required": [
                 "authors",
@@ -737,7 +737,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.BookResponse": {
+        "book.Response": {
             "type": "object",
             "properties": {
                 "authors": {
@@ -760,7 +760,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.MemberRequest": {
+        "member.Request": {
             "type": "object",
             "required": [
                 "books",
@@ -781,7 +781,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.MemberResponse": {
+        "member.Response": {
             "type": "object",
             "properties": {
                 "books": {
@@ -798,7 +798,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Response": {
+        "status.Response": {
             "type": "object",
             "properties": {
                 "data": {},

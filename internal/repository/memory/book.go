@@ -7,25 +7,25 @@ import (
 
 	"github.com/google/uuid"
 
-	"library/internal/entity"
+	"library/internal/domain/book"
 )
 
 type BookRepository struct {
-	db map[string]entity.Book
+	db map[string]book.Entity
 	sync.RWMutex
 }
 
 func NewBookRepository() *BookRepository {
 	return &BookRepository{
-		db: make(map[string]entity.Book),
+		db: make(map[string]book.Entity),
 	}
 }
 
-func (r *BookRepository) SelectRows(ctx context.Context) ([]entity.Book, error) {
+func (r *BookRepository) SelectRows(ctx context.Context) ([]book.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	rows := make([]entity.Book, 0, len(r.db))
+	rows := make([]book.Entity, 0, len(r.db))
 	for _, data := range r.db {
 		rows = append(rows, data)
 	}
@@ -33,7 +33,7 @@ func (r *BookRepository) SelectRows(ctx context.Context) ([]entity.Book, error) 
 	return rows, nil
 }
 
-func (r *BookRepository) CreateRow(ctx context.Context, data entity.Book) (string, error) {
+func (r *BookRepository) CreateRow(ctx context.Context, data book.Entity) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *BookRepository) CreateRow(ctx context.Context, data entity.Book) (strin
 	return id, nil
 }
 
-func (r *BookRepository) GetRow(ctx context.Context, id string) (data entity.Book, err error) {
+func (r *BookRepository) GetRow(ctx context.Context, id string) (data book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -57,7 +57,7 @@ func (r *BookRepository) GetRow(ctx context.Context, id string) (data entity.Boo
 	return
 }
 
-func (r *BookRepository) UpdateRow(ctx context.Context, id string, data entity.Book) error {
+func (r *BookRepository) UpdateRow(ctx context.Context, id string, data book.Entity) error {
 	r.Lock()
 	defer r.Unlock()
 

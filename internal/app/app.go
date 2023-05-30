@@ -35,8 +35,11 @@ func Run() {
 		return
 	}
 
-	// Repositories, Services & Handlers
+	// Repositories, Services, Handlers
 	repositories, err := repository.New(
+		repository.Dependencies{
+			PostgresDSN: cfg.POSTGRES.DSN,
+		},
 		repository.WithMemoryRepository())
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
@@ -44,18 +47,29 @@ func Run() {
 	}
 	defer repositories.Close()
 
-	services := service.New(
+	err = repositories.Migrate()
+	if err != nil {
+		logger.Error("ERR_MIGRATE_REPOSITORY", zap.Error(err))
+		return
+	}
+
+	services, err := service.New(
 		service.Dependencies{
 			AuthorRepository: repositories.Author,
 			BookRepository:   repositories.Book,
 			MemberRepository: repositories.Member,
-		})
+		},
+		service.WithLibraryService(),
+		service.WithSubscriptionService())
+	if err != nil {
+		logger.Error("ERR_INIT_SERVICE", zap.Error(err))
+		return
+	}
 
 	handlers, err := handler.New(
 		handler.Dependencies{
-			AuthorService: services.Author,
-			BookService:   services.Book,
-			MemberService: services.Member,
+			LibraryService:      services.Library,
+			SubscriptionService: services.Subscription,
 		},
 		handler.WithHTTPHandler())
 	if err != nil {
@@ -63,14 +77,18 @@ func Run() {
 		return
 	}
 
-	// Run our server in a goroutine so that it doesn't block.
 	servers, err := server.New(
-		server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))
+		server.Dependencies{
+			HTTPHandler: handlers.HTTP,
+			HTTPPort:    cfg.HTTP.Port,
+		},
+		server.WithHTTPServer())
 	if err != nil {
 		logger.Error("ERR_INIT_SERVER", zap.Error(err))
 		return
 	}
 
+	// Run our server in a goroutine so that it doesn't block.
 	if err = servers.Run(logger); err != nil {
 		logger.Error("ERR_RUN_SERVER", zap.Error(err))
 		return

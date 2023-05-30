@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"library/internal/entity"
+	"library/internal/domain/author"
 )
 
 type AuthorRepository struct {
@@ -20,7 +20,7 @@ func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
 	}
 }
 
-func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []entity.Author, err error) {
+func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []author.Entity, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -31,7 +31,7 @@ func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []entity.Author
 	return
 }
 
-func (s *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (id string, err error) {
+func (s *AuthorRepository) CreateRow(ctx context.Context, data author.Entity) (id string, err error) {
 	query := `
 		INSERT INTO authors (full_name, pseudonym, specialty)
 		VALUES ($1, $2, $3)
@@ -44,7 +44,7 @@ func (s *AuthorRepository) CreateRow(ctx context.Context, data entity.Author) (i
 	return
 }
 
-func (s *AuthorRepository) GetRow(ctx context.Context, id string) (dest entity.Author, err error) {
+func (s *AuthorRepository) GetRow(ctx context.Context, id string) (dest author.Entity, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -57,7 +57,7 @@ func (s *AuthorRepository) GetRow(ctx context.Context, id string) (dest entity.A
 	return
 }
 
-func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data entity.Author) (err error) {
+func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data author.Entity) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -71,7 +71,7 @@ func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data entity
 	return
 }
 
-func (s *AuthorRepository) prepareArgs(data entity.Author) (sets []string, args []any) {
+func (s *AuthorRepository) prepareArgs(data author.Entity) (sets []string, args []any) {
 	if data.Pseudonym != nil {
 		args = append(args, data.Pseudonym)
 		sets = append(sets, fmt.Sprintf("pseudonym=$%d", len(args)))

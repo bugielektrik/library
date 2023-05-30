@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"library/internal/entity"
+	"library/internal/domain/member"
 )
 
 type MemberRepository struct {
@@ -20,7 +20,7 @@ func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	}
 }
 
-func (s *MemberRepository) SelectRows(ctx context.Context) (dest []entity.Member, err error) {
+func (s *MemberRepository) SelectRows(ctx context.Context) (dest []member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -31,7 +31,7 @@ func (s *MemberRepository) SelectRows(ctx context.Context) (dest []entity.Member
 	return
 }
 
-func (s *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (id string, err error) {
+func (s *MemberRepository) CreateRow(ctx context.Context, data member.Entity) (id string, err error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
@@ -44,7 +44,7 @@ func (s *MemberRepository) CreateRow(ctx context.Context, data entity.Member) (i
 	return
 }
 
-func (s *MemberRepository) GetRow(ctx context.Context, id string) (dest entity.Member, err error) {
+func (s *MemberRepository) GetRow(ctx context.Context, id string) (dest member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -57,7 +57,7 @@ func (s *MemberRepository) GetRow(ctx context.Context, id string) (dest entity.M
 	return
 }
 
-func (s *MemberRepository) UpdateRow(ctx context.Context, id string, data entity.Member) (err error) {
+func (s *MemberRepository) UpdateRow(ctx context.Context, id string, data member.Entity) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -71,7 +71,7 @@ func (s *MemberRepository) UpdateRow(ctx context.Context, id string, data entity
 	return
 }
 
-func (s *MemberRepository) prepareArgs(data entity.Member) (sets []string, args []any) {
+func (s *MemberRepository) prepareArgs(data member.Entity) (sets []string, args []any) {
 	if data.FullName != nil {
 		args = append(args, data.FullName)
 		sets = append(sets, fmt.Sprintf("full_name=$%d", len(args)))

@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  dto.AuthorRequest:
+  author.Request:
     properties:
       fullName:
         type: string
@@ -9,7 +9,7 @@ definitions:
       specialty:
         type: string
     type: object
-  dto.AuthorResponse:
+  author.Response:
     properties:
       fullName:
         type: string
@@ -20,7 +20,7 @@ definitions:
       specialty:
         type: string
     type: object
-  dto.BookRequest:
+  book.Request:
     properties:
       authors:
         items:
@@ -40,7 +40,7 @@ definitions:
     - isbn
     - name
     type: object
-  dto.BookResponse:
+  book.Response:
     properties:
       authors:
         items:
@@ -55,7 +55,7 @@ definitions:
       name:
         type: string
     type: object
-  dto.MemberRequest:
+  member.Request:
     properties:
       books:
         items:
@@ -69,7 +69,7 @@ definitions:
     - books
     - fullName
     type: object
-  dto.MemberResponse:
+  member.Response:
     properties:
       books:
         items:
@@ -80,7 +80,7 @@ definitions:
       id:
         type: string
     type: object
-  dto.Response:
+  status.Response:
     properties:
       data: {}
       message:
@@ -113,12 +113,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dto.AuthorResponse'
+              $ref: '#/definitions/author.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: List of authors from the store
       tags:
       - authors
@@ -131,22 +131,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.AuthorRequest'
+          $ref: '#/definitions/author.Request'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.AuthorResponse'
+            $ref: '#/definitions/author.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Add a new author to the store
       tags:
       - authors
@@ -168,7 +168,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Delete the author from the store
       tags:
       - authors
@@ -187,11 +187,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.AuthorResponse'
+            $ref: '#/definitions/author.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Read the author from the store
       tags:
       - authors
@@ -209,7 +209,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.AuthorRequest'
+          $ref: '#/definitions/author.Request'
       produces:
       - application/json
       responses:
@@ -218,11 +218,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Update the author in the store
       tags:
       - authors
@@ -237,12 +237,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dto.BookResponse'
+              $ref: '#/definitions/book.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: List of books from the store
       tags:
       - books
@@ -255,22 +255,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.BookRequest'
+          $ref: '#/definitions/book.Request'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.BookResponse'
+            $ref: '#/definitions/book.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Add a new book to the store
       tags:
       - books
@@ -292,7 +292,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Delete the book from the store
       tags:
       - books
@@ -311,11 +311,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.BookResponse'
+            $ref: '#/definitions/book.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Read the book from the store
       tags:
       - books
@@ -333,7 +333,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.BookRequest'
+          $ref: '#/definitions/book.Request'
       produces:
       - application/json
       responses:
@@ -342,11 +342,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Update the book in the store
       tags:
       - books
@@ -367,12 +367,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dto.AuthorResponse'
+              $ref: '#/definitions/author.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: List of authors from the store
       tags:
       - books
@@ -387,12 +387,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dto.MemberResponse'
+              $ref: '#/definitions/member.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: List of members from the store
       tags:
       - members
@@ -405,22 +405,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.MemberRequest'
+          $ref: '#/definitions/member.Request'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.MemberResponse'
+            $ref: '#/definitions/member.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Add a new member to the store
       tags:
       - members
@@ -442,7 +442,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Delete the member from the store
       tags:
       - members
@@ -461,11 +461,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.MemberResponse'
+            $ref: '#/definitions/member.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Read the member from the store
       tags:
       - members
@@ -483,7 +483,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.MemberRequest'
+          $ref: '#/definitions/member.Request'
       produces:
       - application/json
       responses:
@@ -492,11 +492,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: Update the member in the store
       tags:
       - members
@@ -517,12 +517,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dto.BookResponse'
+              $ref: '#/definitions/book.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.Response'
+            $ref: '#/definitions/status.Response'
       summary: List of books from the store
       tags:
       - members
