@@ -14,7 +14,8 @@ import (
 	"library/internal/config"
 	"library/internal/handler"
 	"library/internal/repository"
-	"library/internal/service"
+	"library/internal/service/library"
+	"library/internal/service/subscription"
 	"library/pkg/log"
 	"library/pkg/server"
 )
@@ -26,7 +27,6 @@ const (
 
 // Run initializes whole application.
 func Run() {
-	// Dependencies
 	logger := log.New(version, description)
 
 	cfg, err := config.New()
@@ -37,52 +37,38 @@ func Run() {
 
 	// Repositories, Services, Handlers
 	repositories, err := repository.New(
-		repository.Dependencies{
-			PostgresDSN: cfg.POSTGRES.DSN,
-		},
-		repository.WithMemoryRepository())
+		repository.WithMemoryDatabase())
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
 		return
 	}
 	defer repositories.Close()
 
-	err = repositories.Migrate()
+	libraryService, err := library.New(
+		library.WithAuthorRepository(repositories.Author),
+		library.WithBookRepository(repositories.Book))
 	if err != nil {
-		logger.Error("ERR_MIGRATE_REPOSITORY", zap.Error(err))
+		logger.Error("ERR_INIT_LIBRARY_SERVICE", zap.Error(err))
 		return
 	}
 
-	services, err := service.New(
-		service.Dependencies{
-			AuthorRepository: repositories.Author,
-			BookRepository:   repositories.Book,
-			MemberRepository: repositories.Member,
-		},
-		service.WithLibraryService(),
-		service.WithSubscriptionService())
+	subscriptionService, err := subscription.New(
+		subscription.WithMemberRepository(repositories.Member),
+		subscription.WithLibraryService(libraryService))
 	if err != nil {
-		logger.Error("ERR_INIT_SERVICE", zap.Error(err))
+		logger.Error("ERR_INIT_SUBSCRIPTION_SERVICE", zap.Error(err))
 		return
 	}
 
 	handlers, err := handler.New(
-		handler.Dependencies{
-			LibraryService:      services.Library,
-			SubscriptionService: services.Subscription,
-		},
-		handler.WithHTTPHandler())
+		handler.WithHTTPTransport(libraryService, subscriptionService))
 	if err != nil {
 		logger.Error("ERR_INIT_HANDLER", zap.Error(err))
 		return
 	}
 
 	servers, err := server.New(
-		server.Dependencies{
-			HTTPHandler: handlers.HTTP,
-			HTTPPort:    cfg.HTTP.Port,
-		},
-		server.WithHTTPServer())
+		server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))
 	if err != nil {
 		logger.Error("ERR_INIT_SERVER", zap.Error(err))
 		return

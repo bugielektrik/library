@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/go-chi/chi/v5"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"github.com/swaggo/http-swagger/v2"
 
 	_ "library/docs"
 	"library/internal/handler/http"
@@ -11,31 +11,24 @@ import (
 	"library/pkg/server/router"
 )
 
-type Dependencies struct {
-	LibraryService      library.Service
-	SubscriptionService subscription.Service
-}
+// Configuration is an alias for a function that will take in a pointer to a Handler and modify it
+type Configuration func(h *Handler) error
 
+// Handler is an implementation of the Handler
 type Handler struct {
-	dependencies Dependencies
-
 	HTTP *chi.Mux
 }
 
-// Configuration is an alias for a function that will take in a pointer to a Handler and modify it
-type Configuration func(r *Handler) error
-
 // New takes a variable amount of Configuration functions and returns a new Handler
 // Each Configuration will be called in the order they are passed in
-func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
+func New(configs ...Configuration) (h *Handler, err error) {
 	// Create the handler
-	r = &Handler{
-		dependencies: d,
-	}
+	h = &Handler{}
+
 	// Apply all Configurations passed in
 	for _, cfg := range configs {
 		// Pass the service into the configuration function
-		if err = cfg(r); err != nil {
+		if err = cfg(h); err != nil {
 			return
 		}
 	}
@@ -58,24 +51,24 @@ func New(d Dependencies, configs ...Configuration) (r *Handler, err error) {
 //	@host		localhost
 //	@BasePath	/api/v1
 
-// WithHTTPHandler applies a http handler to the Handler
-func WithHTTPHandler() Configuration {
+// WithHTTPTransport applies a http transport to the Handler
+func WithHTTPTransport(libraryService *library.Service, subscriptionService *subscription.Service) Configuration {
 	return func(h *Handler) (err error) {
-		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
+		// Create the http transport, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
 		h.HTTP.Get("/swagger/*", httpSwagger.Handler(
 			httpSwagger.URL("http://localhost/swagger/doc.json"),
 		))
 
-		libraryService := http.NewLibraryHandler(h.dependencies.LibraryService)
-		subscriptionService := http.NewSubscriptionHandler(h.dependencies.SubscriptionService)
+		libraryHandler := http.NewLibraryHandler(libraryService)
+		subscriptionHandler := http.NewSubscriptionHandler(subscriptionService)
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
-			r.Mount("/authors", libraryService.AuthorRoutes())
-			r.Mount("/books", libraryService.BookRoutes())
+			r.Mount("/authors", libraryHandler.AuthorRoutes())
+			r.Mount("/books", libraryHandler.BookRoutes())
 
-			r.Mount("/members", subscriptionService.MemberRoutes())
+			r.Mount("/members", subscriptionHandler.MemberRoutes())
 		})
 
 		return

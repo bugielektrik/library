@@ -11,14 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Dependencies struct {
-	HTTPHandler http.Handler
-	HTTPPort    string
-}
-
 type Server struct {
-	dependencies Dependencies
-
 	http     *http.Server
 	grpc     *grpc.Server
 	listener net.Listener
@@ -29,11 +22,9 @@ type Configuration func(r *Server) error
 
 // New takes a variable amount of Configuration functions and returns a new Server
 // Each Configuration will be called in the order they are passed in
-func New(d Dependencies, configs ...Configuration) (r *Server, err error) {
+func New(configs ...Configuration) (r *Server, err error) {
 	// Create the Server
-	r = &Server{
-		dependencies: d,
-	}
+	r = &Server{}
 
 	// Apply all Configurations passed in
 	for _, cfg := range configs {
@@ -76,9 +67,9 @@ func (s *Server) Stop(ctx context.Context) (err error) {
 	return
 }
 
-func WithGRPCServer() Configuration {
+func WithGRPCServer(port string) Configuration {
 	return func(s *Server) (err error) {
-		s.listener, err = net.Listen("tcp", fmt.Sprintf("localhost:%s", s.dependencies.HTTPPort))
+		s.listener, err = net.Listen("tcp", fmt.Sprintf("localhost:%s", port))
 		if err != nil {
 			return
 		}
@@ -88,11 +79,11 @@ func WithGRPCServer() Configuration {
 	}
 }
 
-func WithHTTPServer() Configuration {
+func WithHTTPServer(handler http.Handler, port string) Configuration {
 	return func(s *Server) (err error) {
 		s.http = &http.Server{
-			Handler: s.dependencies.HTTPHandler,
-			Addr:    ":" + s.dependencies.HTTPPort,
+			Handler: handler,
+			Addr:    ":" + port,
 		}
 		return
 	}
