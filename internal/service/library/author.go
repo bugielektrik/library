@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err error) {
-	data, err := s.authorRepository.SelectRows(ctx)
+	data, err := s.authorRepository.Select(ctx)
 	if err != nil {
 		return
 	}
@@ -23,7 +23,7 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author
 		Specialty: &req.Specialty,
 	}
 
-	data.ID, err = s.authorRepository.CreateRow(ctx, data)
+	data.ID, err = s.authorRepository.Create(ctx, data)
 	if err != nil {
 		return
 	}
@@ -33,7 +33,7 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author
 }
 
 func (s *Service) GetAuthor(ctx context.Context, id string) (res author.Response, err error) {
-	data, err := s.authorRepository.GetRow(ctx, id)
+	data, err := s.authorRepository.Get(ctx, id)
 	if err != nil {
 		return
 	}
@@ -48,9 +48,9 @@ func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Reques
 		Pseudonym: &req.Pseudonym,
 		Specialty: &req.Specialty,
 	}
-	return s.authorRepository.UpdateRow(ctx, id, data)
+	return s.authorRepository.Update(ctx, id, data)
 }
 
 func (s *Service) DeleteAuthor(ctx context.Context, id string) (err error) {
-	return s.authorRepository.DeleteRow(ctx, id)
+	return s.authorRepository.Delete(ctx, id)
 }

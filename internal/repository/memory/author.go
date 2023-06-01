@@ -21,7 +21,7 @@ func NewAuthorRepository() *AuthorRepository {
 	}
 }
 
-func (r *AuthorRepository) SelectRows(ctx context.Context) ([]author.Entity, error) {
+func (r *AuthorRepository) Select(ctx context.Context) ([]author.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -33,7 +33,7 @@ func (r *AuthorRepository) SelectRows(ctx context.Context) ([]author.Entity, err
 	return rows, nil
 }
 
-func (r *AuthorRepository) CreateRow(ctx context.Context, data author.Entity) (dest string, err error) {
+func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *AuthorRepository) CreateRow(ctx context.Context, data author.Entity) (d
 	return id, nil
 }
 
-func (r *AuthorRepository) GetRow(ctx context.Context, id string) (data author.Entity, err error) {
+func (r *AuthorRepository) Get(ctx context.Context, id string) (data author.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -57,7 +57,7 @@ func (r *AuthorRepository) GetRow(ctx context.Context, id string) (data author.E
 	return
 }
 
-func (r *AuthorRepository) UpdateRow(ctx context.Context, id string, data author.Entity) error {
+func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -69,7 +69,7 @@ func (r *AuthorRepository) UpdateRow(ctx context.Context, id string, data author
 	return nil
 }
 
-func (r *AuthorRepository) DeleteRow(ctx context.Context, id string) error {
+func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()
 

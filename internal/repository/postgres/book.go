@@ -20,7 +20,7 @@ func NewBookRepository(db *sqlx.DB) *BookRepository {
 	}
 }
 
-func (s *BookRepository) SelectRows(ctx context.Context) (dest []book.Entity, err error) {
+func (s *BookRepository) Select(ctx context.Context) (dest []book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -31,7 +31,7 @@ func (s *BookRepository) SelectRows(ctx context.Context) (dest []book.Entity, er
 	return
 }
 
-func (s *BookRepository) CreateRow(ctx context.Context, data book.Entity) (id string, err error) {
+func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id string, err error) {
 	fmt.Println(data.Authors.String())
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
@@ -45,7 +45,7 @@ func (s *BookRepository) CreateRow(ctx context.Context, data book.Entity) (id st
 	return
 }
 
-func (s *BookRepository) GetRow(ctx context.Context, id string) (dest book.Entity, err error) {
+func (s *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -58,7 +58,7 @@ func (s *BookRepository) GetRow(ctx context.Context, id string) (dest book.Entit
 	return
 }
 
-func (s *BookRepository) UpdateRow(ctx context.Context, id string, data book.Entity) (err error) {
+func (s *BookRepository) Update(ctx context.Context, id string, data book.Entity) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -96,7 +96,7 @@ func (s *BookRepository) prepareArgs(data book.Entity) (sets []string, args []an
 	return
 }
 
-func (s *BookRepository) DeleteRow(ctx context.Context, id string) (err error) {
+func (s *BookRepository) Delete(ctx context.Context, id string) (err error) {
 	query := `
 		DELETE 
 		FROM books

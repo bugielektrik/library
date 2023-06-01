@@ -21,7 +21,7 @@ func NewMemberRepository() *MemberRepository {
 	}
 }
 
-func (r *MemberRepository) SelectRows(ctx context.Context) ([]member.Entity, error) {
+func (r *MemberRepository) Select(ctx context.Context) ([]member.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -33,7 +33,7 @@ func (r *MemberRepository) SelectRows(ctx context.Context) ([]member.Entity, err
 	return rows, nil
 }
 
-func (r *MemberRepository) CreateRow(ctx context.Context, data member.Entity) (string, error) {
+func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *MemberRepository) CreateRow(ctx context.Context, data member.Entity) (s
 	return id, nil
 }
 
-func (r *MemberRepository) GetRow(ctx context.Context, id string) (data member.Entity, err error) {
+func (r *MemberRepository) Get(ctx context.Context, id string) (data member.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -57,7 +57,7 @@ func (r *MemberRepository) GetRow(ctx context.Context, id string) (data member.E
 	return
 }
 
-func (r *MemberRepository) UpdateRow(ctx context.Context, id string, data member.Entity) error {
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -69,7 +69,7 @@ func (r *MemberRepository) UpdateRow(ctx context.Context, id string, data member
 	return nil
 }
 
-func (r *MemberRepository) DeleteRow(ctx context.Context, id string) error {
+func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()
 

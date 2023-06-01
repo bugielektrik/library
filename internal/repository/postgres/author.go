@@ -20,7 +20,7 @@ func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
 	}
 }
 
-func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []author.Entity, err error) {
+func (s *AuthorRepository) Select(ctx context.Context) (dest []author.Entity, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -31,7 +31,7 @@ func (s *AuthorRepository) SelectRows(ctx context.Context) (dest []author.Entity
 	return
 }
 
-func (s *AuthorRepository) CreateRow(ctx context.Context, data author.Entity) (id string, err error) {
+func (s *AuthorRepository) Create(ctx context.Context, data author.Entity) (id string, err error) {
 	query := `
 		INSERT INTO authors (full_name, pseudonym, specialty)
 		VALUES ($1, $2, $3)
@@ -44,7 +44,7 @@ func (s *AuthorRepository) CreateRow(ctx context.Context, data author.Entity) (i
 	return
 }
 
-func (s *AuthorRepository) GetRow(ctx context.Context, id string) (dest author.Entity, err error) {
+func (s *AuthorRepository) Get(ctx context.Context, id string) (dest author.Entity, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -57,7 +57,7 @@ func (s *AuthorRepository) GetRow(ctx context.Context, id string) (dest author.E
 	return
 }
 
-func (s *AuthorRepository) UpdateRow(ctx context.Context, id string, data author.Entity) (err error) {
+func (s *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -90,7 +90,7 @@ func (s *AuthorRepository) prepareArgs(data author.Entity) (sets []string, args 
 	return
 }
 
-func (s *AuthorRepository) DeleteRow(ctx context.Context, id string) (err error) {
+func (s *AuthorRepository) Delete(ctx context.Context, id string) (err error) {
 	query := `
 		DELETE 
 		FROM authors

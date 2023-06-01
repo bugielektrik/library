@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) ListBooks(ctx context.Context) (res []book.Response, err error) {
-	data, err := s.bookRepository.SelectRows(ctx)
+	data, err := s.bookRepository.Select(ctx)
 	if err != nil {
 		return
 	}
@@ -25,7 +25,7 @@ func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Respo
 		Authors: req.Authors,
 	}
 
-	data.ID, err = s.bookRepository.CreateRow(ctx, data)
+	data.ID, err = s.bookRepository.Create(ctx, data)
 	if err != nil {
 		return
 	}
@@ -35,7 +35,7 @@ func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Respo
 }
 
 func (s *Service) GetBook(ctx context.Context, id string) (res book.Response, err error) {
-	data, err := s.bookRepository.GetRow(ctx, id)
+	data, err := s.bookRepository.Get(ctx, id)
 	if err != nil {
 		return
 	}
@@ -51,15 +51,15 @@ func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) (
 		ISBN:    &req.ISBN,
 		Authors: req.Authors,
 	}
-	return s.bookRepository.UpdateRow(ctx, id, data)
+	return s.bookRepository.Update(ctx, id, data)
 }
 
 func (s *Service) DeleteBook(ctx context.Context, id string) (err error) {
-	return s.bookRepository.DeleteRow(ctx, id)
+	return s.bookRepository.Delete(ctx, id)
 }
 
 func (s *Service) ListBookAuthors(ctx context.Context, id string) (res []author.Response, err error) {
-	data, err := s.bookRepository.GetRow(ctx, id)
+	data, err := s.bookRepository.Get(ctx, id)
 	if err != nil {
 		return
 	}

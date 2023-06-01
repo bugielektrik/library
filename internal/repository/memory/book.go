@@ -21,7 +21,7 @@ func NewBookRepository() *BookRepository {
 	}
 }
 
-func (r *BookRepository) SelectRows(ctx context.Context) ([]book.Entity, error) {
+func (r *BookRepository) Select(ctx context.Context) ([]book.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -33,7 +33,7 @@ func (r *BookRepository) SelectRows(ctx context.Context) ([]book.Entity, error) 
 	return rows, nil
 }
 
-func (r *BookRepository) CreateRow(ctx context.Context, data book.Entity) (string, error) {
+func (r *BookRepository) Create(ctx context.Context, data book.Entity) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *BookRepository) CreateRow(ctx context.Context, data book.Entity) (strin
 	return id, nil
 }
 
-func (r *BookRepository) GetRow(ctx context.Context, id string) (data book.Entity, err error) {
+func (r *BookRepository) Get(ctx context.Context, id string) (data book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -57,7 +57,7 @@ func (r *BookRepository) GetRow(ctx context.Context, id string) (data book.Entit
 	return
 }
 
-func (r *BookRepository) UpdateRow(ctx context.Context, id string, data book.Entity) error {
+func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -69,7 +69,7 @@ func (r *BookRepository) UpdateRow(ctx context.Context, id string, data book.Ent
 	return nil
 }
 
-func (r *BookRepository) DeleteRow(ctx context.Context, id string) error {
+func (r *BookRepository) Delete(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()
 

@@ -12,6 +12,9 @@ type Configuration func(s *Service) error
 type Service struct {
 	authorRepository author.Repository
 	bookRepository   book.Repository
+
+	authorCache author.Cache
+	bookCache   book.Cache
 }
 
 // New takes a variable amount of Configuration functions and returns a new Service
@@ -45,6 +48,26 @@ func WithBookRepository(bookRepository book.Repository) Configuration {
 	// Create the book repository, if we needed parameters, such as connection strings they could be inputted here
 	return func(s *Service) error {
 		s.bookRepository = bookRepository
+		return nil
+	}
+}
+
+// WithAuthorCache applies a given author cache to the Service
+func WithAuthorCache(authorCache author.Cache) Configuration {
+	// return a function that matches the Configuration alias,
+	// You need to return this so that the parent function can take in all the needed parameters
+	return func(s *Service) error {
+		s.authorCache = authorCache
+		return nil
+	}
+}
+
+// WithBookCache applies a given book cache to the Service
+func WithBookCache(bookCache book.Cache) Configuration {
+	// return a function that matches the Configuration alias,
+	// You need to return this so that the parent function can take in all the needed parameters
+	return func(s *Service) error {
+		s.bookCache = bookCache
 		return nil
 	}
 }

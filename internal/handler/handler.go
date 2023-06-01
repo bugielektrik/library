@@ -11,19 +11,28 @@ import (
 	"library/pkg/server/router"
 )
 
+type Dependencies struct {
+	LibraryService      *library.Service
+	SubscriptionService *subscription.Service
+}
+
 // Configuration is an alias for a function that will take in a pointer to a Handler and modify it
 type Configuration func(h *Handler) error
 
 // Handler is an implementation of the Handler
 type Handler struct {
+	dependencies Dependencies
+
 	HTTP *chi.Mux
 }
 
 // New takes a variable amount of Configuration functions and returns a new Handler
 // Each Configuration will be called in the order they are passed in
-func New(configs ...Configuration) (h *Handler, err error) {
+func New(d Dependencies, configs ...Configuration) (h *Handler, err error) {
 	// Create the handler
-	h = &Handler{}
+	h = &Handler{
+		dependencies: d,
+	}
 
 	// Apply all Configurations passed in
 	for _, cfg := range configs {
@@ -52,7 +61,7 @@ func New(configs ...Configuration) (h *Handler, err error) {
 //	@BasePath	/api/v1
 
 // WithHTTPTransport applies a http transport to the Handler
-func WithHTTPTransport(libraryService *library.Service, subscriptionService *subscription.Service) Configuration {
+func WithHTTPTransport() Configuration {
 	return func(h *Handler) (err error) {
 		// Create the http transport, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
@@ -61,8 +70,8 @@ func WithHTTPTransport(libraryService *library.Service, subscriptionService *sub
 			httpSwagger.URL("http://localhost/swagger/doc.json"),
 		))
 
-		libraryHandler := http.NewLibraryHandler(libraryService)
-		subscriptionHandler := http.NewSubscriptionHandler(subscriptionService)
+		libraryHandler := http.NewLibraryHandler(h.dependencies.LibraryService)
+		subscriptionHandler := http.NewSubscriptionHandler(h.dependencies.SubscriptionService)
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
 			r.Mount("/authors", libraryHandler.AuthorRoutes())

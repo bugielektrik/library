@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) ListMembers(ctx context.Context) (res []member.Response, err error) {
-	data, err := s.memberRepository.SelectRows(ctx)
+	data, err := s.memberRepository.Select(ctx)
 	if err != nil {
 		return
 	}
@@ -23,7 +23,7 @@ func (s *Service) AddMember(ctx context.Context, req member.Request) (res member
 		Books:    req.Books,
 	}
 
-	data.ID, err = s.memberRepository.CreateRow(ctx, data)
+	data.ID, err = s.memberRepository.Create(ctx, data)
 	if err != nil {
 		return
 	}
@@ -33,7 +33,7 @@ func (s *Service) AddMember(ctx context.Context, req member.Request) (res member
 }
 
 func (s *Service) GetMember(ctx context.Context, id string) (res member.Response, err error) {
-	data, err := s.memberRepository.GetRow(ctx, id)
+	data, err := s.memberRepository.Get(ctx, id)
 	if err != nil {
 		return
 	}
@@ -47,15 +47,15 @@ func (s *Service) UpdateMember(ctx context.Context, id string, req member.Reques
 		FullName: &req.FullName,
 		Books:    req.Books,
 	}
-	return s.memberRepository.UpdateRow(ctx, id, data)
+	return s.memberRepository.Update(ctx, id, data)
 }
 
 func (s *Service) DeleteMember(ctx context.Context, id string) (err error) {
-	return s.memberRepository.DeleteRow(ctx, id)
+	return s.memberRepository.Delete(ctx, id)
 }
 
 func (s *Service) ListMemberBooks(ctx context.Context, id string) (res []book.Response, err error) {
-	data, err := s.memberRepository.GetRow(ctx, id)
+	data, err := s.memberRepository.Get(ctx, id)
 	if err != nil {
 		return
 	}

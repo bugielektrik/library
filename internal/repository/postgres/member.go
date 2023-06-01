@@ -20,7 +20,7 @@ func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	}
 }
 
-func (s *MemberRepository) SelectRows(ctx context.Context) (dest []member.Entity, err error) {
+func (s *MemberRepository) Select(ctx context.Context) (dest []member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -31,7 +31,7 @@ func (s *MemberRepository) SelectRows(ctx context.Context) (dest []member.Entity
 	return
 }
 
-func (s *MemberRepository) CreateRow(ctx context.Context, data member.Entity) (id string, err error) {
+func (s *MemberRepository) Create(ctx context.Context, data member.Entity) (id string, err error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
@@ -44,7 +44,7 @@ func (s *MemberRepository) CreateRow(ctx context.Context, data member.Entity) (i
 	return
 }
 
-func (s *MemberRepository) GetRow(ctx context.Context, id string) (dest member.Entity, err error) {
+func (s *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -57,7 +57,7 @@ func (s *MemberRepository) GetRow(ctx context.Context, id string) (dest member.E
 	return
 }
 
-func (s *MemberRepository) UpdateRow(ctx context.Context, id string, data member.Entity) (err error) {
+func (s *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
 	sets, args := s.prepareArgs(data)
 	if len(args) > 0 {
 
@@ -85,7 +85,7 @@ func (s *MemberRepository) prepareArgs(data member.Entity) (sets []string, args 
 	return
 }
 
-func (s *MemberRepository) DeleteRow(ctx context.Context, id string) (err error) {
+func (s *MemberRepository) Delete(ctx context.Context, id string) (err error) {
 	query := `
 		DELETE 
 		FROM members

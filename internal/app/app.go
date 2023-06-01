@@ -11,6 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"library/internal/cache"
 	"library/internal/config"
 	"library/internal/handler"
 	"library/internal/repository"
@@ -35,7 +36,6 @@ func Run() {
 		return
 	}
 
-	// Repositories, Services, Handlers
 	repositories, err := repository.New(
 		repository.WithMemoryDatabase())
 	if err != nil {
@@ -44,9 +44,23 @@ func Run() {
 	}
 	defer repositories.Close()
 
+	caches, err := cache.New(
+		cache.Dependencies{
+			AuthorRepository: repositories.Author,
+			BookRepository:   repositories.Book,
+		},
+		cache.WithMemoryDatabase())
+	if err != nil {
+		logger.Error("ERR_INIT_CACHE", zap.Error(err))
+		return
+	}
+	defer caches.Close()
+
 	libraryService, err := library.New(
 		library.WithAuthorRepository(repositories.Author),
-		library.WithBookRepository(repositories.Book))
+		library.WithBookRepository(repositories.Book),
+		library.WithAuthorCache(caches.Author),
+		library.WithBookCache(caches.Book))
 	if err != nil {
 		logger.Error("ERR_INIT_LIBRARY_SERVICE", zap.Error(err))
 		return
@@ -61,7 +75,11 @@ func Run() {
 	}
 
 	handlers, err := handler.New(
-		handler.WithHTTPTransport(libraryService, subscriptionService))
+		handler.Dependencies{
+			LibraryService:      libraryService,
+			SubscriptionService: subscriptionService,
+		},
+		handler.WithHTTPTransport())
 	if err != nil {
 		logger.Error("ERR_INIT_HANDLER", zap.Error(err))
 		return
