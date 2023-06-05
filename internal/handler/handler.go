@@ -70,14 +70,14 @@ func WithHTTPTransport() Configuration {
 			httpSwagger.URL("http://localhost/swagger/doc.json"),
 		))
 
-		libraryHandler := http.NewLibraryHandler(h.dependencies.LibraryService)
-		subscriptionHandler := http.NewSubscriptionHandler(h.dependencies.SubscriptionService)
+		authorHandler := http.NewAuthorHandler(h.dependencies.LibraryService)
+		bookHandler := http.NewBookHandler(h.dependencies.LibraryService)
+		memberHandler := http.NewMemberHandler(h.dependencies.SubscriptionService)
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
-			r.Mount("/authors", libraryHandler.AuthorRoutes())
-			r.Mount("/books", libraryHandler.BookRoutes())
-
-			r.Mount("/members", subscriptionHandler.MemberRoutes())
+			r.Mount("/authors", authorHandler.Routes())
+			r.Mount("/books", bookHandler.Routes())
+			r.Mount("/members", memberHandler.Routes())
 		})
 
 		return

@@ -11,25 +11,25 @@ import (
 	"library/pkg/server/status"
 )
 
-type SubscriptionHandler struct {
+type MemberHandler struct {
 	subscriptionService *subscription.Service
 }
 
-func NewSubscriptionHandler(s *subscription.Service) *SubscriptionHandler {
-	return &SubscriptionHandler{subscriptionService: s}
+func NewMemberHandler(s *subscription.Service) *MemberHandler {
+	return &MemberHandler{subscriptionService: s}
 }
 
-func (h *SubscriptionHandler) MemberRoutes() chi.Router {
+func (h *MemberHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", h.listMembers)
-	r.Post("/", h.addMember)
+	r.Get("/", h.list)
+	r.Post("/", h.add)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", h.getMember)
-		r.Put("/", h.updateMember)
-		r.Delete("/", h.deleteMember)
-		r.Get("/books", h.listMemberBooks)
+		r.Get("/", h.get)
+		r.Put("/", h.update)
+		r.Delete("/", h.delete)
+		r.Get("/books", h.listBooks)
 	})
 
 	return r
@@ -44,7 +44,7 @@ func (h *SubscriptionHandler) MemberRoutes() chi.Router {
 //	@Success	200			{array}		member.Response
 //	@Failure	500			{object}	status.Response
 //	@Router		/members 	[get]
-func (h *SubscriptionHandler) listMembers(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.subscriptionService.ListMembers(r.Context())
 	if err != nil {
 		render.JSON(w, r, status.InternalServerError(err))
@@ -65,7 +65,7 @@ func (h *SubscriptionHandler) listMembers(w http.ResponseWriter, r *http.Request
 //	@Failure	400		{object}	status.Response
 //	@Failure	500		{object}	status.Response
 //	@Router		/members [post]
-func (h *SubscriptionHandler) addMember(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := member.Request{}
 	if err := render.Bind(r, &req); err != nil {
 		render.JSON(w, r, status.BadRequest(err, req))
@@ -91,7 +91,7 @@ func (h *SubscriptionHandler) addMember(w http.ResponseWriter, r *http.Request) 
 //	@Success	200	{object}	member.Response
 //	@Failure	500	{object}	status.Response
 //	@Router		/members/{id} [get]
-func (h *SubscriptionHandler) getMember(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.subscriptionService.GetMember(r.Context(), id)
@@ -115,7 +115,7 @@ func (h *SubscriptionHandler) getMember(w http.ResponseWriter, r *http.Request) 
 //	@Failure	400	{object}	status.Response
 //	@Failure	500	{object}	status.Response
 //	@Router		/members/{id} [put]
-func (h *SubscriptionHandler) updateMember(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	req := member.Request{}
@@ -140,7 +140,7 @@ func (h *SubscriptionHandler) updateMember(w http.ResponseWriter, r *http.Reques
 //	@Success	200
 //	@Failure	500	{object}	status.Response
 //	@Router		/members/{id} [delete]
-func (h *SubscriptionHandler) deleteMember(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if err := h.subscriptionService.DeleteMember(r.Context(), id); err != nil {
@@ -159,7 +159,7 @@ func (h *SubscriptionHandler) deleteMember(w http.ResponseWriter, r *http.Reques
 //	@Success	200	{array}		book.Response
 //	@Failure	500	{object}	status.Response
 //	@Router		/members/{id}/books [get]
-func (h *SubscriptionHandler) listMemberBooks(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.subscriptionService.ListMemberBooks(r.Context(), id)

@@ -405,46 +405,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/{id}/authors": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "books"
-                ],
-                "summary": "List of authors from the store",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "path param",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/author.Response"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/status.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/members": {
             "get": {
                 "consumes": [
