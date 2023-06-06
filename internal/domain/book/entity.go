@@ -1,7 +1,7 @@
 package book
 
 import (
-	"library/pkg/database/postgres"
+	"library/pkg/store/postgres"
 )
 
 type Entity struct {

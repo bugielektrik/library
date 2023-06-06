@@ -39,7 +39,7 @@ func (c *BookCache) Get(ctx context.Context, id string) (dest book.Entity, err e
 		return
 	}
 
-	// Marshal struct data into JSON and store it in Redis cache
+	// Marshal struct data into JSON and database it in Redis cache
 	payload, err := json.Marshal(dest)
 	if err != nil {
 		return

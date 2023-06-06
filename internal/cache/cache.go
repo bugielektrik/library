@@ -1,11 +1,11 @@
 package cache
 
 import (
-	"github.com/redis/go-redis/v9"
-
 	"library/internal/cache/memory"
+	"library/internal/cache/redis"
 	"library/internal/domain/author"
 	"library/internal/domain/book"
+	"library/pkg/store"
 )
 
 type Dependencies struct {
@@ -18,8 +18,8 @@ type Configuration func(r *Cache) error
 
 // Cache is an implementation of the Cache
 type Cache struct {
-	redis        *redis.Client
 	dependencies Dependencies
+	redis        *store.Redis
 
 	Author author.Cache
 	Book   book.Cache
@@ -48,12 +48,12 @@ func New(d Dependencies, configs ...Configuration) (s *Cache, err error) {
 // Close then waits for all queries that have started processing on the server to finish.
 func (r *Cache) Close() {
 	if r.redis != nil {
-		r.redis.Close()
+		r.redis.Client.Close()
 	}
 }
 
-// WithMemoryDatabase applies a memory database to the Cache
-func WithMemoryDatabase() Configuration {
+// WithMemoryStore applies a memory database to the Cache
+func WithMemoryStore() Configuration {
 	return func(s *Cache) (err error) {
 		// Create the memory database, if we needed parameters, such as connection strings they could be inputted here
 		s.Author = memory.NewAuthorCache(s.dependencies.AuthorRepository)
@@ -63,23 +63,18 @@ func WithMemoryDatabase() Configuration {
 	}
 }
 
-//// WithRedisDatabase applies a postgres database to the Cache
-//func WithRedisDatabase(a author.Repository, b book.Repository) Configuration {
-//	return func(s *Cache) (err error) {
-//		// Create the postgres database, if we needed parameters, such as connection strings they could be inputted here
-//		s.redis, err = database.New(dataSourceName)
-//		if err != nil {
-//			return
-//		}
-//
-//		err = database.Migrate(dataSourceName)
-//		if err != nil {
-//			return
-//		}
-//
-//		s.Author = redis.NewAuthorCache(a)
-//		s.Book = redis.NewBookCache(b)
-//
-//		return
-//	}
-//}
+// WithRedisStore applies a redis store to the Cache
+func WithRedisStore(url string) Configuration {
+	return func(s *Cache) (err error) {
+		// Create the redis store, if we needed parameters, such as connection strings they could be inputted here
+		s.redis, err = store.NewRedis(url)
+		if err != nil {
+			return
+		}
+
+		s.Author = redis.NewAuthorCache(s.redis.Client, s.dependencies.AuthorRepository)
+		s.Book = redis.NewBookCache(s.redis.Client, s.dependencies.BookRepository)
+
+		return
+	}
+}

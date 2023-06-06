@@ -35,9 +35,9 @@ func (h *MemberHandler) Routes() chi.Router {
 	return r
 }
 
-// List of members from the store
+// List of members from the database
 //
-//	@Summary	List of members from the store
+//	@Summary	List of members from the database
 //	@Tags		members
 //	@Accept		json
 //	@Produce	json
@@ -54,9 +54,9 @@ func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Add a new member to the store
+// Add a new member to the database
 //
-//	@Summary	Add a new member to the store
+//	@Summary	Add a new member to the database
 //	@Tags		members
 //	@Accept		json
 //	@Produce	json
@@ -81,9 +81,9 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Read the member from the store
+// Read the member from the database
 //
-//	@Summary	Read the member from the store
+//	@Summary	Read the member from the database
 //	@Tags		members
 //	@Accept		json
 //	@Produce	json
@@ -103,9 +103,9 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Update the member in the store
+// Update the member in the database
 //
-//	@Summary	Update the member in the store
+//	@Summary	Update the member in the database
 //	@Tags		members
 //	@Accept		json
 //	@Produce	json
@@ -130,9 +130,9 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Delete the member from the store
+// Delete the member from the database
 //
-//	@Summary	Delete the member from the store
+//	@Summary	Delete the member from the database
 //	@Tags		members
 //	@Accept		json
 //	@Produce	json
@@ -149,9 +149,9 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// List of books from the store
+// List of books from the database
 //
-//	@Summary	List of books from the store
+//	@Summary	List of books from the database
 //	@Tags		members
 //	@Accept		json
 //	@Produce	json

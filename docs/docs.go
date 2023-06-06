@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "List of authors from the store",
+                "summary": "List of authors from the database",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -65,7 +65,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Add a new author to the store",
+                "summary": "Add a new author to the database",
                 "parameters": [
                     {
                         "description": "body param",
@@ -110,7 +110,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Read the author from the store",
+                "summary": "Read the author from the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -145,7 +145,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Update the author in the store",
+                "summary": "Update the author in the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -192,7 +192,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Delete the author from the store",
+                "summary": "Delete the author from the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -226,7 +226,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "List of books from the store",
+                "summary": "List of books from the database",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -255,7 +255,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Add a new book to the store",
+                "summary": "Add a new book to the database",
                 "parameters": [
                     {
                         "description": "body param",
@@ -300,7 +300,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Read the book from the store",
+                "summary": "Read the book from the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -335,7 +335,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Update the book in the store",
+                "summary": "Update the book in the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -382,7 +382,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Delete the book from the store",
+                "summary": "Delete the book from the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -416,7 +416,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "List of members from the store",
+                "summary": "List of members from the database",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -445,7 +445,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Add a new member to the store",
+                "summary": "Add a new member to the database",
                 "parameters": [
                     {
                         "description": "body param",
@@ -490,7 +490,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Read the member from the store",
+                "summary": "Read the member from the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -525,7 +525,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Update the member in the store",
+                "summary": "Update the member in the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -572,7 +572,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Delete the member from the store",
+                "summary": "Delete the member from the database",
                 "parameters": [
                     {
                         "type": "integer",
@@ -606,7 +606,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "List of books from the store",
+                "summary": "List of books from the database",
                 "parameters": [
                     {
                         "type": "integer",

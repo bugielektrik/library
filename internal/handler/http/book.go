@@ -34,9 +34,9 @@ func (h *BookHandler) Routes() chi.Router {
 	return r
 }
 
-// List of books from the store
+// List of books from the database
 //
-//	@Summary	List of books from the store
+//	@Summary	List of books from the database
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
@@ -53,9 +53,9 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Add a new book to the store
+// Add a new book to the database
 //
-//	@Summary	Add a new book to the store
+//	@Summary	Add a new book to the database
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
@@ -80,9 +80,9 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Read the book from the store
+// Read the book from the database
 //
-//	@Summary	Read the book from the store
+//	@Summary	Read the book from the database
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
@@ -102,9 +102,9 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Update the book in the store
+// Update the book in the database
 //
-//	@Summary	Update the book in the store
+//	@Summary	Update the book in the database
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
@@ -129,9 +129,9 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Delete the book from the store
+// Delete the book from the database
 //
-//	@Summary	Delete the book from the store
+//	@Summary	Delete the book from the database
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json

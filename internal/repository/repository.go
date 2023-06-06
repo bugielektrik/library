@@ -1,14 +1,12 @@
 package repository
 
 import (
-	"github.com/jmoiron/sqlx"
-
 	"library/internal/domain/author"
 	"library/internal/domain/book"
 	"library/internal/domain/member"
 	"library/internal/repository/memory"
 	"library/internal/repository/postgres"
-	"library/pkg/database"
+	"library/pkg/store"
 )
 
 // Configuration is an alias for a function that will take in a pointer to a Repository and modify it
@@ -16,7 +14,7 @@ type Configuration func(r *Repository) error
 
 // Repository is an implementation of the Repository
 type Repository struct {
-	postgres *sqlx.DB
+	postgres *store.Database
 
 	Author author.Repository
 	Book   book.Repository
@@ -44,14 +42,14 @@ func New(configs ...Configuration) (s *Repository, err error) {
 // Close then waits for all queries that have started processing on the server to finish.
 func (r *Repository) Close() {
 	if r.postgres != nil {
-		r.postgres.Close()
+		r.postgres.Client.Close()
 	}
 }
 
-// WithMemoryDatabase applies a memory database to the Repository
-func WithMemoryDatabase() Configuration {
+// WithMemoryStore applies a memory store to the Repository
+func WithMemoryStore() Configuration {
 	return func(s *Repository) (err error) {
-		// Create the memory database, if we needed parameters, such as connection strings they could be inputted here
+		// Create the memory store, if we needed parameters, such as connection strings they could be inputted here
 		s.Author = memory.NewAuthorRepository()
 		s.Book = memory.NewBookRepository()
 		s.Member = memory.NewMemberRepository()
@@ -60,23 +58,23 @@ func WithMemoryDatabase() Configuration {
 	}
 }
 
-// WithPostgresDatabase applies a postgres database to the Repository
-func WithPostgresDatabase(dataSourceName string) Configuration {
+// WithPostgresStore applies a postgres store to the Repository
+func WithPostgresStore(dataSourceName string) Configuration {
 	return func(s *Repository) (err error) {
-		// Create the postgres database, if we needed parameters, such as connection strings they could be inputted here
-		s.postgres, err = database.New(dataSourceName)
+		// Create the postgres store, if we needed parameters, such as connection strings they could be inputted here
+		s.postgres, err = store.NewDatabase(dataSourceName)
 		if err != nil {
 			return
 		}
 
-		err = database.Migrate(dataSourceName)
+		err = s.postgres.Migrate()
 		if err != nil {
 			return
 		}
 
-		s.Author = postgres.NewAuthorRepository(s.postgres)
-		s.Book = postgres.NewBookRepository(s.postgres)
-		s.Member = postgres.NewMemberRepository(s.postgres)
+		s.Author = postgres.NewAuthorRepository(s.postgres.Client)
+		s.Book = postgres.NewBookRepository(s.postgres.Client)
+		s.Member = postgres.NewMemberRepository(s.postgres.Client)
 
 		return
 	}

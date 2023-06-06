@@ -37,7 +37,7 @@ func Run() {
 	}
 
 	repositories, err := repository.New(
-		repository.WithMemoryDatabase())
+		repository.WithMemoryStore())
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
 		return
@@ -49,7 +49,7 @@ func Run() {
 			AuthorRepository: repositories.Author,
 			BookRepository:   repositories.Book,
 		},
-		cache.WithMemoryDatabase())
+		cache.WithMemoryStore())
 	if err != nil {
 		logger.Error("ERR_INIT_CACHE", zap.Error(err))
 		return
@@ -79,7 +79,7 @@ func Run() {
 			LibraryService:      libraryService,
 			SubscriptionService: subscriptionService,
 		},
-		handler.WithHTTPTransport())
+		handler.WithHTTPHandler())
 	if err != nil {
 		logger.Error("ERR_INIT_HANDLER", zap.Error(err))
 		return

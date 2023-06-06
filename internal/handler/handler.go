@@ -60,10 +60,10 @@ func New(d Dependencies, configs ...Configuration) (h *Handler, err error) {
 //	@host		localhost
 //	@BasePath	/api/v1
 
-// WithHTTPTransport applies a http transport to the Handler
-func WithHTTPTransport() Configuration {
+// WithHTTPHandler applies a http handler to the Handler
+func WithHTTPHandler() Configuration {
 	return func(h *Handler) (err error) {
-		// Create the http transport, if we needed parameters, such as connection strings they could be inputted here
+		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
 		h.HTTP.Get("/swagger/*", httpSwagger.Handler(

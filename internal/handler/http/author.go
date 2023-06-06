@@ -34,9 +34,9 @@ func (h *AuthorHandler) Routes() chi.Router {
 	return r
 }
 
-// List of authors from the store
+// List of authors from the database
 //
-//	@Summary	List of authors from the store
+//	@Summary	List of authors from the database
 //	@Tags		authors
 //	@Accept		json
 //	@Produce	json
@@ -53,9 +53,9 @@ func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Add a new author to the store
+// Add a new author to the database
 //
-//	@Summary	Add a new author to the store
+//	@Summary	Add a new author to the database
 //	@Tags		authors
 //	@Accept		json
 //	@Produce	json
@@ -80,9 +80,9 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Read the author from the store
+// Read the author from the database
 //
-//	@Summary	Read the author from the store
+//	@Summary	Read the author from the database
 //	@Tags		authors
 //	@Accept		json
 //	@Produce	json
@@ -102,9 +102,9 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, status.OK(res))
 }
 
-// Update the author in the store
+// Update the author in the database
 //
-//	@Summary	Update the author in the store
+//	@Summary	Update the author in the database
 //	@Tags		authors
 //	@Accept		json
 //	@Produce	json
@@ -129,9 +129,9 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Delete the author from the store
+// Delete the author from the database
 //
-//	@Summary	Delete the author from the store
+//	@Summary	Delete the author from the database
 //	@Tags		authors
 //	@Accept		json
 //	@Produce	json
