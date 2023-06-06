@@ -119,7 +119,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: List of authors from the store
+      summary: List of authors from the database
       tags:
       - authors
     post:
@@ -147,7 +147,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Add a new author to the store
+      summary: Add a new author to the database
       tags:
       - authors
   /authors/{id}:
@@ -169,7 +169,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Delete the author from the store
+      summary: Delete the author from the database
       tags:
       - authors
     get:
@@ -192,7 +192,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Read the author from the store
+      summary: Read the author from the database
       tags:
       - authors
     put:
@@ -223,7 +223,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Update the author in the store
+      summary: Update the author in the database
       tags:
       - authors
   /books:
@@ -243,7 +243,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: List of books from the store
+      summary: List of books from the database
       tags:
       - books
     post:
@@ -271,7 +271,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Add a new book to the store
+      summary: Add a new book to the database
       tags:
       - books
   /books/{id}:
@@ -293,7 +293,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Delete the book from the store
+      summary: Delete the book from the database
       tags:
       - books
     get:
@@ -316,7 +316,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Read the book from the store
+      summary: Read the book from the database
       tags:
       - books
     put:
@@ -347,7 +347,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Update the book in the store
+      summary: Update the book in the database
       tags:
       - books
   /members:
@@ -367,7 +367,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: List of members from the store
+      summary: List of members from the database
       tags:
       - members
     post:
@@ -395,7 +395,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Add a new member to the store
+      summary: Add a new member to the database
       tags:
       - members
   /members/{id}:
@@ -417,7 +417,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Delete the member from the store
+      summary: Delete the member from the database
       tags:
       - members
     get:
@@ -440,7 +440,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Read the member from the store
+      summary: Read the member from the database
       tags:
       - members
     put:
@@ -471,7 +471,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: Update the member in the store
+      summary: Update the member in the database
       tags:
       - members
   /members/{id}/books:
@@ -497,7 +497,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
-      summary: List of books from the store
+      summary: List of books from the database
       tags:
       - members
 swagger: "2.0"
