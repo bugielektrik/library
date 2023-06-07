@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	schema      = "library"
 	version     = "1.0.0"
 	description = "library-service"
 )

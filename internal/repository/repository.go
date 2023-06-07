@@ -59,10 +59,10 @@ func WithMemoryStore() Configuration {
 }
 
 // WithPostgresStore applies a postgres store to the Repository
-func WithPostgresStore(dataSourceName string) Configuration {
+func WithPostgresStore(schema, dataSourceName string) Configuration {
 	return func(s *Repository) (err error) {
 		// Create the postgres store, if we needed parameters, such as connection strings they could be inputted here
-		s.postgres, err = store.NewDatabase(dataSourceName)
+		s.postgres, err = store.NewDatabase(schema, dataSourceName)
 		if err != nil {
 			return
 		}
