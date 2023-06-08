@@ -34,6 +34,9 @@ func NewDatabase(schema, dataSourceName string) (database *Database, err error) 
 		dataSourceName: dataSourceName,
 	}
 	database.Client, err = database.connection()
+	if err != nil {
+		return
+	}
 
 	err = database.createSchema()
 	if err != nil {

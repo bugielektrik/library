@@ -38,7 +38,7 @@ func Run() {
 	}
 
 	repositories, err := repository.New(
-		repository.WithPostgresStore(schema, cfg.POSTGRES.DSN))
+		repository.WithMemoryStore())
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
 		return
