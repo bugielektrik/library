@@ -2,12 +2,12 @@ package memory
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"library/internal/domain/book"
+	"library/pkg/store"
 )
 
 type BookRepository struct {
@@ -21,19 +21,19 @@ func NewBookRepository() *BookRepository {
 	}
 }
 
-func (r *BookRepository) Select(ctx context.Context) ([]book.Entity, error) {
+func (r *BookRepository) Select(ctx context.Context) (dest []book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	rows := make([]book.Entity, 0, len(r.db))
+	dest = make([]book.Entity, 0, len(r.db))
 	for _, data := range r.db {
-		rows = append(rows, data)
+		dest = append(dest, data)
 	}
 
-	return rows, nil
+	return
 }
 
-func (r *BookRepository) Create(ctx context.Context, data book.Entity) (string, error) {
+func (r *BookRepository) Create(ctx context.Context, data book.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,41 +44,41 @@ func (r *BookRepository) Create(ctx context.Context, data book.Entity) (string, 
 	return id, nil
 }
 
-func (r *BookRepository) Get(ctx context.Context, id string) (data book.Entity, err error) {
+func (r *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	data, ok := r.db[id]
+	dest, ok := r.db[id]
 	if !ok {
-		err = sql.ErrNoRows
+		err = store.ErrorNotFound
 		return
 	}
 
 	return
 }
 
-func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) error {
+func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) (err error) {
 	r.Lock()
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return sql.ErrNoRows
+		return store.ErrorNotFound
 	}
 	r.db[id] = data
 
-	return nil
+	return
 }
 
-func (r *BookRepository) Delete(ctx context.Context, id string) error {
+func (r *BookRepository) Delete(ctx context.Context, id string) (err error) {
 	r.Lock()
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return sql.ErrNoRows
+		return store.ErrorNotFound
 	}
 	delete(r.db, id)
 
-	return nil
+	return
 }
 
 func (r *BookRepository) generateID() string {

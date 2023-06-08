@@ -2,12 +2,14 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 
 	"library/internal/domain/book"
+	"library/pkg/store"
 )
 
 type BookRepository struct {
@@ -26,13 +28,13 @@ func (s *BookRepository) Select(ctx context.Context) (dest []book.Entity, err er
 		FROM books
 		ORDER BY id`
 
+	dest = make([]book.Entity, 0)
 	err = s.db.SelectContext(ctx, &dest, query)
 
 	return
 }
 
 func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id string, err error) {
-	fmt.Println(data.Authors.String())
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
 		VALUES ($1, $2, $3, $4)
@@ -53,7 +55,13 @@ func (s *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, 
 
 	args := []any{id}
 
-	err = s.db.GetContext(ctx, &dest, query, args...)
+	if err = s.db.GetContext(ctx, &dest, query, args...); err != nil && err != sql.ErrNoRows {
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		err = store.ErrorNotFound
+	}
 
 	return
 }

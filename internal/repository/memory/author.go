@@ -2,12 +2,12 @@ package memory
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"library/internal/domain/author"
+	"library/pkg/store"
 )
 
 type AuthorRepository struct {
@@ -21,16 +21,16 @@ func NewAuthorRepository() *AuthorRepository {
 	}
 }
 
-func (r *AuthorRepository) Select(ctx context.Context) ([]author.Entity, error) {
+func (r *AuthorRepository) Select(ctx context.Context) (dest []author.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	rows := make([]author.Entity, 0, len(r.db))
+	dest = make([]author.Entity, 0, len(r.db))
 	for _, data := range r.db {
-		rows = append(rows, data)
+		dest = append(dest, data)
 	}
 
-	return rows, nil
+	return
 }
 
 func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest string, err error) {
@@ -44,41 +44,41 @@ func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest
 	return id, nil
 }
 
-func (r *AuthorRepository) Get(ctx context.Context, id string) (data author.Entity, err error) {
+func (r *AuthorRepository) Get(ctx context.Context, id string) (dest author.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	data, ok := r.db[id]
+	dest, ok := r.db[id]
 	if !ok {
-		err = sql.ErrNoRows
+		err = store.ErrorNotFound
 		return
 	}
 
 	return
 }
 
-func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
+func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) (err error) {
 	r.Lock()
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return sql.ErrNoRows
+		return store.ErrorNotFound
 	}
 	r.db[id] = data
 
-	return nil
+	return
 }
 
-func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
+func (r *AuthorRepository) Delete(ctx context.Context, id string) (err error) {
 	r.Lock()
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return sql.ErrNoRows
+		return store.ErrorNotFound
 	}
 	delete(r.db, id)
 
-	return nil
+	return
 }
 
 func (r *AuthorRepository) generateID() string {
