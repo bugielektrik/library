@@ -35,6 +35,7 @@ func ParseFromEntity(data Entity) (res Response) {
 }
 
 func ParseFromEntities(data []Entity) (res []Response) {
+	res = make([]Response, 0)
 	for _, object := range data {
 		res = append(res, ParseFromEntity(object))
 	}

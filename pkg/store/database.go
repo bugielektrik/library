@@ -4,10 +4,11 @@ import (
 	_ "database/sql"
 	"errors"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
 	"net/url"
 	"strings"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	// _ "github.com/golang-migrate/migrate/v4/database/mongodb"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
@@ -34,6 +35,11 @@ func NewDatabase(schema, dataSourceName string) (database *Database, err error) 
 	}
 	database.Client, err = database.connection()
 
+	err = database.createSchema()
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -47,7 +53,7 @@ func (s *Database) Migrate() (err error) {
 		return
 	}
 
-	return
+	return nil
 }
 
 func (s *Database) connection() (client *sqlx.DB, err error) {
@@ -61,11 +67,6 @@ func (s *Database) connection() (client *sqlx.DB, err error) {
 		return
 	}
 	client.SetMaxOpenConns(20)
-
-	err = s.createSchema()
-	if err != nil {
-		return
-	}
 
 	return
 }
