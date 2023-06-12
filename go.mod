@@ -1,4 +1,4 @@
-module library
+module library-service
 
 go 1.18
 

@@ -3,8 +3,8 @@ package subscription
 import (
 	"context"
 
-	"library/internal/domain/book"
-	"library/internal/domain/member"
+	"library-service/internal/domain/book"
+	"library-service/internal/domain/member"
 )
 
 func (s *Service) ListMembers(ctx context.Context) (res []member.Response, err error) {

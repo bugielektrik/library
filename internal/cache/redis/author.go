@@ -7,7 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"library/internal/domain/author"
+	"library-service/internal/domain/author"
 )
 
 type AuthorCache struct {

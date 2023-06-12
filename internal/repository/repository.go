@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"library/internal/domain/author"
-	"library/internal/domain/book"
-	"library/internal/domain/member"
-	"library/internal/repository/memory"
-	"library/internal/repository/postgres"
-	"library/pkg/store"
+	"library-service/internal/domain/author"
+	"library-service/internal/domain/book"
+	"library-service/internal/domain/member"
+	"library-service/internal/repository/memory"
+	"library-service/internal/repository/postgres"
+	"library-service/pkg/store"
 )
 
 // Configuration is an alias for a function that will take in a pointer to a Repository and modify it

@@ -8,8 +8,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"library/internal/domain/member"
-	"library/pkg/store"
+	"library-service/internal/domain/member"
+	"library-service/pkg/store"
 )
 
 type MemberRepository struct {

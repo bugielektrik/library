@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/swaggo/http-swagger/v2"
 
-	_ "library/docs"
-	"library/internal/handler/http"
-	"library/internal/service/library"
-	"library/internal/service/subscription"
-	"library/pkg/server/router"
+	_ "library-service/docs"
+	"library-service/internal/handler/http"
+	"library-service/internal/service/library"
+	"library-service/internal/service/subscription"
+	"library-service/pkg/server/router"
 )
 
 type Dependencies struct {

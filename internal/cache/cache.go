@@ -1,11 +1,11 @@
 package cache
 
 import (
-	"library/internal/cache/memory"
-	"library/internal/cache/redis"
-	"library/internal/domain/author"
-	"library/internal/domain/book"
-	"library/pkg/store"
+	"library-service/internal/cache/memory"
+	"library-service/internal/cache/redis"
+	"library-service/internal/domain/author"
+	"library-service/internal/domain/book"
+	"library-service/pkg/store"
 )
 
 type Dependencies struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"library/internal/domain/author"
+	"library-service/internal/domain/author"
 )
 
 type AuthorCache struct {

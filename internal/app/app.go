@@ -11,14 +11,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"library/internal/cache"
-	"library/internal/config"
-	"library/internal/handler"
-	"library/internal/repository"
-	"library/internal/service/library"
-	"library/internal/service/subscription"
-	"library/pkg/log"
-	"library/pkg/server"
+	"library-service/internal/cache"
+	"library-service/internal/config"
+	"library-service/internal/handler"
+	"library-service/internal/repository"
+	"library-service/internal/service/library"
+	"library-service/internal/service/subscription"
+	"library-service/pkg/log"
+	"library-service/pkg/server"
 )
 
 const (

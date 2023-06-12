@@ -1,7 +1,7 @@
 package main
 
 import (
-	"library/internal/app"
+	"library-service/internal/app"
 )
 
 func main() {

@@ -1,15 +1,15 @@
 package http
 
 import (
-	"library/pkg/store"
+	"library-service/pkg/store"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
-	"library/internal/domain/member"
-	"library/internal/service/subscription"
-	"library/pkg/server/status"
+	"library-service/internal/domain/member"
+	"library-service/internal/service/subscription"
+	"library-service/pkg/server/status"
 )
 
 type MemberHandler struct {

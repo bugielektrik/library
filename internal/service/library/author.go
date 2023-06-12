@@ -3,7 +3,7 @@ package library
 import (
 	"context"
 
-	"library/internal/domain/author"
+	"library-service/internal/domain/author"
 )
 
 func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err error) {

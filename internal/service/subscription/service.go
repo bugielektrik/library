@@ -1,8 +1,8 @@
 package subscription
 
 import (
-	"library/internal/domain/member"
-	"library/internal/service/library"
+	"library-service/internal/domain/member"
+	"library-service/internal/service/library"
 )
 
 // Configuration is an alias for a function that will take in a pointer to a Service and modify it

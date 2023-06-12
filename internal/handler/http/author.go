@@ -6,10 +6,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
-	"library/internal/domain/author"
-	"library/internal/service/library"
-	"library/pkg/server/status"
-	"library/pkg/store"
+	"library-service/internal/domain/author"
+	"library-service/internal/service/library"
+	"library-service/pkg/server/status"
+	"library-service/pkg/store"
 )
 
 type AuthorHandler struct {

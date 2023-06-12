@@ -3,8 +3,8 @@ package library
 import (
 	"context"
 
-	"library/internal/domain/author"
-	"library/internal/domain/book"
+	"library-service/internal/domain/author"
+	"library-service/internal/domain/book"
 )
 
 func (s *Service) ListBooks(ctx context.Context) (res []book.Response, err error) {

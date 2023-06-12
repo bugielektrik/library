@@ -1,8 +1,8 @@
 package library
 
 import (
-	"library/internal/domain/author"
-	"library/internal/domain/book"
+	"library-service/internal/domain/author"
+	"library-service/internal/domain/book"
 )
 
 // Configuration is an alias for a function that will take in a pointer to a Service and modify it

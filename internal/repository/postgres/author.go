@@ -8,8 +8,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"library/internal/domain/author"
-	"library/pkg/store"
+	"library-service/internal/domain/author"
+	"library-service/pkg/store"
 )
 
 type AuthorRepository struct {

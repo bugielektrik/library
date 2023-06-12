@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"library/internal/domain/author"
-	"library/pkg/store"
+	"library-service/internal/domain/author"
+	"library-service/pkg/store"
 )
 
 type AuthorRepository struct {

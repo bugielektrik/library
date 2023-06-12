@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"library/internal/domain/book"
-	"library/pkg/store"
+	"library-service/internal/domain/book"
+	"library-service/pkg/store"
 )
 
 type BookRepository struct {
