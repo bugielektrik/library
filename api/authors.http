@@ -6,9 +6,9 @@ POST http://localhost/api/v1/authors
 Content-Type: application/json
 
 {
-  "fullName": "fullName",
-  "pseudonym": "pseudonym",
-  "specialty": "specialty"
+  "fullName": "Zhanat Rakhmet",
+  "pseudonym": "Bugielektrik",
+  "specialty": "Gopher"
 }
 
 ### Read the author from the store
