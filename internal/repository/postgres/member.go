@@ -2,12 +2,14 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 
 	"library/internal/domain/member"
+	"library/pkg/store"
 )
 
 type MemberRepository struct {
@@ -26,6 +28,7 @@ func (s *MemberRepository) Select(ctx context.Context) (dest []member.Entity, er
 		FROM members
 		ORDER BY id`
 
+	dest = make([]member.Entity, 0)
 	err = s.db.SelectContext(ctx, &dest, query)
 
 	return
@@ -52,7 +55,13 @@ func (s *MemberRepository) Get(ctx context.Context, id string) (dest member.Enti
 
 	args := []any{id}
 
-	err = s.db.GetContext(ctx, &dest, query, args...)
+	if err = s.db.GetContext(ctx, &dest, query, args...); err != nil && err != sql.ErrNoRows {
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		err = store.ErrorNotFound
+	}
 
 	return
 }

@@ -33,6 +33,14 @@ func BadRequest(err error, data any) Response {
 	}
 }
 
+func NotFound(err error) Response {
+	return Response{
+		Status:  http.StatusNotFound,
+		Success: false,
+		Message: err.Error(),
+	}
+}
+
 func InternalServerError(err error) Response {
 	return Response{
 		Status:  http.StatusInternalServerError,

@@ -9,6 +9,7 @@ import (
 	"library/internal/domain/author"
 	"library/internal/service/library"
 	"library/pkg/server/status"
+	"library/pkg/store"
 )
 
 type AuthorHandler struct {
@@ -88,14 +89,20 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Produce	json
 //	@Param		id	path		int	true	"path param"
 //	@Success	200	{object}	author.Response
+//	@Failure	404	{object}	status.Response
 //	@Failure	500	{object}	status.Response
 //	@Router		/authors/{id} [get]
 func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.libraryService.GetAuthor(r.Context(), id)
-	if err != nil {
+	if err != nil && err != store.ErrorNotFound {
 		render.JSON(w, r, status.InternalServerError(err))
+		return
+	}
+
+	if err == store.ErrorNotFound {
+		render.JSON(w, r, status.NotFound(err))
 		return
 	}
 
@@ -112,6 +119,7 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 //	@Param		request	body	author.Request	true	"body param"
 //	@Success	200
 //	@Failure	400	{object}	status.Response
+//	@Failure	404	{object}	status.Response
 //	@Failure	500	{object}	status.Response
 //	@Router		/authors/{id} [put]
 func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +131,14 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.libraryService.UpdateAuthor(r.Context(), id, req); err != nil {
+	err := h.libraryService.UpdateAuthor(r.Context(), id, req)
+	if err != nil && err != store.ErrorNotFound {
 		render.JSON(w, r, status.InternalServerError(err))
+		return
+	}
+
+	if err == store.ErrorNotFound {
+		render.JSON(w, r, status.NotFound(err))
 		return
 	}
 }
@@ -137,13 +151,20 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 //	@Produce	json
 //	@Param		id	path	int	true	"path param"
 //	@Success	200
+//	@Failure	404	{object}	status.Response
 //	@Failure	500	{object}	status.Response
 //	@Router		/authors/{id} [delete]
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.libraryService.DeleteAuthor(r.Context(), id); err != nil {
+	err := h.libraryService.DeleteAuthor(r.Context(), id)
+	if err != nil && err != store.ErrorNotFound {
 		render.JSON(w, r, status.InternalServerError(err))
+		return
+	}
+
+	if err == store.ErrorNotFound {
+		render.JSON(w, r, status.NotFound(err))
 		return
 	}
 }

@@ -4,10 +4,11 @@ import (
 	_ "database/sql"
 	"errors"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
 	"net/url"
 	"strings"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	// _ "github.com/golang-migrate/migrate/v4/database/mongodb"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
@@ -32,7 +33,12 @@ func NewDatabase(schema, dataSourceName string) (database *Database, err error) 
 		schema:         schema,
 		dataSourceName: dataSourceName,
 	}
+
 	database.Client, err = database.connection()
+	if err != nil {
+		return
+	}
+	err = database.createSchema()
 
 	return
 }
@@ -47,7 +53,7 @@ func (s *Database) Migrate() (err error) {
 		return
 	}
 
-	return
+	return nil
 }
 
 func (s *Database) connection() (client *sqlx.DB, err error) {
@@ -61,11 +67,6 @@ func (s *Database) connection() (client *sqlx.DB, err error) {
 		return
 	}
 	client.SetMaxOpenConns(20)
-
-	err = s.createSchema()
-	if err != nil {
-		return
-	}
 
 	return
 }
@@ -84,10 +85,14 @@ func (s *Database) parseDSN() (err error) {
 	sourceQuery := source.Query()
 
 	if s.schema != "" {
-		sourceQuery.Set("search_path", s.schema)
-		source.RawQuery = sourceQuery.Encode()
-		s.dataSourceName = source.String()
+		switch s.driverName {
+		case "postgres":
+			sourceQuery.Set("search_path", s.schema)
+		}
 	}
+
+	source.RawQuery = sourceQuery.Encode()
+	s.dataSourceName = source.String()
 
 	return
 }
@@ -97,20 +102,13 @@ func (s *Database) createSchema() (err error) {
 		return
 	}
 
+	query := ""
 	switch s.driverName {
 	case "postgres":
-		query := make([]string, 0)
-		query = append(query, "BEGIN")
-		query = append(query, "SET TIMEZONE='Asia/Almaty'")
-		query = append(query, "SET TIME ZONE 'Asia/Almaty'")
-		query = append(query, "SET TIMEZONE TO 'Asia/Almaty'")
-		query = append(query, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s.schema))
-		query = append(query, "COMMIT")
-
-		_, err = s.Client.Exec(strings.Join(query, ";"))
-		if err != nil {
-			return
-		}
+		query = fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s.schema)
 	}
+
+	_, err = s.Client.Exec(query)
+
 	return
 }

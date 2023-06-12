@@ -2,12 +2,12 @@ package memory
 
 import (
 	"context"
-	"database/sql"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"library/internal/domain/member"
+	"library/pkg/store"
 )
 
 type MemberRepository struct {
@@ -21,19 +21,19 @@ func NewMemberRepository() *MemberRepository {
 	}
 }
 
-func (r *MemberRepository) Select(ctx context.Context) ([]member.Entity, error) {
+func (r *MemberRepository) Select(ctx context.Context) (dest []member.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	rows := make([]member.Entity, 0, len(r.db))
+	dest = make([]member.Entity, 0, len(r.db))
 	for _, data := range r.db {
-		rows = append(rows, data)
+		dest = append(dest, data)
 	}
 
-	return rows, nil
+	return
 }
 
-func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (string, error) {
+func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,41 +44,41 @@ func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (stri
 	return id, nil
 }
 
-func (r *MemberRepository) Get(ctx context.Context, id string) (data member.Entity, err error) {
+func (r *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	data, ok := r.db[id]
+	dest, ok := r.db[id]
 	if !ok {
-		err = sql.ErrNoRows
+		err = store.ErrorNotFound
 		return
 	}
 
 	return
 }
 
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
 	r.Lock()
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return sql.ErrNoRows
+		return store.ErrorNotFound
 	}
 	r.db[id] = data
 
-	return nil
+	return
 }
 
-func (r *MemberRepository) Delete(ctx context.Context, id string) error {
+func (r *MemberRepository) Delete(ctx context.Context, id string) (err error) {
 	r.Lock()
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return sql.ErrNoRows
+		return store.ErrorNotFound
 	}
 	delete(r.db, id)
 
-	return nil
+	return
 }
 
 func (r *MemberRepository) generateID() string {

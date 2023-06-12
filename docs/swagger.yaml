@@ -165,6 +165,10 @@ paths:
       responses:
         "200":
           description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -188,6 +192,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/author.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -217,6 +225,10 @@ paths:
           description: OK
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/status.Response'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/status.Response'
         "500":
@@ -289,6 +301,10 @@ paths:
       responses:
         "200":
           description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -312,6 +328,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/book.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -343,11 +363,45 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/status.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/status.Response'
       summary: Update the book in the database
+      tags:
+      - books
+  /books/{id}/authors:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/author.Response'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/status.Response'
+      summary: List of authors from the database
       tags:
       - books
   /members:
@@ -413,6 +467,10 @@ paths:
       responses:
         "200":
           description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -436,6 +494,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/member.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -467,6 +529,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/status.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -493,6 +559,10 @@ paths:
             items:
               $ref: '#/definitions/book.Response'
             type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/status.Response'
         "500":
           description: Internal Server Error
           schema:
