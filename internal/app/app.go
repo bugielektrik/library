@@ -31,7 +31,7 @@ const (
 func Run() {
 	logger := log.New(version, description)
 
-	cfg, err := config.New()
+	configs, err := config.New()
 	if err != nil {
 		logger.Error("ERR_INIT_CONFIG", zap.Error(err))
 		return
@@ -77,6 +77,7 @@ func Run() {
 
 	handlers, err := handler.New(
 		handler.Dependencies{
+			Configs:             configs,
 			LibraryService:      libraryService,
 			SubscriptionService: subscriptionService,
 		},
@@ -87,7 +88,7 @@ func Run() {
 	}
 
 	servers, err := server.New(
-		server.WithHTTPServer(handlers.HTTP, cfg.HTTP.Port))
+		server.WithHTTPServer(handlers.HTTP, configs.HTTP.Port))
 	if err != nil {
 		logger.Error("ERR_INIT_SERVER", zap.Error(err))
 		return

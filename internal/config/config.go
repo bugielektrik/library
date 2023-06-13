@@ -11,7 +11,8 @@ import (
 
 const (
 	defaultHTTPPort               = "80"
-	defaultHTTPHost               = "http://localhost"
+	defaultHTTPHost               = "localhost"
+	defaultHTTPSchema             = "http"
 	defaultHTTPReadTimeout        = 15 * time.Second
 	defaultHTTPWriteTimeout       = 15 * time.Second
 	defaultHTTPIdleTimeout        = 60 * time.Second
@@ -19,7 +20,7 @@ const (
 )
 
 type (
-	Config struct {
+	Configs struct {
 		HTTP     HTTPConfig
 		POSTGRES DatabaseConfig
 	}
@@ -27,6 +28,7 @@ type (
 	HTTPConfig struct {
 		Port               string
 		Host               string
+		Schema             string
 		ReadTimeout        time.Duration
 		WriteTimeout       time.Duration
 		IdleTimeout        time.Duration
@@ -44,9 +46,9 @@ type (
 	}
 )
 
-// New populates Config struct with values from config file
+// New populates Configs struct with values from config file
 // located at filepath and environment variables.
-func New() (cfg Config, err error) {
+func New() (cfg Configs, err error) {
 	root, err := os.Getwd()
 	if err != nil {
 		return
@@ -56,6 +58,7 @@ func New() (cfg Config, err error) {
 	cfg.HTTP = HTTPConfig{
 		Port:               defaultHTTPPort,
 		Host:               defaultHTTPHost,
+		Schema:             defaultHTTPSchema,
 		ReadTimeout:        defaultHTTPReadTimeout,
 		WriteTimeout:       defaultHTTPWriteTimeout,
 		IdleTimeout:        defaultHTTPIdleTimeout,

@@ -8,7 +8,7 @@ import (
 
 	"library-service/internal/domain/book"
 	"library-service/internal/service/library"
-	"library-service/pkg/server/status"
+	"library-service/pkg/server/response"
 	"library-service/pkg/store"
 )
 
@@ -41,17 +41,17 @@ func (h *BookHandler) Routes() chi.Router {
 //	@Tags		books
 //	@Accept		json
 //	@Produce	json
-//	@Success	200		{array}		book.Response
-//	@Failure	500		{object}	status.Response
+//	@Success	200		{array}		response.Object
+//	@Failure	500		{object}	response.Object
 //	@Router		/books 	[get]
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.ListBooks(r.Context())
 	if err != nil {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }
 
 // Add a new book to the database
@@ -61,24 +61,24 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		request	body		book.Request	true	"body param"
-//	@Success	200		{object}	book.Response
-//	@Failure	400		{object}	status.Response
-//	@Failure	500		{object}	status.Response
+//	@Success	200		{object}	response.Object
+//	@Failure	400		{object}	response.Object
+//	@Failure	500		{object}	response.Object
 //	@Router		/books [post]
 func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := book.Request{}
 	if err := render.Bind(r, &req); err != nil {
-		render.JSON(w, r, status.BadRequest(err, req))
+		response.BadRequest(w, r, err, req)
 		return
 	}
 
 	res, err := h.libraryService.AddBook(r.Context(), req)
 	if err != nil {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }
 
 // Read the book from the database
@@ -88,25 +88,25 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		id	path		int	true	"path param"
-//	@Success	200	{object}	book.Response
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Success	200	{object}	response.Object
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/books/{id} [get]
 func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.libraryService.GetBook(r.Context(), id)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }
 
 // Update the book in the database
@@ -118,27 +118,27 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 //	@Param		id		path	int				true	"path param"
 //	@Param		request	body	book.Request	true	"body param"
 //	@Success	200
-//	@Failure	400	{object}	status.Response
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Failure	400	{object}	response.Object
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/books/{id} [put]
 func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	req := book.Request{}
 	if err := render.Bind(r, &req); err != nil {
-		render.JSON(w, r, status.BadRequest(err, req))
+		response.BadRequest(w, r, err, req)
 		return
 	}
 
 	err := h.libraryService.UpdateBook(r.Context(), id, req)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 }
@@ -151,20 +151,20 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 //	@Produce	json
 //	@Param		id	path	int	true	"path param"
 //	@Success	200
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/books/{id} [delete]
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	err := h.libraryService.DeleteBook(r.Context(), id)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 }
@@ -176,23 +176,23 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		id	path		int	true	"path param"
-//	@Success	200	{array}		author.Response
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Success	200	{array}		author.Object
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/books/{id}/authors [get]
 func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.libraryService.ListBookAuthors(r.Context(), id)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }

@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"net/url"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/swaggo/http-swagger/v2"
 
+	"library-service/docs"
 	_ "library-service/docs"
+	"library-service/internal/config"
 	"library-service/internal/handler/http"
 	"library-service/internal/service/library"
 	"library-service/internal/service/subscription"
@@ -12,6 +16,7 @@ import (
 )
 
 type Dependencies struct {
+	Configs             config.Configs
 	LibraryService      *library.Service
 	SubscriptionService *subscription.Service
 }
@@ -47,7 +52,7 @@ func New(d Dependencies, configs ...Configuration) (h *Handler, err error) {
 
 //	@title			Swagger Example API
 //	@version		1.0
-//	@description	This is a sample server celler server.
+//	@description	This is a sample server.
 //	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	API Support
@@ -57,17 +62,24 @@ func New(d Dependencies, configs ...Configuration) (h *Handler, err error) {
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@host		localhost
-//	@BasePath	/api/v1
-
 // WithHTTPHandler applies a http handler to the Handler
 func WithHTTPHandler() Configuration {
 	return func(h *Handler) (err error) {
 		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
+		docs.SwaggerInfo.BasePath = "/api/v1"
+		docs.SwaggerInfo.Host = h.dependencies.Configs.HTTP.Host
+		docs.SwaggerInfo.Schemes = []string{h.dependencies.Configs.HTTP.Schema}
+
+		swaggerURL := url.URL{
+			Scheme: h.dependencies.Configs.HTTP.Schema,
+			Host:   h.dependencies.Configs.HTTP.Host,
+			Path:   "swagger/doc.json",
+		}
+
 		h.HTTP.Get("/swagger/*", httpSwagger.Handler(
-			httpSwagger.URL("http://localhost/swagger/doc.json"),
+			httpSwagger.URL(swaggerURL.String()),
 		))
 
 		authorHandler := http.NewAuthorHandler(h.dependencies.LibraryService)

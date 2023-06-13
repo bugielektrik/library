@@ -8,7 +8,7 @@ import (
 
 	"library-service/internal/domain/author"
 	"library-service/internal/service/library"
-	"library-service/pkg/server/status"
+	"library-service/pkg/server/response"
 	"library-service/pkg/store"
 )
 
@@ -41,17 +41,17 @@ func (h *AuthorHandler) Routes() chi.Router {
 //	@Tags		authors
 //	@Accept		json
 //	@Produce	json
-//	@Success	200			{array}		author.Response
-//	@Failure	500			{object}	status.Response
+//	@Success	200			{array}		response.Object
+//	@Failure	500			{object}	response.Object
 //	@Router		/authors 	[get]
 func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.ListAuthors(r.Context())
 	if err != nil {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }
 
 // Add a new author to the database
@@ -61,24 +61,24 @@ func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		request	body		author.Request	true	"body param"
-//	@Success	200		{object}	author.Response
-//	@Failure	400		{object}	status.Response
-//	@Failure	500		{object}	status.Response
+//	@Success	200		{object}	response.Object
+//	@Failure	400		{object}	response.Object
+//	@Failure	500		{object}	response.Object
 //	@Router		/authors [post]
 func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := author.Request{}
 	if err := render.Bind(r, &req); err != nil {
-		render.JSON(w, r, status.BadRequest(err, req))
+		response.BadRequest(w, r, err, req)
 		return
 	}
 
 	res, err := h.libraryService.AddAuthor(r.Context(), req)
 	if err != nil {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }
 
 // Read the author from the database
@@ -88,25 +88,25 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		id	path		int	true	"path param"
-//	@Success	200	{object}	author.Response
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Success	200	{object}	response.Object
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/authors/{id} [get]
 func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.libraryService.GetAuthor(r.Context(), id)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, status.OK(res))
+	response.OK(w, r, res)
 }
 
 // Update the author in the database
@@ -118,27 +118,27 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 //	@Param		id		path	int				true	"path param"
 //	@Param		request	body	author.Request	true	"body param"
 //	@Success	200
-//	@Failure	400	{object}	status.Response
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Failure	400	{object}	response.Object
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/authors/{id} [put]
 func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	req := author.Request{}
 	if err := render.Bind(r, &req); err != nil {
-		render.JSON(w, r, status.BadRequest(err, req))
+		response.BadRequest(w, r, err, req)
 		return
 	}
 
 	err := h.libraryService.UpdateAuthor(r.Context(), id, req)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 }
@@ -151,20 +151,20 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 //	@Produce	json
 //	@Param		id	path	int	true	"path param"
 //	@Success	200
-//	@Failure	404	{object}	status.Response
-//	@Failure	500	{object}	status.Response
+//	@Failure	404	{object}	response.Object
+//	@Failure	500	{object}	response.Object
 //	@Router		/authors/{id} [delete]
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	err := h.libraryService.DeleteAuthor(r.Context(), id)
 	if err != nil && err != store.ErrorNotFound {
-		render.JSON(w, r, status.InternalServerError(err))
+		response.InternalServerError(w, r, err)
 		return
 	}
 
 	if err == store.ErrorNotFound {
-		render.JSON(w, r, status.NotFound(err))
+		response.NotFound(w, r, err)
 		return
 	}
 }

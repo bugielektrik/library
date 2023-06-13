@@ -101,13 +101,12 @@ func (s *Database) createSchema() (err error) {
 	if s.schema == "" {
 		return
 	}
-
 	query := ""
+
 	switch s.driverName {
 	case "postgres":
 		query = fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s.schema)
 	}
-
 	_, err = s.Client.Exec(query)
 
 	return
