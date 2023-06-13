@@ -11,7 +11,7 @@ import (
 
 const (
 	defaultHTTPPort               = "80"
-	defaultHTTPHost               = "localhost"
+	defaultHTTPHost               = "http://localhost"
 	defaultHTTPReadTimeout        = 15 * time.Second
 	defaultHTTPWriteTimeout       = 15 * time.Second
 	defaultHTTPIdleTimeout        = 60 * time.Second
