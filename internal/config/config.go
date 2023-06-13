@@ -11,6 +11,7 @@ import (
 
 const (
 	defaultHTTPPort               = "80"
+	defaultHTTPHost               = "localhost"
 	defaultHTTPReadTimeout        = 15 * time.Second
 	defaultHTTPWriteTimeout       = 15 * time.Second
 	defaultHTTPIdleTimeout        = 60 * time.Second
@@ -50,19 +51,15 @@ func New() (cfg Config, err error) {
 	if err != nil {
 		return
 	}
+	godotenv.Load(filepath.Join(root, ".env"))
 
-	httpConfig := HTTPConfig{
+	cfg.HTTP = HTTPConfig{
 		Port:               defaultHTTPPort,
+		Host:               defaultHTTPHost,
 		ReadTimeout:        defaultHTTPReadTimeout,
 		WriteTimeout:       defaultHTTPWriteTimeout,
 		IdleTimeout:        defaultHTTPIdleTimeout,
 		MaxHeaderMegabytes: defaultHTTPMaxHeaderMegabytes,
-	}
-	cfg.HTTP = httpConfig
-
-	err = godotenv.Load(filepath.Join(root, ".env"))
-	if err != nil {
-		return
 	}
 
 	err = envconfig.Process("HTTP", &cfg.HTTP)
