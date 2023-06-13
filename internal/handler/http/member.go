@@ -177,7 +177,7 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		id	path		int	true	"path param"
-//	@Success	200	{array}		book.Object
+//	@Success	200	{array}		response.Object
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/members/{id}/books [get]

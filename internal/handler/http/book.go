@@ -176,7 +176,7 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 //	@Accept		json
 //	@Produce	json
 //	@Param		id	path		int	true	"path param"
-//	@Success	200	{array}		author.Object
+//	@Success	200	{array}		response.Object
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/books/{id}/authors [get]

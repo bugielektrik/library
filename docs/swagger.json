@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server celler server.",
+        "description": "This is a sample server.",
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
@@ -15,8 +15,6 @@
         },
         "version": "1.0"
     },
-    "host": "localhost",
-    "basePath": "/api/v1",
     "paths": {
         "/authors": {
             "get": {
@@ -36,14 +34,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/author.Response"
+                                "$ref": "#/definitions/response.Object"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -74,19 +72,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/author.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -117,19 +115,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/author.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -170,19 +168,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -214,13 +212,13 @@
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -244,14 +242,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/book.Response"
+                                "$ref": "#/definitions/response.Object"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -282,19 +280,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/book.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -325,19 +323,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/book.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -378,19 +376,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -422,13 +420,13 @@
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -461,20 +459,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/author.Response"
+                                "$ref": "#/definitions/response.Object"
                             }
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -498,14 +496,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/member.Response"
+                                "$ref": "#/definitions/response.Object"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -536,19 +534,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/member.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -579,19 +577,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/member.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -632,19 +630,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -676,13 +674,13 @@
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -715,20 +713,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/book.Response"
+                                "$ref": "#/definitions/response.Object"
                             }
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/status.Response"
+                            "$ref": "#/definitions/response.Object"
                         }
                     }
                 }
@@ -750,23 +748,6 @@
                 }
             }
         },
-        "author.Response": {
-            "type": "object",
-            "properties": {
-                "fullName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "pseudonym": {
-                    "type": "string"
-                },
-                "specialty": {
-                    "type": "string"
-                }
-            }
-        },
         "book.Request": {
             "type": "object",
             "required": [
@@ -775,29 +756,6 @@
                 "isbn",
                 "name"
             ],
-            "properties": {
-                "authors": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "genre": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "isbn": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "book.Response": {
-            "type": "object",
             "properties": {
                 "authors": {
                     "type": "array",
@@ -840,24 +798,7 @@
                 }
             }
         },
-        "member.Response": {
-            "type": "object",
-            "properties": {
-                "books": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "fullName": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                }
-            }
-        },
-        "status.Response": {
+        "response.Object": {
             "type": "object",
             "properties": {
                 "data": {},

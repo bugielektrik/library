@@ -1,19 +1,7 @@
-basePath: /api/v1
 definitions:
   author.Request:
     properties:
       fullName:
-        type: string
-      pseudonym:
-        type: string
-      specialty:
-        type: string
-    type: object
-  author.Response:
-    properties:
-      fullName:
-        type: string
-      id:
         type: string
       pseudonym:
         type: string
@@ -40,21 +28,6 @@ definitions:
     - isbn
     - name
     type: object
-  book.Response:
-    properties:
-      authors:
-        items:
-          type: string
-        type: array
-      genre:
-        type: string
-      id:
-        type: string
-      isbn:
-        type: string
-      name:
-        type: string
-    type: object
   member.Request:
     properties:
       books:
@@ -69,18 +42,7 @@ definitions:
     - books
     - fullName
     type: object
-  member.Response:
-    properties:
-      books:
-        items:
-          type: string
-        type: array
-      fullName:
-        type: string
-      id:
-        type: string
-    type: object
-  status.Response:
+  response.Object:
     properties:
       data: {}
       message:
@@ -88,13 +50,12 @@ definitions:
       success:
         type: boolean
     type: object
-host: localhost
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a sample server celler server.
+  description: This is a sample server.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -113,12 +74,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/author.Response'
+              $ref: '#/definitions/response.Object'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: List of authors from the database
       tags:
       - authors
@@ -138,15 +99,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/author.Response'
+            $ref: '#/definitions/response.Object'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Add a new author to the database
       tags:
       - authors
@@ -168,11 +129,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Delete the author from the database
       tags:
       - authors
@@ -191,15 +152,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/author.Response'
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Read the author from the database
       tags:
       - authors
@@ -226,15 +187,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Update the author in the database
       tags:
       - authors
@@ -249,12 +210,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/book.Response'
+              $ref: '#/definitions/response.Object'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: List of books from the database
       tags:
       - books
@@ -274,15 +235,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/book.Response'
+            $ref: '#/definitions/response.Object'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Add a new book to the database
       tags:
       - books
@@ -304,11 +265,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Delete the book from the database
       tags:
       - books
@@ -327,15 +288,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/book.Response'
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Read the book from the database
       tags:
       - books
@@ -362,15 +323,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Update the book in the database
       tags:
       - books
@@ -391,16 +352,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/author.Response'
+              $ref: '#/definitions/response.Object'
             type: array
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: List of authors from the database
       tags:
       - books
@@ -415,12 +376,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/member.Response'
+              $ref: '#/definitions/response.Object'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: List of members from the database
       tags:
       - members
@@ -440,15 +401,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/member.Response'
+            $ref: '#/definitions/response.Object'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Add a new member to the database
       tags:
       - members
@@ -470,11 +431,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Delete the member from the database
       tags:
       - members
@@ -493,15 +454,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/member.Response'
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Read the member from the database
       tags:
       - members
@@ -528,15 +489,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: Update the member in the database
       tags:
       - members
@@ -557,16 +518,16 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/book.Response'
+              $ref: '#/definitions/response.Object'
             type: array
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/status.Response'
+            $ref: '#/definitions/response.Object'
       summary: List of books from the database
       tags:
       - members
