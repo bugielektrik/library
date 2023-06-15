@@ -72,13 +72,13 @@ func WithHTTPHandler() Configuration {
 			httpSwagger.URL(swaggerURL.String()),
 		))
 
-		// Init auth handlers
+		// Init auth handler
 		authHandler := oauth.NewBearerServer(
 			h.dependencies.Configs.OAUTH.Secret,
 			h.dependencies.Configs.OAUTH.Expires,
 			h.dependencies.AuthService, nil)
 
-		h.HTTP.Post("/auth", authHandler.ClientCredentials)
+		h.HTTP.Post("/token", authHandler.UserCredentials)
 
 		// Init service handlers
 		authorHandler := http.NewAuthorHandler(h.dependencies.LibraryService)

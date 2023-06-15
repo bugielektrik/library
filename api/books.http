@@ -1,12 +1,12 @@
 ### List of books from the store
 GET http://localhost/api/v1/books
 Content-Type: application/json
-Authorization: Bearer {{authorization}}
+Authorization: Bearer {{access_token}}
 
 ### Add a new book to the store
 POST http://localhost/api/v1/books
 Content-Type: application/json
-Authorization: Bearer {{authorization}}
+Authorization: Bearer {{access_token}}
 
 {
     "name": "name",
@@ -21,12 +21,12 @@ Authorization: Bearer {{authorization}}
 ### Read the book from the store
 GET http://localhost/api/v1/books/1
 Content-Type: application/json
-Authorization: Bearer {{authorization}}
+Authorization: Bearer {{access_token}}
 
 ### Update the book in the store
 PUT http://localhost/api/v1/books/1
 Content-Type: application/json
-Authorization: Bearer {{authorization}}
+Authorization: Bearer {{access_token}}
 
 {
     "name": "name",
@@ -41,9 +41,9 @@ Authorization: Bearer {{authorization}}
 ### Delete the book from the store
 DELETE http://localhost/api/v1/books/1
 Content-Type: application/json
-Authorization: Bearer {{authorization}}
+Authorization: Bearer {{access_token}}
 
 ### List of authors from the store
 GET http://localhost/api/v1/books/1/authors
 Content-Type: application/json
-Authorization: Bearer {{authorization}}
+Authorization: Bearer {{access_token}}
