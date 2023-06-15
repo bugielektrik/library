@@ -7,8 +7,8 @@ import (
 
 type Request struct {
 	ID       string   `json:"id"`
-	FullName string   `json:"fullName" validate:"required"`
-	Books    []string `json:"books" validate:"required"`
+	FullName string   `json:"fullName"`
+	Books    []string `json:"books"`
 }
 
 func (s *Request) Bind(r *http.Request) error {

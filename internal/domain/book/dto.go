@@ -7,10 +7,10 @@ import (
 
 type Request struct {
 	ID      string   `json:"id"`
-	Name    string   `json:"name" validate:"required"`
-	Genre   string   `json:"genre" validate:"required"`
-	ISBN    string   `json:"isbn" validate:"required"`
-	Authors []string `json:"authors" validate:"required"`
+	Name    string   `json:"name"`
+	Genre   string   `json:"genre"`
+	ISBN    string   `json:"isbn"`
+	Authors []string `json:"authors"`
 }
 
 func (s *Request) Bind(r *http.Request) error {
