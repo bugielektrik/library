@@ -27,8 +27,6 @@ func New() *chi.Mux {
 
 	r.Use(middleware.Timeout(time.Second * 60))
 
-	r.Use(middleware.AllowContentType("application/json"))
-
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Use(cors.Handler(cors.Options{

@@ -1,22 +1,23 @@
 package handler
 
 import (
-	"net/url"
-
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/oauth"
 	"github.com/swaggo/http-swagger/v2"
-
 	"library-service/docs"
 	_ "library-service/docs"
 	"library-service/internal/config"
 	"library-service/internal/handler/http"
+	"library-service/internal/service/auth"
 	"library-service/internal/service/library"
 	"library-service/internal/service/subscription"
 	"library-service/pkg/server/router"
+	"net/url"
 )
 
 type Dependencies struct {
 	Configs             config.Configs
+	AuthService         *auth.Service
 	LibraryService      *library.Service
 	SubscriptionService *subscription.Service
 }
@@ -56,6 +57,7 @@ func WithHTTPHandler() Configuration {
 		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
+		// Init swagger handler
 		docs.SwaggerInfo.BasePath = "/api/v1"
 		docs.SwaggerInfo.Host = h.dependencies.Configs.HTTP.Host
 		docs.SwaggerInfo.Schemes = []string{h.dependencies.Configs.HTTP.Schema}
@@ -70,11 +72,23 @@ func WithHTTPHandler() Configuration {
 			httpSwagger.URL(swaggerURL.String()),
 		))
 
+		// Init auth handlers
+		authHandler := oauth.NewBearerServer(
+			h.dependencies.Configs.OAUTH.Secret,
+			h.dependencies.Configs.OAUTH.Expires,
+			h.dependencies.AuthService, nil)
+
+		h.HTTP.Post("/auth", authHandler.ClientCredentials)
+
+		// Init service handlers
 		authorHandler := http.NewAuthorHandler(h.dependencies.LibraryService)
 		bookHandler := http.NewBookHandler(h.dependencies.LibraryService)
 		memberHandler := http.NewMemberHandler(h.dependencies.SubscriptionService)
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
+			// use the Bearer Authentication middleware
+			r.Use(oauth.Authorize(h.dependencies.Configs.OAUTH.Secret, nil))
+
 			r.Mount("/authors", authorHandler.Routes())
 			r.Mount("/books", bookHandler.Routes())
 			r.Mount("/members", memberHandler.Routes())

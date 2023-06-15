@@ -15,6 +15,7 @@ import (
 	"library-service/internal/config"
 	"library-service/internal/handler"
 	"library-service/internal/repository"
+	"library-service/internal/service/auth"
 	"library-service/internal/service/library"
 	"library-service/internal/service/subscription"
 	"library-service/pkg/log"
@@ -57,6 +58,12 @@ func Run() {
 	}
 	defer caches.Close()
 
+	authService, err := auth.New()
+	if err != nil {
+		logger.Error("ERR_INIT_AUTH_SERVICE", zap.Error(err))
+		return
+	}
+
 	libraryService, err := library.New(
 		library.WithAuthorRepository(repositories.Author),
 		library.WithBookRepository(repositories.Book),
@@ -78,6 +85,7 @@ func Run() {
 	handlers, err := handler.New(
 		handler.Dependencies{
 			Configs:             configs,
+			AuthService:         authService,
 			LibraryService:      libraryService,
 			SubscriptionService: subscriptionService,
 		},

@@ -1,9 +1,12 @@
 ### List of authors from the store
 GET http://localhost/api/v1/authors
+Content-Type: application/json
+Authorization: Bearer {{authorization}}
 
 ### Add a new author to the store
 POST http://localhost/api/v1/authors
 Content-Type: application/json
+Authorization: Bearer {{authorization}}
 
 {
   "fullName": "Zhanat Rakhmet",
@@ -13,10 +16,13 @@ Content-Type: application/json
 
 ### Read the author from the store
 GET http://localhost/api/v1/authors/1
+Content-Type: application/json
+Authorization: Bearer {{authorization}}
 
 ### Update the author in the store
 PUT http://localhost/api/v1/authors/1
 Content-Type: application/json
+Authorization: Bearer {{authorization}}
 
 {
   "fullName": "Zhanat Rakhmet",
@@ -26,3 +32,5 @@ Content-Type: application/json
 
 ### Delete the author from the store
 DELETE http://localhost/api/v1/authors/1
+Content-Type: application/json
+Authorization: Bearer {{authorization}}

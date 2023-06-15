@@ -17,11 +17,15 @@ const (
 	defaultHTTPWriteTimeout       = 15 * time.Second
 	defaultHTTPIdleTimeout        = 60 * time.Second
 	defaultHTTPMaxHeaderMegabytes = 1
+
+	defaultOAUTHSecret  = "IP03O5Ekg91g5jw=="
+	defaultOAUTHExpires = 1200 * time.Second
 )
 
 type (
 	Configs struct {
 		HTTP     HTTPConfig
+		OAUTH    OAuthConfig
 		POSTGRES DatabaseConfig
 	}
 
@@ -39,6 +43,12 @@ type (
 		Endpoint string
 		Username string
 		Password string
+	}
+
+	OAuthConfig struct {
+		Secret   string
+		Expires  time.Duration
+		Duration string
 	}
 
 	DatabaseConfig struct {
@@ -69,6 +79,22 @@ func New() (cfg Configs, err error) {
 	if err != nil {
 		return
 	}
+
+	cfg.OAUTH = OAuthConfig{
+		Secret:  defaultOAUTHSecret,
+		Expires: defaultOAUTHExpires,
+	}
+
+	err = envconfig.Process("OAUTH", &cfg.OAUTH)
+	if err != nil {
+		return
+	}
+
+	duration, err := time.ParseDuration(cfg.OAUTH.Duration)
+	if err == nil {
+		return
+	}
+	cfg.OAUTH.Expires = duration
 
 	err = envconfig.Process("POSTGRES", &cfg.POSTGRES)
 	if err != nil {
