@@ -6,4 +6,5 @@ grant_type=client_credentials&client_id=abcdef&client_secret=12345
 
 > {%
     client.global.set("access_token", response.body.access_token);
+    client.global.set("refresh_token", response.body.refresh_token);
 %}

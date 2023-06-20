@@ -1,18 +1,19 @@
 package handler
 
 import (
+	"net/url"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/oauth"
 	"github.com/swaggo/http-swagger/v2"
+
 	"library-service/docs"
-	_ "library-service/docs"
 	"library-service/internal/config"
 	"library-service/internal/handler/http"
 	"library-service/internal/service/auth"
 	"library-service/internal/service/library"
 	"library-service/internal/service/subscription"
 	"library-service/pkg/server/router"
-	"net/url"
 )
 
 type Dependencies struct {
