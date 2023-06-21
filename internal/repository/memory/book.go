@@ -2,12 +2,12 @@ package memory
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"library-service/internal/domain/book"
-	"library-service/pkg/store"
 )
 
 type BookRepository struct {
@@ -44,13 +44,13 @@ func (r *BookRepository) Create(ctx context.Context, data book.Entity) (dest str
 	return id, nil
 }
 
-func (r *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
+func (r *BookRepository) GetByID(ctx context.Context, id string) (dest book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
 	dest, ok := r.db[id]
 	if !ok {
-		err = store.ErrorNotFound
+		err = sql.ErrNoRows
 		return
 	}
 
@@ -62,7 +62,7 @@ func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return store.ErrorNotFound
+		return sql.ErrNoRows
 	}
 	r.db[id] = data
 
@@ -74,7 +74,7 @@ func (r *BookRepository) Delete(ctx context.Context, id string) (err error) {
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return store.ErrorNotFound
+		return sql.ErrNoRows
 	}
 	delete(r.db, id)
 

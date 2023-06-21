@@ -23,14 +23,14 @@ import (
 )
 
 const (
-	schema      = "public"
-	version     = "1.0.0"
-	description = "library-service"
+	schema  = "public"
+	version = "1.0.0"
+	service = "library-service"
 )
 
 // Run initializes whole application.
 func Run() {
-	logger := log.New(version, description)
+	logger := log.New(service, version)
 
 	configs, err := config.New()
 	if err != nil {

@@ -2,14 +2,12 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 
 	"library-service/internal/domain/author"
-	"library-service/pkg/store"
 )
 
 type AuthorRepository struct {
@@ -46,7 +44,7 @@ func (s *AuthorRepository) Create(ctx context.Context, data author.Entity) (id s
 	return
 }
 
-func (s *AuthorRepository) Get(ctx context.Context, id string) (dest author.Entity, err error) {
+func (s *AuthorRepository) GetByID(ctx context.Context, id string) (dest author.Entity, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -54,13 +52,7 @@ func (s *AuthorRepository) Get(ctx context.Context, id string) (dest author.Enti
 
 	args := []any{id}
 
-	if err = s.db.GetContext(ctx, &dest, query, args...); err != nil && err != sql.ErrNoRows {
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		err = store.ErrorNotFound
-	}
+	err = s.db.GetContext(ctx, &dest, query, args...)
 
 	return
 }
@@ -74,13 +66,6 @@ func (s *AuthorRepository) Update(ctx context.Context, id string, data author.En
 
 		query := fmt.Sprintf("UPDATE authors SET %s WHERE id=$%d", strings.Join(sets, ", "), len(args))
 		_, err = s.db.ExecContext(ctx, query, args...)
-		if err != nil && err != sql.ErrNoRows {
-			return
-		}
-
-		if err == sql.ErrNoRows {
-			err = store.ErrorNotFound
-		}
 	}
 
 	return
@@ -114,13 +99,6 @@ func (s *AuthorRepository) Delete(ctx context.Context, id string) (err error) {
 	args := []any{id}
 
 	_, err = s.db.ExecContext(ctx, query, args...)
-	if err != nil && err != sql.ErrNoRows {
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		err = store.ErrorNotFound
-	}
 
 	return
 }

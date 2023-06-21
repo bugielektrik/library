@@ -1,6 +1,7 @@
 package http
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,7 +10,6 @@ import (
 	"library-service/internal/domain/book"
 	"library-service/internal/service/library"
 	"library-service/pkg/server/response"
-	"library-service/pkg/store"
 )
 
 type BookHandler struct {
@@ -27,7 +27,7 @@ func (h *BookHandler) Routes() chi.Router {
 	r.Post("/", h.add)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", h.get)
+		r.Get("/", h.getByID)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
 	})
@@ -92,16 +92,16 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/books/{id} [get]
-func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
+func (h *BookHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.libraryService.GetBook(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	res, err := h.libraryService.GetBookByID(r.Context(), id)
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -132,12 +132,12 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.libraryService.UpdateBook(r.Context(), id, req)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -158,12 +158,12 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	err := h.libraryService.DeleteBook(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -184,12 +184,12 @@ func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.libraryService.ListBookAuthors(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}

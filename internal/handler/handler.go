@@ -80,6 +80,7 @@ func WithHTTPHandler() Configuration {
 			h.dependencies.AuthService, nil)
 
 		h.HTTP.Post("/token", authHandler.UserCredentials)
+		h.HTTP.Post("/auth", authHandler.ClientCredentials)
 
 		// Init service handlers
 		authorHandler := http.NewAuthorHandler(h.dependencies.LibraryService)

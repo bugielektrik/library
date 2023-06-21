@@ -2,12 +2,12 @@ package memory
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"library-service/internal/domain/author"
-	"library-service/pkg/store"
 )
 
 type AuthorRepository struct {
@@ -44,13 +44,13 @@ func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest
 	return id, nil
 }
 
-func (r *AuthorRepository) Get(ctx context.Context, id string) (dest author.Entity, err error) {
+func (r *AuthorRepository) GetByID(ctx context.Context, id string) (dest author.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
 	dest, ok := r.db[id]
 	if !ok {
-		err = store.ErrorNotFound
+		err = sql.ErrNoRows
 		return
 	}
 
@@ -62,7 +62,7 @@ func (r *AuthorRepository) Update(ctx context.Context, id string, data author.En
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return store.ErrorNotFound
+		return sql.ErrNoRows
 	}
 	r.db[id] = data
 
@@ -74,7 +74,7 @@ func (r *AuthorRepository) Delete(ctx context.Context, id string) (err error) {
 	defer r.Unlock()
 
 	if _, ok := r.db[id]; !ok {
-		return store.ErrorNotFound
+		return sql.ErrNoRows
 	}
 	delete(r.db, id)
 

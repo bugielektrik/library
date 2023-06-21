@@ -1,6 +1,7 @@
 package http
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,7 +10,6 @@ import (
 	"library-service/internal/domain/author"
 	"library-service/internal/service/library"
 	"library-service/pkg/server/response"
-	"library-service/pkg/store"
 )
 
 type AuthorHandler struct {
@@ -27,7 +27,7 @@ func (h *AuthorHandler) Routes() chi.Router {
 	r.Post("/", h.add)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", h.get)
+		r.Get("/", h.getByID)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
 	})
@@ -92,16 +92,16 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/authors/{id} [get]
-func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
+func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.libraryService.GetAuthor(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	res, err := h.libraryService.GetAuthorByID(r.Context(), id)
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -132,12 +132,12 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.libraryService.UpdateAuthor(r.Context(), id, req)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -158,12 +158,12 @@ func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	err := h.libraryService.DeleteAuthor(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}

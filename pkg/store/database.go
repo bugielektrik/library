@@ -107,7 +107,10 @@ func (s *Database) createSchema() (err error) {
 	case "postgres":
 		query = fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s.schema)
 	}
-	_, err = s.Client.Exec(query)
+
+	if query != "" {
+		_, err = s.Client.Exec(query)
+	}
 
 	return
 }

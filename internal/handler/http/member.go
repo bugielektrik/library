@@ -1,6 +1,7 @@
 package http
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,7 +10,6 @@ import (
 	"library-service/internal/domain/member"
 	"library-service/internal/service/subscription"
 	"library-service/pkg/server/response"
-	"library-service/pkg/store"
 )
 
 type MemberHandler struct {
@@ -27,7 +27,7 @@ func (h *MemberHandler) Routes() chi.Router {
 	r.Post("/", h.add)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", h.get)
+		r.Get("/", h.getByID)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
 		r.Get("/books", h.listBooks)
@@ -93,16 +93,16 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/members/{id} [get]
-func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.subscriptionService.GetMember(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	res, err := h.subscriptionService.GetMemberByID(r.Context(), id)
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -133,12 +133,12 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.subscriptionService.UpdateMember(r.Context(), id, req)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -159,12 +159,12 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	err := h.subscriptionService.DeleteMember(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}
@@ -185,12 +185,12 @@ func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.subscriptionService.ListMemberBooks(r.Context(), id)
-	if err != nil && err != store.ErrorNotFound {
+	if err != nil && err != sql.ErrNoRows {
 		response.InternalServerError(w, r, err)
 		return
 	}
 
-	if err == store.ErrorNotFound {
+	if err == sql.ErrNoRows {
 		response.NotFound(w, r, err)
 		return
 	}

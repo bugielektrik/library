@@ -22,7 +22,7 @@ func NewAuthorCache(c *redis.Client, r author.Repository) *AuthorCache {
 	}
 }
 
-func (c *AuthorCache) Get(ctx context.Context, id string) (dest author.Entity, err error) {
+func (c *AuthorCache) GetByID(ctx context.Context, id string) (dest author.Entity, err error) {
 	// Check if data is available in Redis cache
 	data, err := c.cache.Get(ctx, id).Result()
 	if err == nil {
@@ -34,7 +34,7 @@ func (c *AuthorCache) Get(ctx context.Context, id string) (dest author.Entity, e
 	}
 
 	// Data not found in cache, retrieve it from the data source
-	dest, err = c.repository.Get(ctx, id)
+	dest, err = c.repository.GetByID(ctx, id)
 	if err != nil {
 		return
 	}

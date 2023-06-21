@@ -1,42 +1,50 @@
 package log
 
 import (
+	"context"
 	"os"
 
 	"go.elastic.co/apm/module/apmzap"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func New(version, description string) *zap.Logger {
-	var log *zap.Logger
-	var err error
-	var wrappedCore = zap.WrapCore((&apmzap.Core{
-		FatalFlushTimeout: 10000,
-	}).WrapCore)
+type logger struct{}
+
+// ContextWithLogger adds logger to context
+func ContextWithLogger(ctx context.Context, l *zap.Logger) context.Context {
+	return context.WithValue(ctx, logger{}, l)
+}
+
+// LoggerFromContext returns logger from context
+func LoggerFromContext(ctx context.Context) *zap.Logger {
+	if l, ok := ctx.Value(logger{}).(*zap.Logger); ok {
+		return l
+	}
+	return zap.L()
+}
+
+func New(service, version string) *zap.Logger {
+	cfg := zap.NewProductionConfig()
 
 	if os.Getenv("DEBUG") != "" {
-		cfg := zap.NewDevelopmentConfig()
+		cfg = zap.NewDevelopmentConfig()
+
 		if os.Getenv("DEBUG") == "true" {
 			cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		}
-		cfg.OutputPaths = []string{"stdout", description + "-" + version + ".log"}
-		log, err = cfg.Build(wrappedCore)
-	} else {
-		cfg := zap.NewProductionConfig()
-		cfg.OutputPaths = []string{"stdout", description + "-" + version + ".log"}
-		log, err = cfg.Build(wrappedCore)
 	}
 
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.OutputPaths = []string{"stdout", service + "-" + version + ".log"}
+
+	log, err := cfg.Build(zap.WrapCore((&apmzap.Core{FatalFlushTimeout: 10000}).WrapCore))
 	if err != nil {
 		log = zap.NewExample()
 		log.Warn("Unable to set up the logger. Replaced with example one which shouldn't fail", zap.Error(err))
 	}
-	zap.ReplaceGlobals(log)
-	err = log.Sync()
-	if err != nil {
-		log.Warn("Logger sync fail", zap.Error(err))
-	}
-	log.Debug("Logger is ready")
+	defer log.Sync()
 
 	return log
 }
