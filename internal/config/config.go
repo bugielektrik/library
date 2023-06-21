@@ -91,7 +91,7 @@ func New() (cfg Configs, err error) {
 	}
 
 	duration, err := time.ParseDuration(cfg.OAUTH.Duration)
-	if err == nil {
+	if err != nil {
 		return
 	}
 	cfg.OAUTH.Expires = duration
