@@ -30,7 +30,7 @@ const (
 
 // Run initializes whole application.
 func Run() {
-	logger := log.New()
+	logger := log.LoggerFromContext(context.Background())
 
 	configs, err := config.New()
 	if err != nil {
