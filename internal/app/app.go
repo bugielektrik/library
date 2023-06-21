@@ -23,9 +23,7 @@ import (
 )
 
 const (
-	schema  = "public"
-	version = "1.0.0"
-	service = "library-service"
+	schema = "public"
 )
 
 // Run initializes whole application.
