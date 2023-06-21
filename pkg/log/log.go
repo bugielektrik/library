@@ -9,6 +9,14 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var (
+	defaultLogger *zap.Logger
+)
+
+func init() {
+	defaultLogger = New()
+}
+
 type logger struct{}
 
 // ContextWithLogger adds logger to context
@@ -21,10 +29,12 @@ func LoggerFromContext(ctx context.Context) *zap.Logger {
 	if l, ok := ctx.Value(logger{}).(*zap.Logger); ok {
 		return l
 	}
-	return zap.L()
+	lg := defaultLogger
+
+	return lg
 }
 
-func New(service, version string) *zap.Logger {
+func New() *zap.Logger {
 	cfg := zap.NewProductionConfig()
 
 	if os.Getenv("DEBUG") != "" {
@@ -37,7 +47,7 @@ func New(service, version string) *zap.Logger {
 
 	cfg.EncoderConfig.TimeKey = "timestamp"
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	cfg.OutputPaths = []string{"stdout", service + "-" + version + ".log"}
+	cfg.OutputPaths = []string{"stdout", "service.log"}
 
 	log, err := cfg.Build(zap.WrapCore((&apmzap.Core{FatalFlushTimeout: 10000}).WrapCore))
 	if err != nil {

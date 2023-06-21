@@ -12,7 +12,7 @@ import (
 func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("ListAuthors")
 
-	data, err := s.authorRepository.Select(log.ContextWithLogger(ctx, logger))
+	data, err := s.authorRepository.Select(ctx)
 	if err != nil {
 		logger.Error("failed to select", zap.Error(err))
 		return

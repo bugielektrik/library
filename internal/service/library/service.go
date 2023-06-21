@@ -12,9 +12,8 @@ type Configuration func(s *Service) error
 type Service struct {
 	authorRepository author.Repository
 	bookRepository   book.Repository
-
-	authorCache author.Cache
-	bookCache   book.Cache
+	authorCache      author.Cache
+	bookCache        book.Cache
 }
 
 // New takes a variable amount of Configuration functions and returns a new Service
