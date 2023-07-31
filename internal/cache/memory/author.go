@@ -22,7 +22,7 @@ func NewAuthorCache(r author.Repository) *AuthorCache {
 	}
 }
 
-func (c *AuthorCache) GetByID(ctx context.Context, id string) (dest author.Entity, err error) {
+func (c *AuthorCache) Get(ctx context.Context, id string) (dest author.Entity, err error) {
 	// Check if data is available in the cache
 	if data, found := c.cache.Get(id); found {
 		// Data found in the cache, return it
@@ -30,7 +30,7 @@ func (c *AuthorCache) GetByID(ctx context.Context, id string) (dest author.Entit
 	}
 
 	// Data not found in the cache, retrieve it from the data source
-	dest, err = c.repository.GetByID(ctx, id)
+	dest, err = c.repository.Get(ctx, id)
 	if err != nil {
 		return
 	}

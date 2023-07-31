@@ -9,7 +9,7 @@ type Service struct{}
 // New takes a variable amount of Configuration functions and returns a new Service
 // Each Configuration will be called in the order they are passed in
 func New(configs ...Configuration) (s *Service, err error) {
-	// Create the service
+	// Insert the service
 	s = &Service{}
 
 	// Apply all Configurations passed in

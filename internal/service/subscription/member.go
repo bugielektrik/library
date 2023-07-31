@@ -31,7 +31,7 @@ func (s *Service) AddMember(ctx context.Context, req member.Request) (res member
 		Books:    req.Books,
 	}
 
-	data.ID, err = s.memberRepository.Create(ctx, data)
+	data.ID, err = s.memberRepository.Insert(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return
@@ -44,7 +44,7 @@ func (s *Service) AddMember(ctx context.Context, req member.Request) (res member
 func (s *Service) GetMemberByID(ctx context.Context, id string) (res member.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("GetMemberByID").With(zap.String("id", id))
 
-	data, err := s.memberRepository.GetByID(ctx, id)
+	data, err := s.memberRepository.Get(ctx, id)
 	if err != nil {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
@@ -86,7 +86,7 @@ func (s *Service) DeleteMember(ctx context.Context, id string) (err error) {
 func (s *Service) ListMemberBooks(ctx context.Context, id string) (res []book.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("ListMemberBooks").With(zap.String("id", id))
 
-	data, err := s.memberRepository.GetByID(ctx, id)
+	data, err := s.memberRepository.Get(ctx, id)
 	if err != nil {
 		logger.Error("failed to get by id", zap.Error(err))
 		return

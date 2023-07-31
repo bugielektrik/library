@@ -24,7 +24,7 @@ type Repository struct {
 // New takes a variable amount of Configuration functions and returns a new Repository
 // Each Configuration will be called in the order they are passed in
 func New(configs ...Configuration) (s *Repository, err error) {
-	// Create the repository
+	// Insert the repository
 	s = &Repository{}
 
 	// Apply all Configurations passed in
@@ -49,7 +49,7 @@ func (r *Repository) Close() {
 // WithMemoryStore applies a memory store to the Repository
 func WithMemoryStore() Configuration {
 	return func(s *Repository) (err error) {
-		// Create the memory store, if we needed parameters, such as connection strings they could be inputted here
+		// Insert the memory store, if we needed parameters, such as connection strings they could be inputted here
 		s.Author = memory.NewAuthorRepository()
 		s.Book = memory.NewBookRepository()
 		s.Member = memory.NewMemberRepository()
@@ -61,7 +61,7 @@ func WithMemoryStore() Configuration {
 // WithPostgresStore applies a postgres store to the Repository
 func WithPostgresStore(schema, dataSourceName string) Configuration {
 	return func(s *Repository) (err error) {
-		// Create the postgres store, if we needed parameters, such as connection strings they could be inputted here
+		// Insert the postgres store, if we needed parameters, such as connection strings they could be inputted here
 		s.postgres, err = store.NewDatabase(schema, dataSourceName)
 		if err != nil {
 			return

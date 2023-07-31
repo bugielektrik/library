@@ -33,7 +33,7 @@ func (r *AuthorRepository) Select(ctx context.Context) (dest []author.Entity, er
 	return
 }
 
-func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest string, err error) {
+func (r *AuthorRepository) Insert(ctx context.Context, data author.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest
 	return id, nil
 }
 
-func (r *AuthorRepository) GetByID(ctx context.Context, id string) (dest author.Entity, err error) {
+func (r *AuthorRepository) Get(ctx context.Context, id string) (dest author.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 

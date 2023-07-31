@@ -22,7 +22,7 @@ func NewBookCache(r book.Repository) *BookCache {
 	}
 }
 
-func (r *BookCache) GetByID(ctx context.Context, id string) (dest book.Entity, err error) {
+func (r *BookCache) Get(ctx context.Context, id string) (dest book.Entity, err error) {
 	// Check if data is available in the cache
 	if data, found := r.cache.Get(id); found {
 		// Data found in the cache, return it
@@ -30,7 +30,7 @@ func (r *BookCache) GetByID(ctx context.Context, id string) (dest book.Entity, e
 	}
 
 	// Data not found in the cache, retrieve it from the data source
-	dest, err = r.repository.GetByID(ctx, id)
+	dest, err = r.repository.Get(ctx, id)
 	if err != nil {
 		return
 	}

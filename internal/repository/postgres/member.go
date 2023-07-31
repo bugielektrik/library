@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"library-service/internal/domain/member"
 )
@@ -31,20 +32,20 @@ func (s *MemberRepository) Select(ctx context.Context) (dest []member.Entity, er
 	return
 }
 
-func (s *MemberRepository) Create(ctx context.Context, data member.Entity) (id string, err error) {
+func (s *MemberRepository) Insert(ctx context.Context, data member.Entity) (id string, err error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
 		RETURNING id`
 
-	args := []any{data.FullName, data.Books.String()}
+	args := []any{data.FullName, pq.Array(data.Books)}
 
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
 	return
 }
 
-func (s *MemberRepository) GetByID(ctx context.Context, id string) (dest member.Entity, err error) {
+func (s *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -78,7 +79,7 @@ func (s *MemberRepository) prepareArgs(data member.Entity) (sets []string, args 
 	}
 
 	if len(data.Books) > 0 {
-		args = append(args, data.Books.String())
+		args = append(args, pq.Array(data.Books))
 		sets = append(sets, fmt.Sprintf("books=$%d", len(args)))
 	}
 

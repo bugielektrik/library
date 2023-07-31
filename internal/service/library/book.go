@@ -33,7 +33,7 @@ func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Respo
 		Authors: req.Authors,
 	}
 
-	data.ID, err = s.bookRepository.Create(ctx, data)
+	data.ID, err = s.bookRepository.Insert(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return
@@ -46,7 +46,7 @@ func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Respo
 func (s *Service) GetBookByID(ctx context.Context, id string) (res book.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("GetBookByID").With(zap.String("id", id))
 
-	data, err := s.bookRepository.GetByID(ctx, id)
+	data, err := s.bookRepository.Get(ctx, id)
 	if err != nil {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
@@ -90,7 +90,7 @@ func (s *Service) DeleteBook(ctx context.Context, id string) (err error) {
 func (s *Service) ListBookAuthors(ctx context.Context, id string) (res []author.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("ListBookAuthors").With(zap.String("id", id))
 
-	data, err := s.bookRepository.GetByID(ctx, id)
+	data, err := s.bookRepository.Get(ctx, id)
 	if err != nil {
 		logger.Error("failed to get by id", zap.Error(err))
 		return

@@ -33,7 +33,7 @@ func (r *BookRepository) Select(ctx context.Context) (dest []book.Entity, err er
 	return
 }
 
-func (r *BookRepository) Create(ctx context.Context, data book.Entity) (dest string, err error) {
+func (r *BookRepository) Insert(ctx context.Context, data book.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *BookRepository) Create(ctx context.Context, data book.Entity) (dest str
 	return id, nil
 }
 
-func (r *BookRepository) GetByID(ctx context.Context, id string) (dest book.Entity, err error) {
+func (r *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 

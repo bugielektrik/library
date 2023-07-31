@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	schema = "public"
+	schema = "library"
 )
 
 // Run initializes whole application.
@@ -37,7 +37,7 @@ func Run() {
 	}
 
 	repositories, err := repository.New(
-		repository.WithMemoryStore())
+		repository.WithPostgresStore(schema, configs.POSTGRES.DSN))
 	if err != nil {
 		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
 		return

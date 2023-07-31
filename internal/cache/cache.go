@@ -28,7 +28,7 @@ type Cache struct {
 // New takes a variable amount of Configuration functions and returns a new Cache
 // Each Configuration will be called in the order they are passed in
 func New(d Dependencies, configs ...Configuration) (s *Cache, err error) {
-	// Create the cache
+	// Insert the cache
 	s = &Cache{
 		dependencies: d,
 	}
@@ -55,7 +55,7 @@ func (r *Cache) Close() {
 // WithMemoryStore applies a memory database to the Cache
 func WithMemoryStore() Configuration {
 	return func(s *Cache) (err error) {
-		// Create the memory database, if we needed parameters, such as connection strings they could be inputted here
+		// Insert the memory database, if we needed parameters, such as connection strings they could be inputted here
 		s.Author = memory.NewAuthorCache(s.dependencies.AuthorRepository)
 		s.Book = memory.NewBookCache(s.dependencies.BookRepository)
 
@@ -66,7 +66,7 @@ func WithMemoryStore() Configuration {
 // WithRedisStore applies a redis store to the Cache
 func WithRedisStore(url string) Configuration {
 	return func(s *Cache) (err error) {
-		// Create the redis store, if we needed parameters, such as connection strings they could be inputted here
+		// Insert the redis store, if we needed parameters, such as connection strings they could be inputted here
 		s.redis, err = store.NewRedis(url)
 		if err != nil {
 			return

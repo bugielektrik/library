@@ -31,7 +31,7 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author
 		Specialty: &req.Specialty,
 	}
 
-	data.ID, err = s.authorRepository.Create(ctx, data)
+	data.ID, err = s.authorRepository.Insert(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return
@@ -44,7 +44,7 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author
 func (s *Service) GetAuthorByID(ctx context.Context, id string) (res author.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("GetAuthorByID").With(zap.String("id", id))
 
-	data, err := s.authorRepository.GetByID(ctx, id)
+	data, err := s.authorRepository.Get(ctx, id)
 	if err != nil {
 		logger.Error("failed to get by id", zap.Error(err))
 		return

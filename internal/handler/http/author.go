@@ -2,6 +2,7 @@ package http
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -96,13 +97,13 @@ func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.libraryService.GetAuthorByID(r.Context(), id)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 
@@ -131,14 +132,13 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.libraryService.UpdateAuthor(r.Context(), id, req)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err := h.libraryService.UpdateAuthor(r.Context(), id, req); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 }
@@ -157,14 +157,13 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	err := h.libraryService.DeleteAuthor(r.Context(), id)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err := h.libraryService.DeleteAuthor(r.Context(), id); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 }

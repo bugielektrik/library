@@ -31,7 +31,7 @@ func (s *BookRepository) Select(ctx context.Context) (dest []book.Entity, err er
 	return
 }
 
-func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id string, err error) {
+func (s *BookRepository) Insert(ctx context.Context, data book.Entity) (id string, err error) {
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
 		VALUES ($1, $2, $3, $4)
@@ -44,7 +44,7 @@ func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id strin
 	return
 }
 
-func (s *BookRepository) GetByID(ctx context.Context, id string) (dest book.Entity, err error) {
+func (s *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books

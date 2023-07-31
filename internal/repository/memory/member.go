@@ -33,7 +33,7 @@ func (r *MemberRepository) Select(ctx context.Context) (dest []member.Entity, er
 	return
 }
 
-func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (dest string, err error) {
+func (r *MemberRepository) Insert(ctx context.Context, data member.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,7 +44,7 @@ func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (dest
 	return id, nil
 }
 
-func (r *MemberRepository) GetByID(ctx context.Context, id string) (dest member.Entity, err error) {
+func (r *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 

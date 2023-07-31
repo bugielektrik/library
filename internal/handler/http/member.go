@@ -2,6 +2,7 @@ package http
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -97,13 +98,13 @@ func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.subscriptionService.GetMemberByID(r.Context(), id)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 
@@ -132,14 +133,13 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.subscriptionService.UpdateMember(r.Context(), id, req)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err := h.subscriptionService.UpdateMember(r.Context(), id, req); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 }
@@ -158,14 +158,13 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	err := h.subscriptionService.DeleteMember(r.Context(), id)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err := h.subscriptionService.DeleteMember(r.Context(), id); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 }
@@ -185,13 +184,13 @@ func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	res, err := h.subscriptionService.ListMemberBooks(r.Context(), id)
-	if err != nil && err != sql.ErrNoRows {
-		response.InternalServerError(w, r, err)
-		return
-	}
-
-	if err == sql.ErrNoRows {
-		response.NotFound(w, r, err)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			response.NotFound(w, r, err)
+		default:
+			response.InternalServerError(w, r, err)
+		}
 		return
 	}
 
