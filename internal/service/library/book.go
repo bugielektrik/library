@@ -13,7 +13,7 @@ import (
 func (s *Service) ListBooks(ctx context.Context) (res []book.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("ListBooks")
 
-	data, err := s.bookRepository.Select(ctx)
+	data, err := s.bookRepository.List(ctx)
 	if err != nil {
 		logger.Error("failed to select", zap.Error(err))
 		return
@@ -23,8 +23,8 @@ func (s *Service) ListBooks(ctx context.Context) (res []book.Response, err error
 	return
 }
 
-func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("AddBook")
+func (s *Service) CreateBook(ctx context.Context, req book.Request) (res book.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("CreateBook")
 
 	data := book.Entity{
 		Name:    &req.Name,
@@ -33,7 +33,7 @@ func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Respo
 		Authors: req.Authors,
 	}
 
-	data.ID, err = s.bookRepository.Insert(ctx, data)
+	data.ID, err = s.bookRepository.Create(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return
@@ -43,8 +43,8 @@ func (s *Service) AddBook(ctx context.Context, req book.Request) (res book.Respo
 	return
 }
 
-func (s *Service) GetBookByID(ctx context.Context, id string) (res book.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("GetBookByID").With(zap.String("id", id))
+func (s *Service) GetBook(ctx context.Context, id string) (res book.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("GetBook").With(zap.String("id", id))
 
 	data, err := s.bookRepository.Get(ctx, id)
 	if err != nil {
@@ -98,7 +98,7 @@ func (s *Service) ListBookAuthors(ctx context.Context, id string) (res []author.
 	res = make([]author.Response, len(data.Authors))
 
 	for i := 0; i < len(data.Authors); i++ {
-		res[i], err = s.GetAuthorByID(ctx, data.Authors[i])
+		res[i], err = s.GetAuthor(ctx, data.Authors[i])
 		if err != nil {
 			logger.Error("failed to get author by id", zap.Error(err))
 			return

@@ -23,7 +23,7 @@ type Configuration func(r *Server) error
 // New takes a variable amount of Configuration functions and returns a new Server
 // Each Configuration will be called in the order they are passed in
 func New(configs ...Configuration) (r *Server, err error) {
-	// Insert the Server
+	// Create the Server
 	r = &Server{}
 
 	// Apply all Configurations passed in

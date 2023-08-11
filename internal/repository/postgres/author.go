@@ -20,7 +20,7 @@ func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
 	}
 }
 
-func (s *AuthorRepository) Select(ctx context.Context) (dest []author.Entity, err error) {
+func (s *AuthorRepository) List(ctx context.Context) (dest []author.Entity, err error) {
 	query := `
 		SELECT id, full_name, pseudonym, specialty
 		FROM authors
@@ -31,7 +31,7 @@ func (s *AuthorRepository) Select(ctx context.Context) (dest []author.Entity, er
 	return
 }
 
-func (s *AuthorRepository) Insert(ctx context.Context, data author.Entity) (id string, err error) {
+func (s *AuthorRepository) Create(ctx context.Context, data author.Entity) (id string, err error) {
 	query := `
 		INSERT INTO authors (full_name, pseudonym, specialty)
 		VALUES ($1, $2, $3)

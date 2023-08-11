@@ -21,7 +21,7 @@ func NewBookRepository() *BookRepository {
 	}
 }
 
-func (r *BookRepository) Select(ctx context.Context) (dest []book.Entity, err error) {
+func (r *BookRepository) List(ctx context.Context) (dest []book.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -33,7 +33,7 @@ func (r *BookRepository) Select(ctx context.Context) (dest []book.Entity, err er
 	return
 }
 
-func (r *BookRepository) Insert(ctx context.Context, data book.Entity) (dest string, err error) {
+func (r *BookRepository) Create(ctx context.Context, data book.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 

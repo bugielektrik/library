@@ -17,7 +17,7 @@ type Service struct {
 // New takes a variable amount of Configuration functions and returns a new Service
 // Each Configuration will be called in the order they are passed in
 func New(configs ...Configuration) (s *Service, err error) {
-	// Insert the service
+	// Create the service
 	s = &Service{}
 
 	// Apply all Configurations passed in
@@ -42,7 +42,7 @@ func WithMemberRepository(memberRepository member.Repository) Configuration {
 
 // WithLibraryService applies a given library service to the Service
 func WithLibraryService(libraryService *library.Service) Configuration {
-	// Insert the library service, if we needed parameters, such as connection strings they could be inputted here
+	// Create the library service, if we needed parameters, such as connection strings they could be inputted here
 	return func(s *Service) error {
 		s.libraryService = libraryService
 		return nil

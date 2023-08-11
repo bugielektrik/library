@@ -43,7 +43,7 @@ DELETE http://localhost/api/v1/books/1
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
-### List of authors from the store
+### List of book authors from the store
 GET http://localhost/api/v1/books/1/authors
 Content-Type: application/json
 Authorization: Bearer {{access_token}}

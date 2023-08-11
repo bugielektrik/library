@@ -12,7 +12,7 @@ import (
 func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("ListAuthors")
 
-	data, err := s.authorRepository.Select(ctx)
+	data, err := s.authorRepository.List(ctx)
 	if err != nil {
 		logger.Error("failed to select", zap.Error(err))
 		return
@@ -22,8 +22,8 @@ func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err e
 	return
 }
 
-func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("AddAuthor")
+func (s *Service) CreateAuthor(ctx context.Context, req author.Request) (res author.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("CreateAuthor")
 
 	data := author.Entity{
 		FullName:  &req.FullName,
@@ -31,7 +31,7 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author
 		Specialty: &req.Specialty,
 	}
 
-	data.ID, err = s.authorRepository.Insert(ctx, data)
+	data.ID, err = s.authorRepository.Create(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return
@@ -41,8 +41,8 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author
 	return
 }
 
-func (s *Service) GetAuthorByID(ctx context.Context, id string) (res author.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("GetAuthorByID").With(zap.String("id", id))
+func (s *Service) GetAuthor(ctx context.Context, id string) (res author.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("GetAuthor").With(zap.String("id", id))
 
 	data, err := s.authorRepository.Get(ctx, id)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Reques
 }
 
 func (s *Service) DeleteAuthor(ctx context.Context, id string) (err error) {
-	logger := log.LoggerFromContext(ctx).Named("UpdateAuthor").With(zap.String("id", id))
+	logger := log.LoggerFromContext(ctx).Named("DeleteAuthor").With(zap.String("id", id))
 
 	err = s.authorRepository.Delete(ctx, id)
 	if err != nil {

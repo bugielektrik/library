@@ -750,12 +750,6 @@ const docTemplate = `{
         },
         "book.Request": {
             "type": "object",
-            "required": [
-                "authors",
-                "genre",
-                "isbn",
-                "name"
-            ],
             "properties": {
                 "authors": {
                     "type": "array",
@@ -779,10 +773,6 @@ const docTemplate = `{
         },
         "member.Request": {
             "type": "object",
-            "required": [
-                "books",
-                "fullName"
-            ],
             "properties": {
                 "books": {
                     "type": "array",

@@ -21,7 +21,7 @@ func NewMemberRepository() *MemberRepository {
 	}
 }
 
-func (r *MemberRepository) Select(ctx context.Context) (dest []member.Entity, err error) {
+func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -33,7 +33,7 @@ func (r *MemberRepository) Select(ctx context.Context) (dest []member.Entity, er
 	return
 }
 
-func (r *MemberRepository) Insert(ctx context.Context, data member.Entity) (dest string, err error) {
+func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 

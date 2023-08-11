@@ -22,11 +22,6 @@ definitions:
         type: string
       name:
         type: string
-    required:
-    - authors
-    - genre
-    - isbn
-    - name
     type: object
   member.Request:
     properties:
@@ -38,9 +33,6 @@ definitions:
         type: string
       id:
         type: string
-    required:
-    - books
-    - fullName
     type: object
   response.Object:
     properties:

@@ -25,10 +25,10 @@ func (h *MemberHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.list)
-	r.Post("/", h.add)
+	r.Post("/", h.create)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", h.getByID)
+		r.Get("/", h.get)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
 		r.Get("/books", h.listBooks)
@@ -67,14 +67,14 @@ func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 //	@Failure	400		{object}	response.Object
 //	@Failure	500		{object}	response.Object
 //	@Router		/members [post]
-func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := member.Request{}
 	if err := render.Bind(r, &req); err != nil {
 		response.BadRequest(w, r, err, req)
 		return
 	}
 
-	res, err := h.subscriptionService.AddMember(r.Context(), req)
+	res, err := h.subscriptionService.CreateMember(r.Context(), req)
 	if err != nil {
 		response.InternalServerError(w, r, err)
 		return
@@ -94,10 +94,10 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/members/{id} [get]
-func (h *MemberHandler) getByID(w http.ResponseWriter, r *http.Request) {
+func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.subscriptionService.GetMemberByID(r.Context(), id)
+	res, err := h.subscriptionService.GetMember(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

@@ -39,7 +39,7 @@ DELETE http://localhost/api/v1/members/1
 Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
-### List of books from the store
+### List of member books from the store
 GET http://localhost/api/v1/members/1/books
 Content-Type: application/json
 Authorization: Bearer {{access_token}}

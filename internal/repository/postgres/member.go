@@ -21,7 +21,7 @@ func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	}
 }
 
-func (s *MemberRepository) Select(ctx context.Context) (dest []member.Entity, err error) {
+func (s *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -32,7 +32,7 @@ func (s *MemberRepository) Select(ctx context.Context) (dest []member.Entity, er
 	return
 }
 
-func (s *MemberRepository) Insert(ctx context.Context, data member.Entity) (id string, err error) {
+func (s *MemberRepository) Create(ctx context.Context, data member.Entity) (id string, err error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)

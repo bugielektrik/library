@@ -25,10 +25,10 @@ func (h *AuthorHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.list)
-	r.Post("/", h.add)
+	r.Post("/", h.create)
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Get("/", h.getByID)
+		r.Get("/", h.get)
 		r.Put("/", h.update)
 		r.Delete("/", h.delete)
 	})
@@ -66,14 +66,14 @@ func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 //	@Failure	400		{object}	response.Object
 //	@Failure	500		{object}	response.Object
 //	@Router		/authors [post]
-func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
+func (h *AuthorHandler) create(w http.ResponseWriter, r *http.Request) {
 	req := author.Request{}
 	if err := render.Bind(r, &req); err != nil {
 		response.BadRequest(w, r, err, req)
 		return
 	}
 
-	res, err := h.libraryService.AddAuthor(r.Context(), req)
+	res, err := h.libraryService.CreateAuthor(r.Context(), req)
 	if err != nil {
 		response.InternalServerError(w, r, err)
 		return
@@ -93,10 +93,10 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 //	@Failure	404	{object}	response.Object
 //	@Failure	500	{object}	response.Object
 //	@Router		/authors/{id} [get]
-func (h *AuthorHandler) getByID(w http.ResponseWriter, r *http.Request) {
+func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.libraryService.GetAuthorByID(r.Context(), id)
+	res, err := h.libraryService.GetAuthor(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

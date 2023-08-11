@@ -13,7 +13,7 @@ import (
 func (s *Service) ListMembers(ctx context.Context) (res []member.Response, err error) {
 	logger := log.LoggerFromContext(ctx).Named("ListMembers")
 
-	data, err := s.memberRepository.Select(ctx)
+	data, err := s.memberRepository.List(ctx)
 	if err != nil {
 		logger.Error("failed to select", zap.Error(err))
 		return
@@ -23,15 +23,15 @@ func (s *Service) ListMembers(ctx context.Context) (res []member.Response, err e
 	return
 }
 
-func (s *Service) AddMember(ctx context.Context, req member.Request) (res member.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("AddMember")
+func (s *Service) CreateMember(ctx context.Context, req member.Request) (res member.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("CreateMember")
 
 	data := member.Entity{
 		FullName: &req.FullName,
 		Books:    req.Books,
 	}
 
-	data.ID, err = s.memberRepository.Insert(ctx, data)
+	data.ID, err = s.memberRepository.Create(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return
@@ -41,8 +41,8 @@ func (s *Service) AddMember(ctx context.Context, req member.Request) (res member
 	return
 }
 
-func (s *Service) GetMemberByID(ctx context.Context, id string) (res member.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("GetMemberByID").With(zap.String("id", id))
+func (s *Service) GetMember(ctx context.Context, id string) (res member.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("GetMember").With(zap.String("id", id))
 
 	data, err := s.memberRepository.Get(ctx, id)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *Service) ListMemberBooks(ctx context.Context, id string) (res []book.Re
 	res = make([]book.Response, len(data.Books))
 
 	for i := 0; i < len(data.Books); i++ {
-		res[i], err = s.libraryService.GetBookByID(ctx, data.Books[i])
+		res[i], err = s.libraryService.GetBook(ctx, data.Books[i])
 		if err != nil {
 			logger.Error("failed to get book by id", zap.Error(err))
 			return

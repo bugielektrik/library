@@ -738,12 +738,6 @@
         },
         "book.Request": {
             "type": "object",
-            "required": [
-                "authors",
-                "genre",
-                "isbn",
-                "name"
-            ],
             "properties": {
                 "authors": {
                     "type": "array",
@@ -767,10 +761,6 @@
         },
         "member.Request": {
             "type": "object",
-            "required": [
-                "books",
-                "fullName"
-            ],
             "properties": {
                 "books": {
                     "type": "array",
