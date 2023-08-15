@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	//_ "github.com/golang-migrate/migrate/v4/database/mongodb"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
 	//_ "github.com/sijms/go-ora/v2"
