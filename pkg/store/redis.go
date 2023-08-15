@@ -4,26 +4,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// redis://username:password@localhost:6789/3?dial_timeout=3&db=1&read_timeout=6s&max_retries=2
+
 type Redis struct {
-	url    string
-	Client *redis.Client
+	Connection *redis.Client
 }
 
-func NewRedis(url string) (redis *Redis, err error) {
-	redis = &Redis{
-		url: url,
-	}
-	redis.Client, err = redis.connection()
-
-	return
-}
-
-func (s Redis) connection() (client *redis.Client, err error) {
-	opt, err := redis.ParseURL(s.url)
+func NewRedis(url string) (store Redis, err error) {
+	opt, err := redis.ParseURL(url)
 	if err != nil {
 		return
 	}
-	client = redis.NewClient(opt)
+	store.Connection = redis.NewClient(opt)
 
 	return
 }

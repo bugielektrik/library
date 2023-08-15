@@ -14,7 +14,7 @@ type Configuration func(r *Repository) error
 
 // Repository is an implementation of the Repository
 type Repository struct {
-	postgres *store.Database
+	postgres store.SQL
 
 	Author author.Repository
 	Book   book.Repository
@@ -41,8 +41,8 @@ func New(configs ...Configuration) (s *Repository, err error) {
 // Close closes the repository and prevents new queries from starting.
 // Close then waits for all queries that have started processing on the server to finish.
 func (r *Repository) Close() {
-	if r.postgres != nil {
-		r.postgres.Client.Close()
+	if r.postgres.Connection != nil {
+		r.postgres.Connection.Close()
 	}
 }
 
@@ -59,22 +59,21 @@ func WithMemoryStore() Configuration {
 }
 
 // WithPostgresStore applies a postgres store to the Repository
-func WithPostgresStore(schema, dataSourceName string) Configuration {
+func WithPostgresStore(dataSourceName string) Configuration {
 	return func(s *Repository) (err error) {
 		// Create the postgres store, if we needed parameters, such as connection strings they could be inputted here
-		s.postgres, err = store.NewDatabase(schema, dataSourceName)
+		s.postgres, err = store.NewSQL(dataSourceName)
 		if err != nil {
 			return
 		}
 
-		err = s.postgres.Migrate()
-		if err != nil {
+		if err = store.Migrate(dataSourceName); err != nil {
 			return
 		}
 
-		s.Author = postgres.NewAuthorRepository(s.postgres.Client)
-		s.Book = postgres.NewBookRepository(s.postgres.Client)
-		s.Member = postgres.NewMemberRepository(s.postgres.Client)
+		s.Author = postgres.NewAuthorRepository(s.postgres.Connection)
+		s.Book = postgres.NewBookRepository(s.postgres.Connection)
+		s.Member = postgres.NewMemberRepository(s.postgres.Connection)
 
 		return
 	}

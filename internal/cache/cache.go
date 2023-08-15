@@ -19,7 +19,7 @@ type Configuration func(r *Cache) error
 // Cache is an implementation of the Cache
 type Cache struct {
 	dependencies Dependencies
-	redis        *store.Redis
+	redis        store.Redis
 
 	Author author.Cache
 	Book   book.Cache
@@ -47,8 +47,8 @@ func New(d Dependencies, configs ...Configuration) (s *Cache, err error) {
 // Close closes the cache and prevents new queries from starting.
 // Close then waits for all queries that have started processing on the server to finish.
 func (r *Cache) Close() {
-	if r.redis != nil {
-		r.redis.Client.Close()
+	if r.redis.Connection != nil {
+		r.redis.Connection.Close()
 	}
 }
 
@@ -72,8 +72,8 @@ func WithRedisStore(url string) Configuration {
 			return
 		}
 
-		s.Author = redis.NewAuthorCache(s.redis.Client, s.dependencies.AuthorRepository)
-		s.Book = redis.NewBookCache(s.redis.Client, s.dependencies.BookRepository)
+		s.Author = redis.NewAuthorCache(s.redis.Connection, s.dependencies.AuthorRepository)
+		s.Book = redis.NewBookCache(s.redis.Connection, s.dependencies.BookRepository)
 
 		return
 	}

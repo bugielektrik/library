@@ -40,18 +40,21 @@ func (s *Server) Run(logger *zap.Logger) (err error) {
 	if s.http != nil {
 		go func() {
 			if err = s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.Error("ERR_INIT_REST", zap.Error(err))
+				logger.Error("ERR_SERVE_HTTP", zap.Error(err))
 				return
 			}
 		}()
-		logger.Info("http server started on http://localhost" + s.http.Addr)
+		logger.Info("http server started on http://localhost:" + s.http.Addr)
 	}
 
 	if s.grpc != nil {
-		if err = s.grpc.Serve(s.listener); err != nil {
-			return
-		}
-		logger.Info("grpc server started on http://localhost" + s.listener.Addr().String())
+		go func() {
+			if err = s.grpc.Serve(s.listener); err != nil {
+				logger.Error("ERR_SERVE_GRPC", zap.Error(err))
+				return
+			}
+		}()
+		logger.Info("grpc server started on http://localhost:" + s.listener.Addr().String())
 	}
 
 	return
@@ -62,6 +65,10 @@ func (s *Server) Stop(ctx context.Context) (err error) {
 		if err = s.http.Shutdown(ctx); err != nil {
 			return
 		}
+	}
+
+	if s.grpc != nil {
+		s.grpc.GracefulStop()
 	}
 
 	return
