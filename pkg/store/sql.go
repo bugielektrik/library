@@ -12,7 +12,6 @@ import (
 )
 
 // postgres://username:password@localhost:5432/dbname?sslmode=disable&search_path=public
-// mongodb://username:password@localhost:27017/?retryWrites=true&w=majority&tls=false
 // oracle://username:password@:0/?connstr=(description=(address=(protocol=tcp)(host=localhost)(port=1521))(connect_data=(server=dedicated)(sid=dbname)))&persist security info=true&ssl=enable&ssl verify=false
 
 type SQL struct {
