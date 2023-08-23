@@ -16,13 +16,15 @@ func Migrate(dataSourceName string) (err error) {
 	}
 	driverName := strings.ToLower(strings.Split(dataSourceName, "://")[0])
 
-	migrations, err := migrate.New(fmt.Sprintf("file://%s/migrations", driverName), dataSourceName)
+	migrations, err := migrate.New(fmt.Sprintf("file://migrations/%s", driverName), dataSourceName)
 	if err != nil {
 		return
 	}
 
-	if err = migrations.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return
+	if err = migrations.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			return nil
+		}
 	}
 
 	return
