@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"library-service/internal/domain/book"
 )
@@ -37,7 +38,7 @@ func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id strin
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
 
-	args := []any{data.Name, data.Genre, data.ISBN, data.Authors.String()}
+	args := []any{data.Name, data.Genre, data.ISBN, pq.Array(data.Authors)}
 
 	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
 
@@ -88,7 +89,7 @@ func (s *BookRepository) prepareArgs(data book.Entity) (sets []string, args []an
 	}
 
 	if len(data.Authors) > 0 {
-		args = append(args, data.Authors.String())
+		args = append(args, pq.Array(data.Authors))
 		sets = append(sets, fmt.Sprintf("authors=$%d", len(args)))
 	}
 
