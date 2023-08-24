@@ -10,49 +10,36 @@ import (
 )
 
 const (
-	defaultHTTPPort               = "80"
-	defaultHTTPHost               = "localhost"
-	defaultHTTPSchema             = "http"
-	defaultHTTPReadTimeout        = 15 * time.Second
-	defaultHTTPWriteTimeout       = 15 * time.Second
-	defaultHTTPIdleTimeout        = 60 * time.Second
-	defaultHTTPMaxHeaderMegabytes = 1
+	defaultPort    = "8080"
+	defaultHost    = "http://localhost:8080"
+	defaultTimeout = 60 * time.Second
 
-	defaultOAUTHSecret  = "IP03O5Ekg91g5jw=="
-	defaultOAUTHExpires = 1200 * time.Second
+	defaultKey     = "IP03O5Ekg91g5jw=="
+	defaultExpires = 3600 * time.Second
 )
 
 type (
 	Configs struct {
-		HTTP     HTTPConfig
-		OAUTH    OAuthConfig
-		POSTGRES DatabaseConfig
+		APP      AppConfig
+		POSTGRES StoreConfig
 	}
 
-	HTTPConfig struct {
-		Port               string
-		Host               string
-		Schema             string
-		ReadTimeout        time.Duration
-		WriteTimeout       time.Duration
-		IdleTimeout        time.Duration
-		MaxHeaderMegabytes int
+	AppConfig struct {
+		ServerPort    string        `split_words:"true" required:"true"`
+		ServerHost    string        `split_words:"true" required:"true"`
+		ServerTimeout time.Duration `split_words:"true" required:"true"`
+		TokenKey      string        `split_words:"true"`
+		TokenExpires  time.Duration `split_words:"true"`
 	}
 
 	ClientConfig struct {
-		Endpoint string
-		Username string
-		Password string
+		URL      string `split_words:"true" required:"true"`
+		Login    string `split_words:"true"`
+		Password string `split_words:"true"`
 	}
 
-	OAuthConfig struct {
-		Secret   string
-		Expires  time.Duration
-		Duration string
-	}
-
-	DatabaseConfig struct {
-		DSN string
+	StoreConfig struct {
+		DSN string `split_words:"true" required:"true"`
 	}
 )
 
@@ -65,39 +52,20 @@ func New() (cfg Configs, err error) {
 	}
 	godotenv.Load(filepath.Join(root, ".env"))
 
-	cfg.HTTP = HTTPConfig{
-		Port:               defaultHTTPPort,
-		Host:               defaultHTTPHost,
-		Schema:             defaultHTTPSchema,
-		ReadTimeout:        defaultHTTPReadTimeout,
-		WriteTimeout:       defaultHTTPWriteTimeout,
-		IdleTimeout:        defaultHTTPIdleTimeout,
-		MaxHeaderMegabytes: defaultHTTPMaxHeaderMegabytes,
+	cfg.APP = AppConfig{
+		ServerPort:    defaultPort,
+		ServerHost:    defaultHost,
+		ServerTimeout: defaultTimeout,
+
+		TokenKey:     defaultKey,
+		TokenExpires: defaultExpires,
 	}
 
-	err = envconfig.Process("HTTP", &cfg.HTTP)
-	if err != nil {
+	if err = envconfig.Process("APP", &cfg.APP); err != nil {
 		return
 	}
 
-	cfg.OAUTH = OAuthConfig{
-		Secret:  defaultOAUTHSecret,
-		Expires: defaultOAUTHExpires,
-	}
-
-	err = envconfig.Process("OAUTH", &cfg.OAUTH)
-	if err != nil {
-		return
-	}
-
-	duration, err := time.ParseDuration(cfg.OAUTH.Duration)
-	if err != nil {
-		return
-	}
-	cfg.OAUTH.Expires = duration
-
-	err = envconfig.Process("POSTGRES", &cfg.POSTGRES)
-	if err != nil {
+	if err = envconfig.Process("POSTGRES", &cfg.POSTGRES); err != nil {
 		return
 	}
 

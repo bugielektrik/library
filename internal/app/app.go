@@ -94,7 +94,7 @@ func Run() {
 	}
 
 	servers, err := server.New(
-		server.WithHTTPServer(handlers.HTTP, configs.HTTP.Port))
+		server.WithHTTPServer(handlers.HTTP, configs.APP.ServerPort))
 	if err != nil {
 		logger.Error("ERR_INIT_SERVER", zap.Error(err))
 		return
@@ -105,6 +105,7 @@ func Run() {
 		logger.Error("ERR_RUN_SERVER", zap.Error(err))
 		return
 	}
+	logger.Info("http server started on http://localhost:" + configs.APP.ServerPort + "/swagger/index.html")
 
 	// Graceful Shutdown
 	var wait time.Duration

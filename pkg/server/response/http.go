@@ -22,15 +22,6 @@ func OK(w http.ResponseWriter, r *http.Request, data any) {
 	render.JSON(w, r, v)
 }
 
-func NoContent(w http.ResponseWriter, r *http.Request) {
-	render.Status(r, http.StatusOK)
-
-	v := Object{
-		Success: true,
-	}
-	render.JSON(w, r, v)
-}
-
 func BadRequest(w http.ResponseWriter, r *http.Request, err error, data any) {
 	render.Status(r, http.StatusBadRequest)
 

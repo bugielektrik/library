@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
-
 	"google.golang.org/grpc"
 )
 
@@ -39,12 +38,11 @@ func New(configs ...Configuration) (r *Server, err error) {
 func (s *Server) Run(logger *zap.Logger) (err error) {
 	if s.http != nil {
 		go func() {
-			if err = s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err = s.http.ListenAndServe(); err != nil {
 				logger.Error("ERR_SERVE_HTTP", zap.Error(err))
 				return
 			}
 		}()
-		logger.Info("http server started on http://localhost:" + s.http.Addr)
 	}
 
 	if s.grpc != nil {
@@ -54,7 +52,6 @@ func (s *Server) Run(logger *zap.Logger) (err error) {
 				return
 			}
 		}()
-		logger.Info("grpc server started on http://localhost:" + s.listener.Addr().String())
 	}
 
 	return

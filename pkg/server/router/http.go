@@ -1,8 +1,6 @@
 package router
 
 import (
-	"time"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -24,8 +22,6 @@ func New() *chi.Mux {
 	r.Use(middleware.CleanPath)
 
 	r.Use(middleware.Heartbeat("/"))
-
-	r.Use(middleware.Timeout(time.Second * 60))
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 

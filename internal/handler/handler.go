@@ -2,10 +2,12 @@ package handler
 
 import (
 	"net/url"
+	"path"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/oauth"
-	"github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"library-service/docs"
 	"library-service/internal/config"
@@ -58,25 +60,28 @@ func WithHTTPHandler() Configuration {
 		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
-		// Init swagger handler
-		docs.SwaggerInfo.BasePath = "/api/v1"
-		docs.SwaggerInfo.Host = h.dependencies.Configs.HTTP.Host
-		docs.SwaggerInfo.Schemes = []string{h.dependencies.Configs.HTTP.Schema}
+		h.HTTP.Use(middleware.Timeout(h.dependencies.Configs.APP.ServerTimeout))
 
-		swaggerURL := url.URL{
-			Scheme: h.dependencies.Configs.HTTP.Schema,
-			Host:   h.dependencies.Configs.HTTP.Host,
-			Path:   "swagger/doc.json",
+		// Init swagger handler
+		app, err := url.Parse(h.dependencies.Configs.APP.ServerHost)
+		if err != nil {
+			return
 		}
+		app.Path = path.Join(app.Path, "/swagger/doc.json")
+
+		docs.SwaggerInfo.BasePath = "/api/v1"
+		docs.SwaggerInfo.Host = app.Host
+		docs.SwaggerInfo.Schemes = []string{app.Scheme}
 
 		h.HTTP.Get("/swagger/*", httpSwagger.Handler(
-			httpSwagger.URL(swaggerURL.String()),
+			httpSwagger.URL(app.String()),
+			httpSwagger.URL(app.String()),
 		))
 
 		// Init auth handler
 		authHandler := oauth.NewBearerServer(
-			h.dependencies.Configs.OAUTH.Secret,
-			h.dependencies.Configs.OAUTH.Expires,
+			h.dependencies.Configs.APP.TokenKey,
+			h.dependencies.Configs.APP.TokenExpires,
 			h.dependencies.AuthService, nil)
 
 		h.HTTP.Post("/token", authHandler.UserCredentials)
@@ -89,7 +94,7 @@ func WithHTTPHandler() Configuration {
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
 			// use the Bearer Authentication middleware
-			r.Use(oauth.Authorize(h.dependencies.Configs.OAUTH.Secret, nil))
+			r.Use(oauth.Authorize(h.dependencies.Configs.APP.TokenKey, nil))
 
 			r.Mount("/authors", authorHandler.Routes())
 			r.Mount("/books", bookHandler.Routes())
