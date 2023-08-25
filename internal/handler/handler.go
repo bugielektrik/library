@@ -60,10 +60,10 @@ func WithHTTPHandler() Configuration {
 		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
-		h.HTTP.Use(middleware.Timeout(h.dependencies.Configs.APP.ServerTimeout))
+		h.HTTP.Use(middleware.Timeout(h.dependencies.Configs.SERVER.Timeout))
 
 		// Init swagger handler
-		app, err := url.Parse(h.dependencies.Configs.APP.ServerHost)
+		app, err := url.Parse(h.dependencies.Configs.SERVER.Host)
 		if err != nil {
 			return
 		}
@@ -80,8 +80,8 @@ func WithHTTPHandler() Configuration {
 
 		// Init auth handler
 		authHandler := oauth.NewBearerServer(
-			h.dependencies.Configs.APP.TokenKey,
-			h.dependencies.Configs.APP.TokenExpires,
+			h.dependencies.Configs.TOKEN.Key,
+			h.dependencies.Configs.TOKEN.Expires,
 			h.dependencies.AuthService, nil)
 
 		h.HTTP.Post("/token", authHandler.UserCredentials)
@@ -94,7 +94,7 @@ func WithHTTPHandler() Configuration {
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
 			// use the Bearer Authentication middleware
-			r.Use(oauth.Authorize(h.dependencies.Configs.APP.TokenKey, nil))
+			r.Use(oauth.Authorize(h.dependencies.Configs.TOKEN.Key, nil))
 
 			r.Mount("/authors", authorHandler.Routes())
 			r.Mount("/books", bookHandler.Routes())

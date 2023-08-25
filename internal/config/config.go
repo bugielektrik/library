@@ -10,36 +10,40 @@ import (
 )
 
 const (
-	defaultPort    = "8080"
-	defaultHost    = "http://localhost:8080"
-	defaultTimeout = 60 * time.Second
+	defaultServerPort    = "8080"
+	defaultServertHost   = "http://localhost:8080"
+	defaultServerTimeout = 60 * time.Second
 
-	defaultKey     = "IP03O5Ekg91g5jw=="
-	defaultExpires = 3600 * time.Second
+	defaultTokenKey     = "IP03O5Ekg91g5jw=="
+	defaultTokenExpires = 3600 * time.Second
 )
 
 type (
 	Configs struct {
-		APP      AppConfig
+		SERVER   ServerConfig
+		TOKEN    TokenConfig
 		POSTGRES StoreConfig
 	}
 
-	AppConfig struct {
-		ServerPort    string        `split_words:"true" required:"true"`
-		ServerHost    string        `split_words:"true" required:"true"`
-		ServerTimeout time.Duration `split_words:"true" required:"true"`
-		TokenKey      string        `split_words:"true"`
-		TokenExpires  time.Duration `split_words:"true"`
+	ServerConfig struct {
+		Port    string        `required:"true"`
+		Host    string        `required:"true"`
+		Timeout time.Duration `required:"true"`
+	}
+
+	TokenConfig struct {
+		Key     string
+		Expires time.Duration
 	}
 
 	ClientConfig struct {
-		URL      string `split_words:"true" required:"true"`
-		Login    string `split_words:"true"`
-		Password string `split_words:"true"`
+		URL      string `required:"true"`
+		Login    string
+		Password string
 	}
 
 	StoreConfig struct {
-		DSN string `split_words:"true" required:"true"`
+		DSN string `required:"true"`
 	}
 )
 
@@ -52,16 +56,18 @@ func New() (cfg Configs, err error) {
 	}
 	godotenv.Load(filepath.Join(root, ".env"))
 
-	cfg.APP = AppConfig{
-		ServerPort:    defaultPort,
-		ServerHost:    defaultHost,
-		ServerTimeout: defaultTimeout,
-
-		TokenKey:     defaultKey,
-		TokenExpires: defaultExpires,
+	cfg.SERVER = ServerConfig{
+		Port:    defaultServerPort,
+		Host:    defaultServertHost,
+		Timeout: defaultServerTimeout,
 	}
 
-	if err = envconfig.Process("APP", &cfg.APP); err != nil {
+	cfg.TOKEN = TokenConfig{
+		Key:     defaultTokenKey,
+		Expires: defaultTokenExpires,
+	}
+
+	if err = envconfig.Process("SERVER", &cfg.SERVER); err != nil {
 		return
 	}
 
