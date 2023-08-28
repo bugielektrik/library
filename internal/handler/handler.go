@@ -75,7 +75,6 @@ func WithHTTPHandler() Configuration {
 
 		h.HTTP.Get("/swagger/*", httpSwagger.Handler(
 			httpSwagger.URL(app.String()),
-			httpSwagger.URL(app.String()),
 		))
 
 		// Init auth handler
