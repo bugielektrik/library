@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/lib/pq"
 
 	"library-service/internal/domain/book"
+	"library-service/pkg/store"
 )
 
 type BookRepository struct {
@@ -21,18 +24,18 @@ func NewBookRepository(db *sqlx.DB) *BookRepository {
 	}
 }
 
-func (s *BookRepository) List(ctx context.Context) (dest []book.Entity, err error) {
+func (r *BookRepository) List(ctx context.Context) (dest []book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
 		ORDER BY id`
 
-	err = s.db.SelectContext(ctx, &dest, query)
+	err = r.db.SelectContext(ctx, &dest, query)
 
 	return
 }
 
-func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id string, err error) {
+func (r *BookRepository) Create(ctx context.Context, data book.Entity) (id string, err error) {
 	query := `
 		INSERT INTO books (name, genre, isbn, authors)
 		VALUES ($1, $2, $3, $4)
@@ -40,12 +43,16 @@ func (s *BookRepository) Create(ctx context.Context, data book.Entity) (id strin
 
 	args := []any{data.Name, data.Genre, data.ISBN, pq.Array(data.Authors)}
 
-	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = store.ErrorNotFound
+		}
+	}
 
 	return
 }
 
-func (s *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
+func (r *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
 	query := `
 		SELECT id, name, genre, isbn, authors
 		FROM books
@@ -53,26 +60,34 @@ func (s *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, 
 
 	args := []any{id}
 
-	err = s.db.GetContext(ctx, &dest, query, args...)
-
-	return
-}
-
-func (s *BookRepository) Update(ctx context.Context, id string, data book.Entity) (err error) {
-	sets, args := s.prepareArgs(data)
-	if len(args) > 0 {
-
-		args = append(args, id)
-		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
-
-		query := fmt.Sprintf("UPDATE books SET %s WHERE id=$%d", strings.Join(sets, ", "), len(args))
-		_, err = s.db.ExecContext(ctx, query, args...)
+	if err = r.db.GetContext(ctx, &dest, query, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = store.ErrorNotFound
+		}
 	}
 
 	return
 }
 
-func (s *BookRepository) prepareArgs(data book.Entity) (sets []string, args []any) {
+func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) (err error) {
+	sets, args := r.prepareArgs(data)
+	if len(args) > 0 {
+
+		args = append(args, id)
+		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
+		query := fmt.Sprintf("UPDATE books SET %r WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
+
+		if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				err = store.ErrorNotFound
+			}
+		}
+	}
+
+	return
+}
+
+func (r *BookRepository) prepareArgs(data book.Entity) (sets []string, args []any) {
 	if data.Name != nil {
 		args = append(args, data.Name)
 		sets = append(sets, fmt.Sprintf("name=$%d", len(args)))
@@ -96,15 +111,19 @@ func (s *BookRepository) prepareArgs(data book.Entity) (sets []string, args []an
 	return
 }
 
-func (s *BookRepository) Delete(ctx context.Context, id string) (err error) {
+func (r *BookRepository) Delete(ctx context.Context, id string) (err error) {
 	query := `
-		DELETE 
-		FROM books
-		WHERE id=$1`
+		DELETE FROM books
+		WHERE id=$1
+		RETURNING id`
 
 	args := []any{id}
 
-	_, err = s.db.ExecContext(ctx, query, args...)
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = store.ErrorNotFound
+		}
+	}
 
 	return
 }

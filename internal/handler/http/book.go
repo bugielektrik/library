@@ -1,7 +1,6 @@
 package http
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 	"library-service/internal/domain/book"
 	"library-service/internal/service/library"
 	"library-service/pkg/server/response"
+	"library-service/pkg/store"
 )
 
 type BookHandler struct {
@@ -100,7 +100,7 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.GetBook(r.Context(), id)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -135,7 +135,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.libraryService.UpdateBook(r.Context(), id, req); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -160,7 +160,7 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.libraryService.DeleteBook(r.Context(), id); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -186,7 +186,7 @@ func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.ListBookAuthors(r.Context(), id)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)

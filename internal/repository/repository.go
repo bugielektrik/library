@@ -5,6 +5,7 @@ import (
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
 	"library-service/internal/repository/memory"
+	"library-service/internal/repository/mongo"
 	"library-service/internal/repository/postgres"
 	"library-service/pkg/store"
 )
@@ -14,7 +15,8 @@ type Configuration func(r *Repository) error
 
 // Repository is an implementation of the Repository
 type Repository struct {
-	postgres store.SQL
+	mongo    store.Mongo
+	postgres store.SQLX
 
 	Author author.Repository
 	Book   book.Repository
@@ -41,8 +43,12 @@ func New(configs ...Configuration) (s *Repository, err error) {
 // Close closes the repository and prevents new queries from starting.
 // Close then waits for all queries that have started processing on the server to finish.
 func (r *Repository) Close() {
-	if r.postgres.Connection != nil {
-		r.postgres.Connection.Close()
+	if r.postgres.Client != nil {
+		r.postgres.Client.Close()
+	}
+
+	if r.mongo.Client != nil {
+		r.mongo.Client.Disconnect(nil)
 	}
 }
 
@@ -53,6 +59,24 @@ func WithMemoryStore() Configuration {
 		s.Author = memory.NewAuthorRepository()
 		s.Book = memory.NewBookRepository()
 		s.Member = memory.NewMemberRepository()
+
+		return
+	}
+}
+
+// WithMongoStore applies a mongo store to the Repository
+func WithMongoStore(uri, name string) Configuration {
+	return func(s *Repository) (err error) {
+		// Create the mongo store, if we needed parameters, such as connection strings they could be inputted here
+		s.mongo, err = store.NewMongo(uri)
+		if err != nil {
+			return
+		}
+		database := s.mongo.Client.Database(name)
+
+		s.Author = mongo.NewAuthorRepository(database)
+		s.Book = mongo.NewBookRepository(database)
+		s.Member = mongo.NewMemberRepository(database)
 
 		return
 	}
@@ -71,9 +95,9 @@ func WithPostgresStore(dataSourceName string) Configuration {
 			return
 		}
 
-		s.Author = postgres.NewAuthorRepository(s.postgres.Connection)
-		s.Book = postgres.NewBookRepository(s.postgres.Connection)
-		s.Member = postgres.NewMemberRepository(s.postgres.Connection)
+		s.Author = postgres.NewAuthorRepository(s.postgres.Client)
+		s.Book = postgres.NewBookRepository(s.postgres.Client)
+		s.Member = postgres.NewMemberRepository(s.postgres.Client)
 
 		return
 	}

@@ -2,11 +2,13 @@ package library
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/author"
 	"library-service/pkg/log"
+	"library-service/pkg/store"
 )
 
 func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err error) {
@@ -45,7 +47,7 @@ func (s *Service) GetAuthor(ctx context.Context, id string) (res author.Response
 	logger := log.LoggerFromContext(ctx).Named("GetAuthor").With(zap.String("id", id))
 
 	data, err := s.authorRepository.Get(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
 	}
@@ -64,7 +66,7 @@ func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Reques
 	}
 
 	err = s.authorRepository.Update(ctx, id, data)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to update by id", zap.Error(err))
 		return
 	}
@@ -76,7 +78,7 @@ func (s *Service) DeleteAuthor(ctx context.Context, id string) (err error) {
 	logger := log.LoggerFromContext(ctx).Named("DeleteAuthor").With(zap.String("id", id))
 
 	err = s.authorRepository.Delete(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to delete by id", zap.Error(err))
 		return
 	}

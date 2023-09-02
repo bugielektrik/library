@@ -2,12 +2,14 @@ package library
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 	"library-service/pkg/log"
+	"library-service/pkg/store"
 )
 
 func (s *Service) ListBooks(ctx context.Context) (res []book.Response, err error) {
@@ -47,7 +49,7 @@ func (s *Service) GetBook(ctx context.Context, id string) (res book.Response, er
 	logger := log.LoggerFromContext(ctx).Named("GetBook").With(zap.String("id", id))
 
 	data, err := s.bookRepository.Get(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
 	}
@@ -67,7 +69,7 @@ func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) (
 	}
 
 	err = s.bookRepository.Update(ctx, id, data)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to update by id", zap.Error(err))
 		return
 	}
@@ -79,7 +81,7 @@ func (s *Service) DeleteBook(ctx context.Context, id string) (err error) {
 	logger := log.LoggerFromContext(ctx).Named("DeleteBook").With(zap.String("id", id))
 
 	err = s.bookRepository.Delete(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to delete by id", zap.Error(err))
 		return
 	}
@@ -91,7 +93,7 @@ func (s *Service) ListBookAuthors(ctx context.Context, id string) (res []author.
 	logger := log.LoggerFromContext(ctx).Named("ListBookAuthors").With(zap.String("id", id))
 
 	data, err := s.bookRepository.Get(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
 	}
@@ -99,7 +101,7 @@ func (s *Service) ListBookAuthors(ctx context.Context, id string) (res []author.
 
 	for i := 0; i < len(data.Authors); i++ {
 		res[i], err = s.GetAuthor(ctx, data.Authors[i])
-		if err != nil {
+		if err != nil && !errors.Is(err, store.ErrorNotFound) {
 			logger.Error("failed to get author by id", zap.Error(err))
 			return
 		}

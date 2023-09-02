@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/lib/pq"
 
 	"library-service/internal/domain/member"
+	"library-service/pkg/store"
 )
 
 type MemberRepository struct {
@@ -21,18 +24,18 @@ func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	}
 }
 
-func (s *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
+func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
 		ORDER BY id`
 
-	err = s.db.SelectContext(ctx, &dest, query)
+	err = r.db.SelectContext(ctx, &dest, query)
 
 	return
 }
 
-func (s *MemberRepository) Create(ctx context.Context, data member.Entity) (id string, err error) {
+func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (id string, err error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
@@ -40,12 +43,16 @@ func (s *MemberRepository) Create(ctx context.Context, data member.Entity) (id s
 
 	args := []any{data.FullName, pq.Array(data.Books)}
 
-	err = s.db.QueryRowContext(ctx, query, args...).Scan(&id)
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = store.ErrorNotFound
+		}
+	}
 
 	return
 }
 
-func (s *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
+func (r *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
@@ -53,26 +60,34 @@ func (s *MemberRepository) Get(ctx context.Context, id string) (dest member.Enti
 
 	args := []any{id}
 
-	err = s.db.GetContext(ctx, &dest, query, args...)
-
-	return
-}
-
-func (s *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
-	sets, args := s.prepareArgs(data)
-	if len(args) > 0 {
-
-		args = append(args, id)
-		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
-
-		query := fmt.Sprintf("UPDATE members SET %s WHERE id=$%d", strings.Join(sets, ", "), len(args))
-		_, err = s.db.ExecContext(ctx, query, args...)
+	if err = r.db.GetContext(ctx, &dest, query, args...); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = store.ErrorNotFound
+		}
 	}
 
 	return
 }
 
-func (s *MemberRepository) prepareArgs(data member.Entity) (sets []string, args []any) {
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
+	sets, args := r.prepareArgs(data)
+	if len(args) > 0 {
+
+		args = append(args, id)
+		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
+		query := fmt.Sprintf("UPDATE members SET %r WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
+
+		if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				err = store.ErrorNotFound
+			}
+		}
+	}
+
+	return
+}
+
+func (r *MemberRepository) prepareArgs(data member.Entity) (sets []string, args []any) {
 	if data.FullName != nil {
 		args = append(args, data.FullName)
 		sets = append(sets, fmt.Sprintf("full_name=$%d", len(args)))
@@ -86,15 +101,19 @@ func (s *MemberRepository) prepareArgs(data member.Entity) (sets []string, args 
 	return
 }
 
-func (s *MemberRepository) Delete(ctx context.Context, id string) (err error) {
+func (r *MemberRepository) Delete(ctx context.Context, id string) (err error) {
 	query := `
-		DELETE 
-		FROM members
-		WHERE id=$1`
+		DELETE FROM members
+		WHERE id=$1
+		RETURNING id`
 
 	args := []any{id}
 
-	_, err = s.db.ExecContext(ctx, query, args...)
+	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			err = store.ErrorNotFound
+		}
+	}
 
 	return
 }

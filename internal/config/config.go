@@ -10,29 +10,32 @@ import (
 )
 
 const (
-	defaultServerPort    = "8080"
-	defaultServertHost   = "http://localhost:8080"
-	defaultServerTimeout = 60 * time.Second
+	defaultAppMode    = "dev"
+	defaultAppPort    = "8080"
+	defaultAppPath    = "/api/v1"
+	defaultAppTimeout = 60 * time.Second
 
-	defaultTokenKey     = "IP03O5Ekg91g5jw=="
+	defaultTokenSalt    = "IP03O5Ekg91g5jw=="
 	defaultTokenExpires = 3600 * time.Second
 )
 
 type (
 	Configs struct {
-		SERVER   ServerConfig
+		APP      AppConfig
 		TOKEN    TokenConfig
+		MONGO    StoreConfig
 		POSTGRES StoreConfig
 	}
 
-	ServerConfig struct {
-		Port    string        `required:"true"`
-		Host    string        `required:"true"`
-		Timeout time.Duration `required:"true"`
+	AppConfig struct {
+		Mode    string `required:"true"`
+		Port    string
+		Path    string
+		Timeout time.Duration
 	}
 
 	TokenConfig struct {
-		Key     string
+		Salt    string
 		Expires time.Duration
 	}
 
@@ -56,18 +59,23 @@ func New() (cfg Configs, err error) {
 	}
 	godotenv.Load(filepath.Join(root, ".env"))
 
-	cfg.SERVER = ServerConfig{
-		Port:    defaultServerPort,
-		Host:    defaultServertHost,
-		Timeout: defaultServerTimeout,
+	cfg.APP = AppConfig{
+		Mode:    defaultAppMode,
+		Port:    defaultAppPort,
+		Path:    defaultAppPath,
+		Timeout: defaultAppTimeout,
 	}
 
 	cfg.TOKEN = TokenConfig{
-		Key:     defaultTokenKey,
+		Salt:    defaultTokenSalt,
 		Expires: defaultTokenExpires,
 	}
 
-	if err = envconfig.Process("SERVER", &cfg.SERVER); err != nil {
+	if err = envconfig.Process("APP", &cfg.APP); err != nil {
+		return
+	}
+
+	if err = envconfig.Process("MONGO", &cfg.MONGO); err != nil {
 		return
 	}
 

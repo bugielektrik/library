@@ -13,22 +13,22 @@ import (
 // postgres://username:password@localhost:5432/dbname?sslmode=disable&search_path=public
 // oracle://username:password@:0/?connstr=(description=(address=(protocol=tcp)(host=localhost)(port=1521))(connect_data=(server=dedicated)(sid=dbname)))&persist security info=true&ssl=enable&ssl verify=false
 
-type SQL struct {
-	Connection *sqlx.DB
+type SQLX struct {
+	Client *sqlx.DB
 }
 
-func NewSQL(dataSourceName string) (store SQL, err error) {
+func NewSQL(dataSourceName string) (store SQLX, err error) {
 	if !strings.Contains(dataSourceName, "://") {
 		err = errors.New("store: undefined data source name " + dataSourceName)
 		return
 	}
 	driverName := strings.ToLower(strings.Split(dataSourceName, "://")[0])
 
-	store.Connection, err = sqlx.Connect(driverName, dataSourceName)
+	store.Client, err = sqlx.Connect(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
-	store.Connection.SetMaxOpenConns(20)
+	store.Client.SetMaxOpenConns(20)
 
 	return
 }

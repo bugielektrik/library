@@ -22,24 +22,20 @@ import (
 	"library-service/pkg/server"
 )
 
-const (
-	schema = "library"
-)
-
 // Run initializes whole application.
 func Run() {
 	logger := log.LoggerFromContext(context.Background())
 
 	configs, err := config.New()
 	if err != nil {
-		logger.Error("ERR_INIT_CONFIG", zap.Error(err))
+		logger.Error("ERR_INIT_CONFIGS", zap.Error(err))
 		return
 	}
 
 	repositories, err := repository.New(
 		repository.WithMemoryStore())
 	if err != nil {
-		logger.Error("ERR_INIT_REPOSITORY", zap.Error(err))
+		logger.Error("ERR_INIT_REPOSITORIES", zap.Error(err))
 		return
 	}
 	defer repositories.Close()
@@ -51,7 +47,7 @@ func Run() {
 		},
 		cache.WithMemoryStore())
 	if err != nil {
-		logger.Error("ERR_INIT_CACHE", zap.Error(err))
+		logger.Error("ERR_INIT_CACHES", zap.Error(err))
 		return
 	}
 	defer caches.Close()
@@ -89,23 +85,23 @@ func Run() {
 		},
 		handler.WithHTTPHandler())
 	if err != nil {
-		logger.Error("ERR_INIT_HANDLER", zap.Error(err))
+		logger.Error("ERR_INIT_HANDLERS", zap.Error(err))
 		return
 	}
 
 	servers, err := server.New(
-		server.WithHTTPServer(handlers.HTTP, configs.SERVER.Port))
+		server.WithHTTPServer(handlers.HTTP, configs.APP.Port))
 	if err != nil {
-		logger.Error("ERR_INIT_SERVER", zap.Error(err))
+		logger.Error("ERR_INIT_SERVERS", zap.Error(err))
 		return
 	}
 
 	// Run our server in a goroutine so that it doesn't block.
 	if err = servers.Run(logger); err != nil {
-		logger.Error("ERR_RUN_SERVER", zap.Error(err))
+		logger.Error("ERR_RUN_SERVERS", zap.Error(err))
 		return
 	}
-	logger.Info("http server started on http://localhost:" + configs.SERVER.Port + "/swagger/index.html")
+	logger.Info("http server started on http://localhost:" + configs.APP.Port + "/swagger/index.html")
 
 	// Graceful Shutdown
 	var wait time.Duration

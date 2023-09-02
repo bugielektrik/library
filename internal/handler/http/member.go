@@ -1,7 +1,6 @@
 package http
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 	"library-service/internal/domain/member"
 	"library-service/internal/service/subscription"
 	"library-service/pkg/server/response"
+	"library-service/pkg/store"
 )
 
 type MemberHandler struct {
@@ -100,7 +100,7 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	res, err := h.subscriptionService.GetMember(r.Context(), id)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -135,7 +135,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.subscriptionService.UpdateMember(r.Context(), id, req); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -160,7 +160,7 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.subscriptionService.DeleteMember(r.Context(), id); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -186,7 +186,7 @@ func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	res, err := h.subscriptionService.ListMemberBooks(r.Context(), id)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)

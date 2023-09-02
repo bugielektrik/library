@@ -1,7 +1,6 @@
 package http
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 	"library-service/internal/domain/author"
 	"library-service/internal/service/library"
 	"library-service/pkg/server/response"
+	"library-service/pkg/store"
 )
 
 type AuthorHandler struct {
@@ -99,7 +99,7 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.GetAuthor(r.Context(), id)
 	if err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -134,7 +134,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.libraryService.UpdateAuthor(r.Context(), id, req); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)
@@ -159,7 +159,7 @@ func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.libraryService.DeleteAuthor(r.Context(), id); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
 			response.InternalServerError(w, r, err)

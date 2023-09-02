@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"net/url"
-	"path"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/oauth"
@@ -60,26 +57,15 @@ func WithHTTPHandler() Configuration {
 		// Create the http handler, if we needed parameters, such as connection strings they could be inputted here
 		h.HTTP = router.New()
 
-		h.HTTP.Use(middleware.Timeout(h.dependencies.Configs.SERVER.Timeout))
+		h.HTTP.Use(middleware.Timeout(h.dependencies.Configs.APP.Timeout))
 
 		// Init swagger handler
-		app, err := url.Parse(h.dependencies.Configs.SERVER.Host)
-		if err != nil {
-			return
-		}
-		app.Path = path.Join(app.Path, "/swagger/doc.json")
-
-		docs.SwaggerInfo.BasePath = "/api/v1"
-		docs.SwaggerInfo.Host = app.Host
-		docs.SwaggerInfo.Schemes = []string{app.Scheme}
-
-		h.HTTP.Get("/swagger/*", httpSwagger.Handler(
-			httpSwagger.URL(app.String()),
-		))
+		docs.SwaggerInfo.BasePath = h.dependencies.Configs.APP.Path
+		h.HTTP.Get("/swagger/*", httpSwagger.WrapHandler)
 
 		// Init auth handler
 		authHandler := oauth.NewBearerServer(
-			h.dependencies.Configs.TOKEN.Key,
+			h.dependencies.Configs.TOKEN.Salt,
 			h.dependencies.Configs.TOKEN.Expires,
 			h.dependencies.AuthService, nil)
 
@@ -91,9 +77,9 @@ func WithHTTPHandler() Configuration {
 		bookHandler := http.NewBookHandler(h.dependencies.LibraryService)
 		memberHandler := http.NewMemberHandler(h.dependencies.SubscriptionService)
 
-		h.HTTP.Route("/api/v1", func(r chi.Router) {
+		h.HTTP.Route(h.dependencies.Configs.APP.Path, func(r chi.Router) {
 			// use the Bearer Authentication middleware
-			r.Use(oauth.Authorize(h.dependencies.Configs.TOKEN.Key, nil))
+			r.Use(oauth.Authorize(h.dependencies.Configs.TOKEN.Salt, nil))
 
 			r.Mount("/authors", authorHandler.Routes())
 			r.Mount("/books", bookHandler.Routes())

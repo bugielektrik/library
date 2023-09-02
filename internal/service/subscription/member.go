@@ -2,12 +2,14 @@ package subscription
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
 	"library-service/pkg/log"
+	"library-service/pkg/store"
 )
 
 func (s *Service) ListMembers(ctx context.Context) (res []member.Response, err error) {
@@ -45,7 +47,7 @@ func (s *Service) GetMember(ctx context.Context, id string) (res member.Response
 	logger := log.LoggerFromContext(ctx).Named("GetMember").With(zap.String("id", id))
 
 	data, err := s.memberRepository.Get(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
 	}
@@ -63,7 +65,7 @@ func (s *Service) UpdateMember(ctx context.Context, id string, req member.Reques
 	}
 
 	err = s.memberRepository.Update(ctx, id, data)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to update by id", zap.Error(err))
 		return
 	}
@@ -75,7 +77,7 @@ func (s *Service) DeleteMember(ctx context.Context, id string) (err error) {
 	logger := log.LoggerFromContext(ctx).Named("DeleteMember").With(zap.String("id", id))
 
 	err = s.memberRepository.Delete(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to delete by id", zap.Error(err))
 		return
 	}
@@ -87,7 +89,7 @@ func (s *Service) ListMemberBooks(ctx context.Context, id string) (res []book.Re
 	logger := log.LoggerFromContext(ctx).Named("ListMemberBooks").With(zap.String("id", id))
 
 	data, err := s.memberRepository.Get(ctx, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, store.ErrorNotFound) {
 		logger.Error("failed to get by id", zap.Error(err))
 		return
 	}
@@ -95,7 +97,7 @@ func (s *Service) ListMemberBooks(ctx context.Context, id string) (res []book.Re
 
 	for i := 0; i < len(data.Books); i++ {
 		res[i], err = s.libraryService.GetBook(ctx, data.Books[i])
-		if err != nil {
+		if err != nil && !errors.Is(err, store.ErrorNotFound) {
 			logger.Error("failed to get book by id", zap.Error(err))
 			return
 		}
