@@ -77,7 +77,7 @@ func WithHTTPHandler() Configuration {
 		bookHandler := http.NewBookHandler(h.dependencies.LibraryService)
 		memberHandler := http.NewMemberHandler(h.dependencies.SubscriptionService)
 
-		h.HTTP.Route(h.dependencies.Configs.APP.Path, func(r chi.Router) {
+		h.HTTP.Route("/", func(r chi.Router) {
 			// use the Bearer Authentication middleware
 			r.Use(oauth.Authorize(h.dependencies.Configs.TOKEN.Salt, nil))
 

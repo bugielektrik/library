@@ -15,6 +15,7 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/redis/go-redis/v9 v9.0.5
+	github.com/shopspring/decimal v1.2.0
 	github.com/swaggo/http-swagger/v2 v2.0.1
 	github.com/swaggo/swag v1.16.1
 	go.elastic.co/apm/module/apmzap v1.15.0

@@ -33,7 +33,7 @@ func (s *Service) CreateMember(ctx context.Context, req member.Request) (res mem
 		Books:    req.Books,
 	}
 
-	data.ID, err = s.memberRepository.Create(ctx, data)
+	data.ID, err = s.memberRepository.Add(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return

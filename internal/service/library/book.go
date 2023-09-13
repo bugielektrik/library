@@ -35,7 +35,7 @@ func (s *Service) CreateBook(ctx context.Context, req book.Request) (res book.Re
 		Authors: req.Authors,
 	}
 
-	data.ID, err = s.bookRepository.Create(ctx, data)
+	data.ID, err = s.bookRepository.Add(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return

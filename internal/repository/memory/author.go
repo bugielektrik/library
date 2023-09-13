@@ -33,7 +33,7 @@ func (r *AuthorRepository) List(ctx context.Context) (dest []author.Entity, err 
 	return
 }
 
-func (r *AuthorRepository) Create(ctx context.Context, data author.Entity) (dest string, err error) {
+func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 

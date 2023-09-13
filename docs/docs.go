@@ -27,14 +27,14 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "List of authors from the database",
+                "summary": "list of authors from the repository",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Object"
+                                "$ref": "#/definitions/author.Response"
                             }
                         }
                     },
@@ -56,7 +56,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Add a new author to the database",
+                "summary": "add a new author to the repository",
                 "parameters": [
                     {
                         "description": "body param",
@@ -72,7 +72,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Object"
+                            "$ref": "#/definitions/author.Response"
                         }
                     },
                     "400": {
@@ -101,7 +101,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Read the author from the database",
+                "summary": "get the author from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -115,7 +115,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Object"
+                            "$ref": "#/definitions/author.Response"
                         }
                     },
                     "404": {
@@ -142,7 +142,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Update the author in the database",
+                "summary": "update the author in the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -195,7 +195,7 @@ const docTemplate = `{
                 "tags": [
                     "authors"
                 ],
-                "summary": "Delete the author from the database",
+                "summary": "delete the author from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -235,14 +235,14 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "List of books from the database",
+                "summary": "list of books from the repository",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Object"
+                                "$ref": "#/definitions/book.Response"
                             }
                         }
                     },
@@ -264,7 +264,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Add a new book to the database",
+                "summary": "add a new book to the repository",
                 "parameters": [
                     {
                         "description": "body param",
@@ -280,7 +280,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Object"
+                            "$ref": "#/definitions/book.Response"
                         }
                     },
                     "400": {
@@ -309,7 +309,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Read the book from the database",
+                "summary": "get the book from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -323,7 +323,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Object"
+                            "$ref": "#/definitions/book.Response"
                         }
                     },
                     "404": {
@@ -350,7 +350,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Update the book in the database",
+                "summary": "update the book in the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -403,7 +403,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "Delete the book from the database",
+                "summary": "delete the book from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -443,7 +443,7 @@ const docTemplate = `{
                 "tags": [
                     "books"
                 ],
-                "summary": "List of authors from the database",
+                "summary": "list of authors from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -459,7 +459,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Object"
+                                "$ref": "#/definitions/author.Response"
                             }
                         }
                     },
@@ -489,14 +489,14 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "List of members from the database",
+                "summary": "list of members from the repository",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Object"
+                                "$ref": "#/definitions/member.Response"
                             }
                         }
                     },
@@ -518,7 +518,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Add a new member to the database",
+                "summary": "add a new member to the repository",
                 "parameters": [
                     {
                         "description": "body param",
@@ -534,7 +534,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Object"
+                            "$ref": "#/definitions/member.Response"
                         }
                     },
                     "400": {
@@ -563,7 +563,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Read the member from the database",
+                "summary": "get the member from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -577,7 +577,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.Object"
+                            "$ref": "#/definitions/member.Response"
                         }
                     },
                     "404": {
@@ -604,7 +604,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Update the member in the database",
+                "summary": "update the member in the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -657,7 +657,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "Delete the member from the database",
+                "summary": "delete the member from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -697,7 +697,7 @@ const docTemplate = `{
                 "tags": [
                     "members"
                 ],
-                "summary": "List of books from the database",
+                "summary": "list of books from the repository",
                 "parameters": [
                     {
                         "type": "integer",
@@ -713,7 +713,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Object"
+                                "$ref": "#/definitions/book.Response"
                             }
                         }
                     },
@@ -748,6 +748,23 @@ const docTemplate = `{
                 }
             }
         },
+        "author.Response": {
+            "type": "object",
+            "properties": {
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "pseudonym": {
+                    "type": "string"
+                },
+                "specialty": {
+                    "type": "string"
+                }
+            }
+        },
         "book.Request": {
             "type": "object",
             "properties": {
@@ -771,7 +788,47 @@ const docTemplate = `{
                 }
             }
         },
+        "book.Response": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "genre": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isbn": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "member.Request": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "member.Response": {
             "type": "object",
             "properties": {
                 "books": {

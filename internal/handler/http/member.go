@@ -25,7 +25,7 @@ func (h *MemberHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.list)
-	r.Post("/", h.create)
+	r.Post("/", h.add)
 
 	r.Route("/{id}", func(r chi.Router) {
 		r.Get("/", h.get)
@@ -37,15 +37,13 @@ func (h *MemberHandler) Routes() chi.Router {
 	return r
 }
 
-// List of members from the database
-//
-//	@Summary	List of members from the database
-//	@Tags		members
-//	@Accept		json
-//	@Produce	json
-//	@Success	200			{array}		response.Object
-//	@Failure	500			{object}	response.Object
-//	@Router		/members 	[get]
+// @Summary	list of members from the repository
+// @Tags		members
+// @Accept		json
+// @Produce	json
+// @Success	200			{array}		member.Response
+// @Failure	500			{object}	response.Object
+// @Router		/members 	[get]
 func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.subscriptionService.ListMembers(r.Context())
 	if err != nil {
@@ -56,18 +54,16 @@ func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
-// Add a new member to the database
-//
-//	@Summary	Add a new member to the database
-//	@Tags		members
-//	@Accept		json
-//	@Produce	json
-//	@Param		request	body		member.Request	true	"body param"
-//	@Success	200		{object}	response.Object
-//	@Failure	400		{object}	response.Object
-//	@Failure	500		{object}	response.Object
-//	@Router		/members [post]
-func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
+// @Summary	add a new member to the repository
+// @Tags		members
+// @Accept		json
+// @Produce	json
+// @Param		request	body		member.Request	true	"body param"
+// @Success	200		{object}	member.Response
+// @Failure	400		{object}	response.Object
+// @Failure	500		{object}	response.Object
+// @Router		/members [post]
+func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := member.Request{}
 	if err := render.Bind(r, &req); err != nil {
 		response.BadRequest(w, r, err, req)
@@ -83,17 +79,15 @@ func (h *MemberHandler) create(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
-// Read the member from the database
-//
-//	@Summary	Read the member from the database
-//	@Tags		members
-//	@Accept		json
-//	@Produce	json
-//	@Param		id	path		int	true	"path param"
-//	@Success	200	{object}	response.Object
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/members/{id} [get]
+// @Summary	get the member from the repository
+// @Tags		members
+// @Accept		json
+// @Produce	json
+// @Param		id	path		int	true	"path param"
+// @Success	200	{object}	member.Response
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/members/{id} [get]
 func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -111,19 +105,17 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
-// Update the member in the database
-//
-//	@Summary	Update the member in the database
-//	@Tags		members
-//	@Accept		json
-//	@Produce	json
-//	@Param		id		path	int				true	"path param"
-//	@Param		request	body	member.Request	true	"body param"
-//	@Success	200
-//	@Failure	400	{object}	response.Object
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/members/{id} [put]
+// @Summary	update the member in the repository
+// @Tags		members
+// @Accept		json
+// @Produce	json
+// @Param		id		path	int				true	"path param"
+// @Param		request	body	member.Request	true	"body param"
+// @Success	200
+// @Failure	400	{object}	response.Object
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/members/{id} [put]
 func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -144,17 +136,15 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Delete the member from the database
-//
-//	@Summary	Delete the member from the database
-//	@Tags		members
-//	@Accept		json
-//	@Produce	json
-//	@Param		id	path	int	true	"path param"
-//	@Success	200
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/members/{id} [delete]
+// @Summary	delete the member from the repository
+// @Tags		members
+// @Accept		json
+// @Produce	json
+// @Param		id	path	int	true	"path param"
+// @Success	200
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/members/{id} [delete]
 func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -169,17 +159,15 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// List of books from the database
-//
-//	@Summary	List of books from the database
-//	@Tags		members
-//	@Accept		json
-//	@Produce	json
-//	@Param		id	path		int	true	"path param"
-//	@Success	200	{array}		response.Object
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/members/{id}/books [get]
+// @Summary	list of books from the repository
+// @Tags		members
+// @Accept		json
+// @Produce	json
+// @Param		id	path		int	true	"path param"
+// @Success	200	{array}		book.Response
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/members/{id}/books [get]
 func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

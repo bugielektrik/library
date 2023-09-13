@@ -8,6 +8,17 @@ definitions:
       specialty:
         type: string
     type: object
+  author.Response:
+    properties:
+      fullName:
+        type: string
+      id:
+        type: string
+      pseudonym:
+        type: string
+      specialty:
+        type: string
+    type: object
   book.Request:
     properties:
       authors:
@@ -23,7 +34,33 @@ definitions:
       name:
         type: string
     type: object
+  book.Response:
+    properties:
+      authors:
+        items:
+          type: string
+        type: array
+      genre:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      name:
+        type: string
+    type: object
   member.Request:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      fullName:
+        type: string
+      id:
+        type: string
+    type: object
+  member.Response:
     properties:
       books:
         items:
@@ -56,13 +93,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/response.Object'
+              $ref: '#/definitions/author.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: List of authors from the database
+      summary: list of authors from the repository
       tags:
       - authors
     post:
@@ -81,7 +118,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/author.Response'
         "400":
           description: Bad Request
           schema:
@@ -90,7 +127,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Add a new author to the database
+      summary: add a new author to the repository
       tags:
       - authors
   /authors/{id}:
@@ -116,7 +153,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Delete the author from the database
+      summary: delete the author from the repository
       tags:
       - authors
     get:
@@ -134,7 +171,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/author.Response'
         "404":
           description: Not Found
           schema:
@@ -143,7 +180,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Read the author from the database
+      summary: get the author from the repository
       tags:
       - authors
     put:
@@ -178,7 +215,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Update the author in the database
+      summary: update the author in the repository
       tags:
       - authors
   /books:
@@ -192,13 +229,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/response.Object'
+              $ref: '#/definitions/book.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: List of books from the database
+      summary: list of books from the repository
       tags:
       - books
     post:
@@ -217,7 +254,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/book.Response'
         "400":
           description: Bad Request
           schema:
@@ -226,7 +263,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Add a new book to the database
+      summary: add a new book to the repository
       tags:
       - books
   /books/{id}:
@@ -252,7 +289,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Delete the book from the database
+      summary: delete the book from the repository
       tags:
       - books
     get:
@@ -270,7 +307,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/book.Response'
         "404":
           description: Not Found
           schema:
@@ -279,7 +316,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Read the book from the database
+      summary: get the book from the repository
       tags:
       - books
     put:
@@ -314,7 +351,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Update the book in the database
+      summary: update the book in the repository
       tags:
       - books
   /books/{id}/authors:
@@ -334,7 +371,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/response.Object'
+              $ref: '#/definitions/author.Response'
             type: array
         "404":
           description: Not Found
@@ -344,7 +381,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: List of authors from the database
+      summary: list of authors from the repository
       tags:
       - books
   /members:
@@ -358,13 +395,13 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/response.Object'
+              $ref: '#/definitions/member.Response'
             type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: List of members from the database
+      summary: list of members from the repository
       tags:
       - members
     post:
@@ -383,7 +420,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/member.Response'
         "400":
           description: Bad Request
           schema:
@@ -392,7 +429,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Add a new member to the database
+      summary: add a new member to the repository
       tags:
       - members
   /members/{id}:
@@ -418,7 +455,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Delete the member from the database
+      summary: delete the member from the repository
       tags:
       - members
     get:
@@ -436,7 +473,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/member.Response'
         "404":
           description: Not Found
           schema:
@@ -445,7 +482,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Read the member from the database
+      summary: get the member from the repository
       tags:
       - members
     put:
@@ -480,7 +517,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: Update the member in the database
+      summary: update the member in the repository
       tags:
       - members
   /members/{id}/books:
@@ -500,7 +537,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/response.Object'
+              $ref: '#/definitions/book.Response'
             type: array
         "404":
           description: Not Found
@@ -510,7 +547,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
-      summary: List of books from the database
+      summary: list of books from the repository
       tags:
       - members
 swagger: "2.0"

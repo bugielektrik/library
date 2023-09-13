@@ -33,7 +33,7 @@ func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err 
 	return
 }
 
-func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (dest string, err error) {
+func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (dest string, err error) {
 	r.Lock()
 	defer r.Unlock()
 

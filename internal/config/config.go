@@ -12,7 +12,7 @@ import (
 const (
 	defaultAppMode    = "dev"
 	defaultAppPort    = "8080"
-	defaultAppPath    = "/api/v1"
+	defaultAppPath    = "/"
 	defaultAppTimeout = 60 * time.Second
 
 	defaultTokenSalt    = "IP03O5Ekg91g5jw=="
@@ -40,13 +40,13 @@ type (
 	}
 
 	ClientConfig struct {
-		URL      string `required:"true"`
+		URL      string
 		Login    string
 		Password string
 	}
 
 	StoreConfig struct {
-		DSN string `required:"true"`
+		DSN string
 	}
 )
 

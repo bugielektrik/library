@@ -35,7 +35,7 @@ func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err 
 	return
 }
 
-func (r *MemberRepository) Create(ctx context.Context, data member.Entity) (id string, err error) {
+func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (id string, err error) {
 	res, err := r.db.InsertOne(ctx, data)
 	if err != nil {
 		return "", err

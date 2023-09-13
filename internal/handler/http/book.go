@@ -25,7 +25,7 @@ func (h *BookHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.list)
-	r.Post("/", h.create)
+	r.Post("/", h.add)
 
 	r.Route("/{id}", func(r chi.Router) {
 		r.Get("/", h.get)
@@ -37,15 +37,13 @@ func (h *BookHandler) Routes() chi.Router {
 	return r
 }
 
-// List of books from the database
-//
-//	@Summary	List of books from the database
-//	@Tags		books
-//	@Accept		json
-//	@Produce	json
-//	@Success	200		{array}		response.Object
-//	@Failure	500		{object}	response.Object
-//	@Router		/books 	[get]
+// @Summary	list of books from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Success	200		{array}		book.Response
+// @Failure	500		{object}	response.Object
+// @Router		/books 	[get]
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.ListBooks(r.Context())
 	if err != nil {
@@ -56,18 +54,16 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
-// Add a new book to the database
-//
-//	@Summary	Add a new book to the database
-//	@Tags		books
-//	@Accept		json
-//	@Produce	json
-//	@Param		request	body		book.Request	true	"body param"
-//	@Success	200		{object}	response.Object
-//	@Failure	400		{object}	response.Object
-//	@Failure	500		{object}	response.Object
-//	@Router		/books [post]
-func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
+// @Summary	add a new book to the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		request	body		book.Request	true	"body param"
+// @Success	200		{object}	book.Response
+// @Failure	400		{object}	response.Object
+// @Failure	500		{object}	response.Object
+// @Router		/books [post]
+func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := book.Request{}
 	if err := render.Bind(r, &req); err != nil {
 		response.BadRequest(w, r, err, req)
@@ -83,17 +79,15 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
-// Read the book from the database
-//
-//	@Summary	Read the book from the database
-//	@Tags		books
-//	@Accept		json
-//	@Produce	json
-//	@Param		id	path		int	true	"path param"
-//	@Success	200	{object}	response.Object
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/books/{id} [get]
+// @Summary	get the book from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id	path		int	true	"path param"
+// @Success	200	{object}	book.Response
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id} [get]
 func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -111,19 +105,17 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
-// Update the book in the database
-//
-//	@Summary	Update the book in the database
-//	@Tags		books
-//	@Accept		json
-//	@Produce	json
-//	@Param		id		path	int				true	"path param"
-//	@Param		request	body	book.Request	true	"body param"
-//	@Success	200
-//	@Failure	400	{object}	response.Object
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/books/{id} [put]
+// @Summary	update the book in the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id		path	int				true	"path param"
+// @Param		request	body	book.Request	true	"body param"
+// @Success	200
+// @Failure	400	{object}	response.Object
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id} [put]
 func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -144,17 +136,15 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Delete the book from the database
-//
-//	@Summary	Delete the book from the database
-//	@Tags		books
-//	@Accept		json
-//	@Produce	json
-//	@Param		id	path	int	true	"path param"
-//	@Success	200
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/books/{id} [delete]
+// @Summary	delete the book from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id	path	int	true	"path param"
+// @Success	200
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id} [delete]
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -169,17 +159,15 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// List of authors from the database
-//
-//	@Summary	List of authors from the database
-//	@Tags		books
-//	@Accept		json
-//	@Produce	json
-//	@Param		id	path		int	true	"path param"
-//	@Success	200	{array}		response.Object
-//	@Failure	404	{object}	response.Object
-//	@Failure	500	{object}	response.Object
-//	@Router		/books/{id}/authors [get]
+// @Summary	list of authors from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id	path		int	true	"path param"
+// @Success	200	{array}		author.Response
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id}/authors [get]
 func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

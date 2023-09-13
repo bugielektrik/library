@@ -24,8 +24,8 @@ func (s *Service) ListAuthors(ctx context.Context) (res []author.Response, err e
 	return
 }
 
-func (s *Service) CreateAuthor(ctx context.Context, req author.Request) (res author.Response, err error) {
-	logger := log.LoggerFromContext(ctx).Named("CreateAuthor")
+func (s *Service) AddAuthor(ctx context.Context, req author.Request) (res author.Response, err error) {
+	logger := log.LoggerFromContext(ctx).Named("AddAuthor")
 
 	data := author.Entity{
 		FullName:  &req.FullName,
@@ -33,7 +33,7 @@ func (s *Service) CreateAuthor(ctx context.Context, req author.Request) (res aut
 		Specialty: &req.Specialty,
 	}
 
-	data.ID, err = s.authorRepository.Create(ctx, data)
+	data.ID, err = s.authorRepository.Add(ctx, data)
 	if err != nil {
 		logger.Error("failed to create", zap.Error(err))
 		return

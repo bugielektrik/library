@@ -35,7 +35,7 @@ func (r *BookRepository) List(ctx context.Context) (dest []book.Entity, err erro
 	return
 }
 
-func (r *BookRepository) Create(ctx context.Context, data book.Entity) (id string, err error) {
+func (r *BookRepository) Add(ctx context.Context, data book.Entity) (id string, err error) {
 	res, err := r.db.InsertOne(ctx, data)
 	if err != nil {
 		return "", err
