@@ -115,7 +115,7 @@ func Run() {
 
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
 	<-quit                                             // This blocks the main thread until an interrupt is received
-	fmt.Println("Gracefully shutting down...")
+	fmt.Println("gracefully shutting down...")
 
 	// create a deadline to wait for.
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
@@ -127,8 +127,8 @@ func Run() {
 		panic(err) // failure/timeout shutting down the httpServer gracefully
 	}
 
-	fmt.Println("Running cleanup tasks...")
+	fmt.Println("running cleanup tasks...")
 	// Your cleanup tasks go here
 
-	fmt.Println("Server was successful shutdown.")
+	fmt.Println("server was successful shutdown.")
 }
