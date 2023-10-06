@@ -23,7 +23,7 @@ type (
 	Configs struct {
 		APP      AppConfig
 		TOKEN    TokenConfig
-		MONGO    StoreConfig
+		CURRENCY ClientConfig
 		POSTGRES StoreConfig
 	}
 
@@ -75,7 +75,7 @@ func New() (cfg Configs, err error) {
 		return
 	}
 
-	if err = envconfig.Process("MONGO", &cfg.MONGO); err != nil {
+	if err = envconfig.Process("CURRENCY", &cfg.CURRENCY); err != nil {
 		return
 	}
 

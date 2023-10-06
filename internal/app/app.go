@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,15 +15,17 @@ import (
 	"library-service/internal/cache"
 	"library-service/internal/config"
 	"library-service/internal/handler"
+	"library-service/internal/provider/currency"
 	"library-service/internal/repository"
 	"library-service/internal/service/auth"
 	"library-service/internal/service/library"
+	"library-service/internal/service/payment"
 	"library-service/internal/service/subscription"
 	"library-service/pkg/log"
 	"library-service/pkg/server"
 )
 
-// Run initializes whole application.
+// Run initializes whole application
 func Run() {
 	logger := log.LoggerFromContext(context.Background())
 
@@ -31,6 +34,10 @@ func Run() {
 		logger.Error("ERR_INIT_CONFIGS", zap.Error(err))
 		return
 	}
+
+	currencyClient := currency.New(currency.Credentials{
+		URL: configs.CURRENCY.URL,
+	})
 
 	repositories, err := repository.New(
 		repository.WithMemoryStore())
@@ -55,6 +62,13 @@ func Run() {
 	authService, err := auth.New()
 	if err != nil {
 		logger.Error("ERR_INIT_AUTH_SERVICE", zap.Error(err))
+		return
+	}
+
+	paymentService, err := payment.New(
+		payment.WithCurrencyClient(currencyClient))
+	if err != nil {
+		logger.Error("ERR_INIT_PAYMENT_SERVICE", zap.Error(err))
 		return
 	}
 
@@ -96,7 +110,7 @@ func Run() {
 		return
 	}
 
-	// Run our server in a goroutine so that it doesn't block.
+	// Run our server in a goroutine so that it doesn't block
 	if err = servers.Run(logger); err != nil {
 		logger.Error("ERR_RUN_SERVERS", zap.Error(err))
 		return
@@ -108,21 +122,20 @@ func Run() {
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the httpServer gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	quit := make(chan os.Signal, 1) // create channel to signify a signal being sent
+	quit := make(chan os.Signal, 1) // Create channel to signify a signal being sent
 
 	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
-	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
+	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught
 
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
 	<-quit                                             // This blocks the main thread until an interrupt is received
 	fmt.Println("gracefully shutting down...")
 
-	// create a deadline to wait for.
+	// Create a deadline to wait for
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
 
-	// Doesn't block if no connections, but will otherwise wait
-	// until the timeout deadline.
+	// Doesn't block if no connections, but will otherwise wait until the timeout deadline
 	if err = servers.Stop(ctx); err != nil {
 		panic(err) // failure/timeout shutting down the httpServer gracefully
 	}
