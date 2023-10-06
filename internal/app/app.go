@@ -94,6 +94,7 @@ func Run() {
 		handler.Dependencies{
 			Configs:             configs,
 			AuthService:         authService,
+			PaymentService:      paymentService,
 			LibraryService:      libraryService,
 			SubscriptionService: subscriptionService,
 		},

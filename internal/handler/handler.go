@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/oauth"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"library-service/internal/service/payment"
 
 	"library-service/docs"
 	"library-service/internal/config"
@@ -18,6 +19,7 @@ import (
 type Dependencies struct {
 	Configs             config.Configs
 	AuthService         *auth.Service
+	PaymentService      *payment.Service
 	LibraryService      *library.Service
 	SubscriptionService *subscription.Service
 }
