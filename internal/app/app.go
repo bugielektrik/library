@@ -26,6 +26,7 @@ import (
 )
 
 // Run initializes whole application
+// FIRST COMMIT
 func Run() {
 	logger := log.LoggerFromContext(context.Background())
 
