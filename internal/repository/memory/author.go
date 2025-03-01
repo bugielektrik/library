@@ -10,54 +10,54 @@ import (
 	"library-service/internal/domain/author"
 )
 
+// AuthorRepository handles CRUD operations for authors in an in-memory database.
 type AuthorRepository struct {
 	db map[string]author.Entity
 	sync.RWMutex
 }
 
+// NewAuthorRepository creates a new AuthorRepository.
 func NewAuthorRepository() *AuthorRepository {
-	return &AuthorRepository{
-		db: make(map[string]author.Entity),
-	}
+	return &AuthorRepository{db: make(map[string]author.Entity)}
 }
 
-func (r *AuthorRepository) List(ctx context.Context) (dest []author.Entity, err error) {
+// List retrieves all authors from the in-memory database.
+func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	dest = make([]author.Entity, 0, len(r.db))
+	authors := make([]author.Entity, 0, len(r.db))
 	for _, data := range r.db {
-		dest = append(dest, data)
+		authors = append(authors, data)
 	}
-
-	return
+	return authors, nil
 }
 
-func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (dest string, err error) {
+// Add inserts a new author into the in-memory database.
+func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
-	id := r.generateID()
+	id := uuid.New().String()
 	data.ID = id
 	r.db[id] = data
-
 	return id, nil
 }
 
-func (r *AuthorRepository) Get(ctx context.Context, id string) (dest author.Entity, err error) {
+// Get retrieves an author by ID from the in-memory database.
+func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	dest, ok := r.db[id]
+	data, ok := r.db[id]
 	if !ok {
-		err = sql.ErrNoRows
-		return
+		return author.Entity{}, sql.ErrNoRows
 	}
-
-	return
+	return data, nil
 }
 
-func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) (err error) {
+// Update modifies an existing author in the in-memory database.
+func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -65,11 +65,11 @@ func (r *AuthorRepository) Update(ctx context.Context, id string, data author.En
 		return sql.ErrNoRows
 	}
 	r.db[id] = data
-
-	return
+	return nil
 }
 
-func (r *AuthorRepository) Delete(ctx context.Context, id string) (err error) {
+// Delete removes an author by ID from the in-memory database.
+func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -77,10 +77,5 @@ func (r *AuthorRepository) Delete(ctx context.Context, id string) (err error) {
 		return sql.ErrNoRows
 	}
 	delete(r.db, id)
-
-	return
-}
-
-func (r *AuthorRepository) generateID() string {
-	return uuid.New().String()
+	return nil
 }

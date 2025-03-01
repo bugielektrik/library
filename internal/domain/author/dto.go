@@ -5,15 +5,17 @@ import (
 	"net/http"
 )
 
+// Request represents the request payload for author operations.
 type Request struct {
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
 	Specialty string `json:"specialty"`
 }
 
+// Bind validates the request payload.
 func (s *Request) Bind(r *http.Request) error {
 	if s.FullName == "" {
-		return errors.New("phone: cannot be blank")
+		return errors.New("fullname: cannot be blank")
 	}
 
 	if s.Pseudonym == "" {
@@ -27,6 +29,7 @@ func (s *Request) Bind(r *http.Request) error {
 	return nil
 }
 
+// Response represents the response payload for author operations.
 type Response struct {
 	ID        string `json:"id"`
 	FullName  string `json:"fullName"`
@@ -34,20 +37,21 @@ type Response struct {
 	Specialty string `json:"specialty"`
 }
 
-func ParseFromEntity(data Entity) (res Response) {
-	res = Response{
+// ParseFromEntity converts an author entity to a response payload.
+func ParseFromEntity(data Entity) Response {
+	return Response{
 		ID:        data.ID,
 		FullName:  *data.FullName,
 		Pseudonym: *data.Pseudonym,
 		Specialty: *data.Specialty,
 	}
-	return
 }
 
-func ParseFromEntities(data []Entity) (res []Response) {
-	res = make([]Response, 0)
-	for _, object := range data {
-		res = append(res, ParseFromEntity(object))
+// ParseFromEntities converts a list of author entities to a list of response payloads.
+func ParseFromEntities(data []Entity) []Response {
+	res := make([]Response, len(data))
+	for i, entity := range data {
+		res[i] = ParseFromEntity(entity)
 	}
-	return
+	return res
 }
