@@ -41,6 +41,11 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (author.Res
 	}
 	newAuthor.ID = id
 
+	// Cache the newly created author
+	if err := s.authorCache.Set(ctx, id, newAuthor); err != nil {
+		logger.Warn("failed to cache new author", zap.Error(err))
+	}
+
 	return author.ParseFromEntity(newAuthor), nil
 }
 
@@ -93,6 +98,11 @@ func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Reques
 		return err
 	}
 
+	// Update the cache with the new author data
+	if err := s.authorCache.Set(ctx, id, updatedAuthor); err != nil {
+		logger.Warn("failed to update cache for author", zap.Error(err))
+	}
+
 	return nil
 }
 
@@ -108,6 +118,11 @@ func (s *Service) DeleteAuthor(ctx context.Context, id string) error {
 		}
 		logger.Error("failed to delete author", zap.Error(err))
 		return err
+	}
+
+	// Remove the author from the cache
+	if err := s.authorCache.Set(ctx, id, author.Entity{}); err != nil {
+		logger.Warn("failed to remove author from cache", zap.Error(err))
 	}
 
 	return nil

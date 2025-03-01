@@ -9,11 +9,13 @@ import (
 	"library-service/internal/domain/book"
 )
 
+// BookCache handles caching operations for books using an in-memory cache.
 type BookCache struct {
 	cache      *cache.Cache
 	repository book.Repository
 }
 
+// NewBookCache creates a new BookCache.
 func NewBookCache(r book.Repository) *BookCache {
 	c := cache.New(5*time.Minute, 10*time.Minute) // Cache with 5 minutes expiration and 10 minutes cleanup interval
 	return &BookCache{
@@ -22,7 +24,8 @@ func NewBookCache(r book.Repository) *BookCache {
 	}
 }
 
-func (r *BookCache) Get(ctx context.Context, id string) (dest book.Entity, err error) {
+// Get retrieves a book entity by its ID from the cache.
+func (r *BookCache) Get(ctx context.Context, id string) (book.Entity, error) {
 	// Check if data is available in the cache
 	if data, found := r.cache.Get(id); found {
 		// Data found in the cache, return it
@@ -30,13 +33,19 @@ func (r *BookCache) Get(ctx context.Context, id string) (dest book.Entity, err e
 	}
 
 	// Data not found in the cache, retrieve it from the data source
-	dest, err = r.repository.Get(ctx, id)
+	dest, err := r.repository.Get(ctx, id)
 	if err != nil {
-		return
+		return dest, err
 	}
 
 	// Store the retrieved data in the cache for future use
 	r.cache.Set(id, dest, cache.DefaultExpiration)
 
-	return
+	return dest, nil
+}
+
+// Set stores a book entity in the cache.
+func (r *BookCache) Set(ctx context.Context, id string, data book.Entity) error {
+	r.cache.Set(id, data, cache.DefaultExpiration)
+	return nil
 }

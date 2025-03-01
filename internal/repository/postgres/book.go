@@ -14,116 +14,93 @@ import (
 	"library-service/pkg/store"
 )
 
+// BookRepository handles CRUD operations for books in a PostgreSQL database.
 type BookRepository struct {
 	db *sqlx.DB
 }
 
+// NewBookRepository creates a new BookRepository.
 func NewBookRepository(db *sqlx.DB) *BookRepository {
-	return &BookRepository{
-		db: db,
+	return &BookRepository{db: db}
+}
+
+// List retrieves all books from the database.
+func (r *BookRepository) List(ctx context.Context) ([]book.Entity, error) {
+	query := `SELECT id, name, genre, isbn, authors FROM books ORDER BY id`
+	var books []book.Entity
+	err := r.db.SelectContext(ctx, &books, query)
+	return books, err
+}
+
+// Add inserts a new book into the database.
+func (r *BookRepository) Add(ctx context.Context, data book.Entity) (string, error) {
+	query := `INSERT INTO books (name, genre, isbn, authors) VALUES ($1, $2, $3, $4) RETURNING id`
+	args := []interface{}{data.Name, data.Genre, data.ISBN, pq.Array(data.Authors)}
+	var id string
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return "", store.ErrorNotFound
 	}
+	return id, err
 }
 
-func (r *BookRepository) List(ctx context.Context) (dest []book.Entity, err error) {
-	query := `
-		SELECT id, name, genre, isbn, authors
-		FROM books
-		ORDER BY id`
-
-	err = r.db.SelectContext(ctx, &dest, query)
-
-	return
-}
-
-func (r *BookRepository) Add(ctx context.Context, data book.Entity) (id string, err error) {
-	query := `
-		INSERT INTO books (name, genre, isbn, authors)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id`
-
-	args := []any{data.Name, data.Genre, data.ISBN, pq.Array(data.Authors)}
-
-	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = store.ErrorNotFound
-		}
+// Get retrieves a book by ID from the database.
+func (r *BookRepository) Get(ctx context.Context, id string) (book.Entity, error) {
+	query := `SELECT id, name, genre, isbn, authors FROM books WHERE id=$1`
+	var book book.Entity
+	err := r.db.GetContext(ctx, &book, query, id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return book, store.ErrorNotFound
 	}
-
-	return
+	return book, err
 }
 
-func (r *BookRepository) Get(ctx context.Context, id string) (dest book.Entity, err error) {
-	query := `
-		SELECT id, name, genre, isbn, authors
-		FROM books
-		WHERE id=$1`
-
-	args := []any{id}
-
-	if err = r.db.GetContext(ctx, &dest, query, args...); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = store.ErrorNotFound
-		}
-	}
-
-	return
-}
-
-func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) (err error) {
+// Update modifies an existing book in the database.
+func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) error {
 	sets, args := r.prepareArgs(data)
-	if len(args) > 0 {
-
-		args = append(args, id)
-		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
-		query := fmt.Sprintf("UPDATE books SET %r WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
-
-		if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				err = store.ErrorNotFound
-			}
-		}
+	if len(args) == 0 {
+		return nil
 	}
-
-	return
+	args = append(args, id)
+	query := fmt.Sprintf("UPDATE books SET %s, updated_at=CURRENT_TIMESTAMP WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return store.ErrorNotFound
+	}
+	return err
 }
 
-func (r *BookRepository) prepareArgs(data book.Entity) (sets []string, args []any) {
+// Delete removes a book by ID from the database.
+func (r *BookRepository) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM books WHERE id=$1 RETURNING id`
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return store.ErrorNotFound
+	}
+	return err
+}
+
+// prepareArgs prepares the update arguments for the SQL query.
+func (r *BookRepository) prepareArgs(data book.Entity) ([]string, []interface{}) {
+	var sets []string
+	var args []interface{}
+
 	if data.Name != nil {
 		args = append(args, data.Name)
 		sets = append(sets, fmt.Sprintf("name=$%d", len(args)))
 	}
-
 	if data.Genre != nil {
 		args = append(args, data.Genre)
 		sets = append(sets, fmt.Sprintf("genre=$%d", len(args)))
 	}
-
 	if data.ISBN != nil {
 		args = append(args, data.ISBN)
 		sets = append(sets, fmt.Sprintf("isbn=$%d", len(args)))
 	}
-
 	if len(data.Authors) > 0 {
 		args = append(args, pq.Array(data.Authors))
 		sets = append(sets, fmt.Sprintf("authors=$%d", len(args)))
 	}
 
-	return
-}
-
-func (r *BookRepository) Delete(ctx context.Context, id string) (err error) {
-	query := `
-		DELETE FROM books
-		WHERE id=$1
-		RETURNING id`
-
-	args := []any{id}
-
-	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			err = store.ErrorNotFound
-		}
-	}
-
-	return
+	return sets, args
 }

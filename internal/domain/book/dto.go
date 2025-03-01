@@ -5,14 +5,15 @@ import (
 	"net/http"
 )
 
+// Request represents the request payload for book operations.
 type Request struct {
-	ID      string   `json:"id"`
 	Name    string   `json:"name"`
 	Genre   string   `json:"genre"`
 	ISBN    string   `json:"isbn"`
 	Authors []string `json:"authors"`
 }
 
+// Bind validates the request payload.
 func (s *Request) Bind(r *http.Request) error {
 	if s.Name == "" {
 		return errors.New("name: cannot be blank")
@@ -29,6 +30,7 @@ func (s *Request) Bind(r *http.Request) error {
 	return nil
 }
 
+// Response represents the response payload for book operations.
 type Response struct {
 	ID      string   `json:"id"`
 	Name    string   `json:"name"`
@@ -37,21 +39,22 @@ type Response struct {
 	Authors []string `json:"authors"`
 }
 
-func ParseFromEntity(data Entity) (res Response) {
-	res = Response{
+// ParseFromEntity converts a book entity to a response payload.
+func ParseFromEntity(data Entity) Response {
+	return Response{
 		ID:      data.ID,
 		Name:    *data.Name,
 		Genre:   *data.Genre,
 		ISBN:    *data.ISBN,
 		Authors: data.Authors,
 	}
-	return
 }
 
-func ParseFromEntities(data []Entity) (res []Response) {
-	res = make([]Response, 0)
-	for _, object := range data {
-		res = append(res, ParseFromEntity(object))
+// ParseFromEntities converts a list of book entities to a list of response payloads.
+func ParseFromEntities(data []Entity) []Response {
+	res := make([]Response, len(data))
+	for i, entity := range data {
+		res[i] = ParseFromEntity(entity)
 	}
-	return
+	return res
 }
