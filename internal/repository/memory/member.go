@@ -10,77 +10,79 @@ import (
 	"library-service/internal/domain/member"
 )
 
+// MemberRepository provides an in-memory implementation of the member repository.
 type MemberRepository struct {
 	db map[string]member.Entity
-	sync.RWMutex
+	mu sync.RWMutex
 }
 
+// NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository() *MemberRepository {
 	return &MemberRepository{
 		db: make(map[string]member.Entity),
 	}
 }
 
-func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
-	r.RLock()
-	defer r.RUnlock()
+// List retrieves all members from the in-memory store.
+func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	dest = make([]member.Entity, 0, len(r.db))
-	for _, data := range r.db {
-		dest = append(dest, data)
+	members := make([]member.Entity, 0, len(r.db))
+	for _, entity := range r.db {
+		members = append(members, entity)
 	}
 
-	return
+	return members, nil
 }
 
-func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (dest string, err error) {
-	r.Lock()
-	defer r.Unlock()
+// Add inserts a new member into the in-memory store.
+func (r *MemberRepository) Add(ctx context.Context, entity member.Entity) (string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	id := r.generateID()
-	data.ID = id
-	r.db[id] = data
+	id := uuid.New().String()
+	entity.ID = id
+	r.db[id] = entity
 
 	return id, nil
 }
 
-func (r *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
-	r.RLock()
-	defer r.RUnlock()
+// Get retrieves a member by ID from the in-memory store.
+func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	dest, ok := r.db[id]
-	if !ok {
-		err = sql.ErrNoRows
-		return
+	entity, exists := r.db[id]
+	if !exists {
+		return member.Entity{}, sql.ErrNoRows
 	}
 
-	return
+	return entity, nil
 }
 
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
-	r.Lock()
-	defer r.Unlock()
+// Update modifies an existing member in the in-memory store.
+func (r *MemberRepository) Update(ctx context.Context, id string, entity member.Entity) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	if _, ok := r.db[id]; !ok {
+	if _, exists := r.db[id]; !exists {
 		return sql.ErrNoRows
 	}
-	r.db[id] = data
+	r.db[id] = entity
 
-	return
+	return nil
 }
 
-func (r *MemberRepository) Delete(ctx context.Context, id string) (err error) {
-	r.Lock()
-	defer r.Unlock()
+// Delete removes a member by ID from the in-memory store.
+func (r *MemberRepository) Delete(ctx context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	if _, ok := r.db[id]; !ok {
+	if _, exists := r.db[id]; !exists {
 		return sql.ErrNoRows
 	}
 	delete(r.db, id)
 
-	return
-}
-
-func (r *MemberRepository) generateID() string {
-	return uuid.New().String()
+	return nil
 }

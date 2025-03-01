@@ -15,25 +15,23 @@ import (
 func (s *Service) ListAuthors(ctx context.Context) ([]author.Response, error) {
 	logger := log.LoggerFromContext(ctx).Named("list_authors")
 
+	// Retrieve authors from the repository
 	authors, err := s.authorRepository.List(ctx)
 	if err != nil {
 		logger.Error("failed to list authors", zap.Error(err))
 		return nil, err
 	}
-
 	return author.ParseFromEntities(authors), nil
 }
 
 // AddAuthor adds a new author to the repository.
 func (s *Service) AddAuthor(ctx context.Context, req author.Request) (author.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("add_author")
+	logger := log.LoggerFromContext(ctx).Named("add_author").With(zap.Any("author", req))
 
-	newAuthor := author.Entity{
-		FullName:  &req.FullName,
-		Pseudonym: &req.Pseudonym,
-		Specialty: &req.Specialty,
-	}
+	// Create a new author entity from the request
+	newAuthor := author.New(req)
 
+	// Add the new author to the repository
 	id, err := s.authorRepository.Add(ctx, newAuthor)
 	if err != nil {
 		logger.Error("failed to add author", zap.Error(err))
@@ -80,14 +78,12 @@ func (s *Service) GetAuthor(ctx context.Context, id string) (author.Response, er
 
 // UpdateAuthor updates an existing author in the repository.
 func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Request) error {
-	logger := log.LoggerFromContext(ctx).Named("update_author").With(zap.String("id", id))
+	logger := log.LoggerFromContext(ctx).Named("update_author").With(zap.String("id", id), zap.Any("author", req))
 
-	updatedAuthor := author.Entity{
-		FullName:  &req.FullName,
-		Pseudonym: &req.Pseudonym,
-		Specialty: &req.Specialty,
-	}
+	// Create an updated author entity from the request
+	updatedAuthor := author.New(req)
 
+	// Update the author in the repository
 	err := s.authorRepository.Update(ctx, id, updatedAuthor)
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
@@ -110,6 +106,7 @@ func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Reques
 func (s *Service) DeleteAuthor(ctx context.Context, id string) error {
 	logger := log.LoggerFromContext(ctx).Named("delete_author").With(zap.String("id", id))
 
+	// Delete the author from the repository
 	err := s.authorRepository.Delete(ctx, id)
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {

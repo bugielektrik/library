@@ -18,76 +18,86 @@ type MemberRepository struct {
 	db *sqlx.DB
 }
 
+// NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository(db *sqlx.DB) *MemberRepository {
-	return &MemberRepository{
-		db: db,
-	}
+	return &MemberRepository{db: db}
 }
 
-func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
+// List retrieves all members from the database.
+func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
 		ORDER BY id`
 
-	err = r.db.SelectContext(ctx, &dest, query)
-
-	return
+	var members []member.Entity
+	if err := r.db.SelectContext(ctx, &members, query); err != nil {
+		return nil, err
+	}
+	return members, nil
 }
 
-func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (id string, err error) {
+// Add inserts a new member into the database.
+func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
 		RETURNING id`
 
-	args := []any{data.FullName, pq.Array(data.Books)}
+	args := []interface{}{data.FullName, pq.Array(data.Books)}
 
-	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+	var id string
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			err = store.ErrorNotFound
+			return "", store.ErrorNotFound
 		}
+		return "", err
 	}
-
-	return
+	return id, nil
 }
 
-func (r *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
+// Get retrieves a member by ID from the database.
+func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
 		WHERE id=$1`
 
-	args := []any{id}
-
-	if err = r.db.GetContext(ctx, &dest, query, args...); err != nil {
+	var member member.Entity
+	if err := r.db.GetContext(ctx, &member, query, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			err = store.ErrorNotFound
+			return member, store.ErrorNotFound
 		}
+		return member, err
 	}
-
-	return
+	return member, nil
 }
 
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
-	sets, args := r.prepareArgs(data)
-	if len(args) > 0 {
-
-		args = append(args, id)
-		sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
-		query := fmt.Sprintf("UPDATE members SET %r WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
-
-		if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				err = store.ErrorNotFound
-			}
-		}
+// Update modifies an existing member in the database.
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
+	sets, args := r.prepareUpdateArgs(data)
+	if len(args) == 0 {
+		return nil
 	}
 
-	return
+	args = append(args, id)
+	sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
+	query := fmt.Sprintf("UPDATE members SET %s WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
+
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return store.ErrorNotFound
+		}
+		return err
+	}
+	return nil
 }
 
-func (r *MemberRepository) prepareArgs(data member.Entity) (sets []string, args []any) {
+// prepareUpdateArgs prepares the arguments for the update query.
+func (r *MemberRepository) prepareUpdateArgs(data member.Entity) ([]string, []interface{}) {
+	var sets []string
+	var args []interface{}
+
 	if data.FullName != nil {
 		args = append(args, data.FullName)
 		sets = append(sets, fmt.Sprintf("full_name=$%d", len(args)))
@@ -98,22 +108,21 @@ func (r *MemberRepository) prepareArgs(data member.Entity) (sets []string, args 
 		sets = append(sets, fmt.Sprintf("books=$%d", len(args)))
 	}
 
-	return
+	return sets, args
 }
 
-func (r *MemberRepository) Delete(ctx context.Context, id string) (err error) {
+// Delete removes a member by ID from the database.
+func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	query := `
 		DELETE FROM members
 		WHERE id=$1
 		RETURNING id`
 
-	args := []any{id}
-
-	if err = r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+	if err := r.db.QueryRowContext(ctx, query, id).Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			err = store.ErrorNotFound
+			return store.ErrorNotFound
 		}
+		return err
 	}
-
-	return
+	return nil
 }

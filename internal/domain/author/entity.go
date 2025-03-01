@@ -14,3 +14,12 @@ type Entity struct {
 	// Specialty is the specialty of the author.
 	Specialty *string `db:"specialty" bson:"specialty"`
 }
+
+// New creates a new Author instance.
+func New(req Request) Entity {
+	return Entity{
+		FullName:  &req.FullName,
+		Pseudonym: &req.Pseudonym,
+		Specialty: &req.Specialty,
+	}
+}

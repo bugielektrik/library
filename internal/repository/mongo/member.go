@@ -12,86 +12,117 @@ import (
 	"library-service/pkg/store"
 )
 
+// MemberRepository handles CRUD operations for members in MongoDB.
 type MemberRepository struct {
-	db *mongo.Collection
+	collection *mongo.Collection
 }
 
+// NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository(db *mongo.Database) *MemberRepository {
 	return &MemberRepository{
-		db: db.Collection("members"),
+		collection: db.Collection("members"),
 	}
 }
 
-func (r *MemberRepository) List(ctx context.Context) (dest []member.Entity, err error) {
-	cur, err := r.db.Find(ctx, bson.M{})
+// List retrieves all members from the MongoDB collection.
+func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
+	cur, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
+	defer cur.Close(ctx)
 
-	if err = cur.All(ctx, &dest); err != nil {
+	var members []member.Entity
+	if err = cur.All(ctx, &members); err != nil {
 		return nil, err
 	}
 
-	return
+	return members, nil
 }
 
-func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (id string, err error) {
-	res, err := r.db.InsertOne(ctx, data)
+// Add inserts a new member into the MongoDB collection.
+func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
+	res, err := r.collection.InsertOne(ctx, data)
 	if err != nil {
 		return "", err
 	}
 
-	return res.InsertedID.(primitive.ObjectID).String(), nil
+	id := res.InsertedID.(primitive.ObjectID).Hex()
+	return id, nil
 }
 
-func (r *MemberRepository) Get(ctx context.Context, id string) (dest member.Entity, err error) {
-	if err = r.db.FindOne(ctx, bson.M{"_id": id}).Decode(&dest); err != nil {
+// Get retrieves a member by ID from the MongoDB collection.
+func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return member.Entity{}, err
+	}
+
+	var member member.Entity
+	if err = r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&member); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			err = store.ErrorNotFound
+			return member, store.ErrorNotFound
 		}
+		return member, err
 	}
 
-	return
+	return member, nil
 }
 
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) (err error) {
-	args := r.prepareArgs(data)
-	if len(args) > 0 {
-
-		out, err := r.db.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": args})
-		if err != nil {
-			return err
-		}
-
-		if out.MatchedCount == 0 {
-			return store.ErrorNotFound
-		}
-	}
-
-	return
-}
-
-func (r *MemberRepository) prepareArgs(data member.Entity) (args bson.M) {
-	if data.FullName != nil {
-		args["full_name"] = data.FullName
-	}
-
-	if len(data.Books) > 0 {
-		args["books"] = data.Books
-	}
-
-	return
-}
-
-func (r *MemberRepository) Delete(ctx context.Context, id string) (err error) {
-	out, err := r.db.DeleteOne(ctx, bson.M{"_id": id})
+// Update modifies an existing member in the MongoDB collection.
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
 
-	if out.DeletedCount == 0 {
+	updateData := r.prepareUpdateData(data)
+	if len(updateData) == 0 {
+		return nil
+	}
+
+	res, err := r.collection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": updateData})
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
 		return store.ErrorNotFound
 	}
 
-	return
+	return nil
+}
+
+// prepareUpdateData prepares the data for the update query.
+func (r *MemberRepository) prepareUpdateData(data member.Entity) bson.M {
+	updateData := bson.M{}
+
+	if data.FullName != nil {
+		updateData["full_name"] = data.FullName
+	}
+
+	if len(data.Books) > 0 {
+		updateData["books"] = data.Books
+	}
+
+	return updateData
+}
+
+// Delete removes a member by ID from the MongoDB collection.
+func (r *MemberRepository) Delete(ctx context.Context, id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return err
+	}
+
+	if res.DeletedCount == 0 {
+		return store.ErrorNotFound
+	}
+
+	return nil
 }

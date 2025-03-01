@@ -17,3 +17,13 @@ type Entity struct {
 	// Authors is the list of author IDs associated with the book.
 	Authors []string `db:"authors" bson:"authors"`
 }
+
+// New creates a new Book instance.
+func New(req Request) Entity {
+	return Entity{
+		Name:    &req.Name,
+		Genre:   &req.Genre,
+		ISBN:    &req.ISBN,
+		Authors: req.Authors,
+	}
+}
