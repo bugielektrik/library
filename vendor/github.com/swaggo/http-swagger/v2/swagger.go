@@ -3,6 +3,7 @@ package httpSwagger
 import (
 	"html/template"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"regexp"
 
@@ -16,17 +17,18 @@ var WrapHandler = Handler()
 // Config stores httpSwagger configuration variables.
 type Config struct {
 	// The url pointing to API definition (normally swagger.json or swagger.yaml). Default is `doc.json`.
-	URL                  string
-	DocExpansion         string
-	DomID                string
-	InstanceName         string
-	BeforeScript         template.JS
-	AfterScript          template.JS
-	Plugins              []template.JS
-	UIConfig             map[template.JS]template.JS
-	DeepLinking          bool
-	PersistAuthorization bool
-	Layout               SwaggerLayout
+	URL                      string
+	DocExpansion             string
+	DomID                    string
+	InstanceName             string
+	BeforeScript             template.JS
+	AfterScript              template.JS
+	Plugins                  []template.JS
+	UIConfig                 map[template.JS]template.JS
+	DeepLinking              bool
+	PersistAuthorization     bool
+	Layout                   SwaggerLayout
+	DefaultModelsExpandDepth ModelsExpandDepthType
 }
 
 // URL presents the url pointing to API definition (normally swagger.json or swagger.yaml).
@@ -124,15 +126,31 @@ func Layout(layout SwaggerLayout) func(*Config) {
 	}
 }
 
+type ModelsExpandDepthType int
+
+const (
+	ShowModel ModelsExpandDepthType = 1
+	HideModel ModelsExpandDepthType = -1
+)
+
+// DefaultModelsExpandDepth presents the model of response and request.
+// set the default expansion depth for models
+func DefaultModelsExpandDepth(defaultModelsExpandDepth ModelsExpandDepthType) func(*Config) {
+	return func(c *Config) {
+		c.DefaultModelsExpandDepth = defaultModelsExpandDepth
+	}
+}
+
 func newConfig(configFns ...func(*Config)) *Config {
 	config := Config{
-		URL:                  "doc.json",
-		DocExpansion:         "list",
-		DomID:                "swagger-ui",
-		InstanceName:         "swagger",
-		DeepLinking:          true,
-		PersistAuthorization: false,
-		Layout:               StandaloneLayout,
+		URL:                      "doc.json",
+		DocExpansion:             "list",
+		DomID:                    "swagger-ui",
+		InstanceName:             "swagger",
+		DeepLinking:              true,
+		PersistAuthorization:     false,
+		Layout:                   StandaloneLayout,
+		DefaultModelsExpandDepth: ShowModel,
 	}
 
 	for _, fn := range configFns {
@@ -196,7 +214,13 @@ func Handler(configFns ...func(*Config)) http.HandlerFunc {
 		case "":
 			http.Redirect(w, r, matches[1]+"/"+"index.html", http.StatusMovedPermanently)
 		default:
-			r.URL.Path = matches[2]
+			var err error
+			r.URL, err = url.Parse(matches[2])
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+				return
+			}
 			http.FileServer(http.FS(swaggerFiles.FS)).ServeHTTP(w, r)
 		}
 	}
@@ -296,7 +320,8 @@ window.onload = function() {
     {{- range $k, $v := .UIConfig}}
     {{$k}}: {{$v}},
     {{- end}}
-    layout: "{{$.Layout}}"
+    layout: "{{$.Layout}}",
+    defaultModelsExpandDepth: {{.DefaultModelsExpandDepth}}
   })
 
   window.ui = ui

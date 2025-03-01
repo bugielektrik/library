@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Name of the configuration; appears in the launch configuration dropdown menu.
+            "name": "Launch Go Program",
+            // Type of configuration; here it's for Go.
+            "type": "go",
+            // Request type of the configuration; can be 'launch' or 'attach'.
+            "request": "launch",
+            // Path to the program to debug.
+            "program": "${workspaceFolder}/main.go",
+            // Automatically restart the program if it exits.
+            "restart": true,
+            // Environment variables to pass to the program.
+            "env": {
+                "GO_ENV": "development"
+            },
+            // Enable source maps for better debugging experience.
+            "trace": "verbose",
+            // Pre-launch task to run before starting the debugger.
+            "preLaunchTask": "go: build",
+            // Console to use for debugging; can be 'internalConsole', 'integratedTerminal', or 'externalTerminal'.
+            "console": "integratedTerminal"
+        }
+    ]
+}

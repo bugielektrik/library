@@ -65,19 +65,17 @@ func (c *Client) GetRateByID(ctx context.Context, id string, datetime time.Time)
 	return
 }
 
-func (c *Client) GetRatesByDate(ctx context.Context, datetime time.Time) (dest []Rate, err error) {
+func (c *Client) GetRatesByDate(ctx context.Context, datetime time.Time) ([]Rate, error) {
 	if datetime.IsZero() {
-		return dest, errors.New("datetime: cannot be blank")
+		return nil, errors.New("datetime: cannot be blank")
 	}
 
-	for {
-		dest, err = c.getRatesByDate(ctx, datetime)
-		if err == nil {
-			break
-		}
+	rates, err := c.getRatesByDate(ctx, datetime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch rates: %w", err)
 	}
 
-	return
+	return rates, nil
 }
 
 func (c *Client) getRatesByDate(ctx context.Context, datetime time.Time) (dest []Rate, err error) {

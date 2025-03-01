@@ -13,6 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// Pool generation state constants.
+const (
+	generationDisconnected int64 = iota
+	generationConnected
+)
+
 // generationStats represents the version of a pool. It tracks the generation number as well as the number of
 // connections that have been created in the generation.
 type generationStats struct {
@@ -24,8 +30,10 @@ type generationStats struct {
 // load balancer, there is only one service ID: primitive.NilObjectID. For load-balanced deployments, each server behind
 // the load balancer will have a unique service ID.
 type poolGenerationMap struct {
-	// state must be accessed using the atomic package.
-	state         int32
+	// state must be accessed using the atomic package and should be at the beginning of the struct.
+	// - atomic bug: https://pkg.go.dev/sync/atomic#pkg-note-BUG
+	// - suggested layout: https://go101.org/article/memory-layout.html
+	state         int64
 	generationMap map[primitive.ObjectID]*generationStats
 
 	sync.Mutex
@@ -40,11 +48,11 @@ func newPoolGenerationMap() *poolGenerationMap {
 }
 
 func (p *poolGenerationMap) connect() {
-	atomic.StoreInt32(&p.state, connected)
+	atomic.StoreInt64(&p.state, generationConnected)
 }
 
 func (p *poolGenerationMap) disconnect() {
-	atomic.StoreInt32(&p.state, disconnected)
+	atomic.StoreInt64(&p.state, generationDisconnected)
 }
 
 // addConnection increments the connection count for the generation associated with the given service ID and returns the
@@ -100,27 +108,34 @@ func (p *poolGenerationMap) clear(serviceIDPtr *primitive.ObjectID) {
 
 func (p *poolGenerationMap) stale(serviceIDPtr *primitive.ObjectID, knownGeneration uint64) bool {
 	// If the map has been disconnected, all connections should be considered stale to ensure that they're closed.
-	if atomic.LoadInt32(&p.state) == disconnected {
+	if atomic.LoadInt64(&p.state) == generationDisconnected {
 		return true
 	}
 
-	serviceID := getServiceID(serviceIDPtr)
-	p.Lock()
-	defer p.Unlock()
-
-	if stats, ok := p.generationMap[serviceID]; ok {
-		return knownGeneration < stats.generation
+	if generation, ok := p.getGeneration(serviceIDPtr); ok {
+		return knownGeneration < generation
 	}
 	return false
 }
 
-func (p *poolGenerationMap) getGeneration(serviceIDPtr *primitive.ObjectID) uint64 {
+func (p *poolGenerationMap) getGeneration(serviceIDPtr *primitive.ObjectID) (uint64, bool) {
 	serviceID := getServiceID(serviceIDPtr)
 	p.Lock()
 	defer p.Unlock()
 
 	if stats, ok := p.generationMap[serviceID]; ok {
-		return stats.generation
+		return stats.generation, true
+	}
+	return 0, false
+}
+
+func (p *poolGenerationMap) getNumConns(serviceIDPtr *primitive.ObjectID) uint64 {
+	serviceID := getServiceID(serviceIDPtr)
+	p.Lock()
+	defer p.Unlock()
+
+	if stats, ok := p.generationMap[serviceID]; ok {
+		return stats.numConns
 	}
 	return 0
 }
