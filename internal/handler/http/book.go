@@ -47,7 +47,7 @@ func (h *BookHandler) Routes() chi.Router {
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.ListBooks(r.Context())
 	if err != nil {
-		response.InternalServerError(w, r, err)
+		response.InternalServerError(w, r, err, nil)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.libraryService.CreateBook(r.Context(), req)
 	if err != nil {
-		response.InternalServerError(w, r, err)
+		response.InternalServerError(w, r, err, nil)
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -130,7 +130,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -153,7 +153,7 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -177,7 +177,7 @@ func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}

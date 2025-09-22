@@ -14,11 +14,11 @@ import (
 const timeout = 10 * time.Second
 
 type Mongo struct {
-	Client *mongo.Client
+	Connection *mongo.Client
 }
 
-func NewMongo(uri string) (store Mongo, err error) {
-	store.Client, err = mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+func NewMongo(uri string) (store *Mongo, err error) {
+	store.Connection, err = mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		return
 	}
@@ -26,11 +26,11 @@ func NewMongo(uri string) (store Mongo, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	if err = store.Client.Connect(ctx); err != nil {
+	if err = store.Connection.Connect(ctx); err != nil {
 		return
 	}
 
-	if err = store.Client.Ping(context.Background(), nil); err != nil {
+	if err = store.Connection.Ping(context.Background(), nil); err != nil {
 		return
 	}
 

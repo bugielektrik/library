@@ -11,12 +11,12 @@ import (
 )
 
 // Configuration is an alias for a function that will take in a pointer to a Repository and modify it
-type Configuration func(r *Repository) error
+type Configuration func(r *Repositories) error
 
-// Repository is an implementation of the Repository
-type Repository struct {
-	mongo    store.Mongo
-	postgres store.SQLX
+// Repositories is an implementation of the Repositories
+type Repositories struct {
+	mongo    *store.Mongo
+	postgres *store.SQL
 
 	Author author.Repository
 	Book   book.Repository
@@ -25,9 +25,9 @@ type Repository struct {
 
 // New takes a variable amount of Configuration functions and returns a new Repository
 // Each Configuration will be called in the order they are passed in
-func New(configs ...Configuration) (s *Repository, err error) {
+func New(configs ...Configuration) (s *Repositories, err error) {
 	// Create the repository
-	s = &Repository{}
+	s = &Repositories{}
 
 	// Apply all Configurations passed in
 	for _, cfg := range configs {
@@ -42,19 +42,19 @@ func New(configs ...Configuration) (s *Repository, err error) {
 
 // Close closes the repository and prevents new queries from starting.
 // Close then waits for all queries that have started processing on the server to finish.
-func (r *Repository) Close() {
-	if r.postgres.Client != nil {
-		r.postgres.Client.Close()
+func (r *Repositories) Close() {
+	if r.postgres.Connection != nil {
+		r.postgres.Connection.Close()
 	}
 
-	if r.mongo.Client != nil {
-		r.mongo.Client.Disconnect(nil)
+	if r.mongo.Connection != nil {
+		r.mongo.Connection.Disconnect(nil)
 	}
 }
 
 // WithMemoryStore applies a memory store to the Repository
 func WithMemoryStore() Configuration {
-	return func(s *Repository) (err error) {
+	return func(s *Repositories) (err error) {
 		// Create the memory store, if we needed parameters, such as connection strings they could be inputted here
 		s.Author = memory.NewAuthorRepository()
 		s.Book = memory.NewBookRepository()
@@ -66,13 +66,13 @@ func WithMemoryStore() Configuration {
 
 // WithMongoStore applies a mongo store to the Repository
 func WithMongoStore(uri, name string) Configuration {
-	return func(s *Repository) (err error) {
+	return func(s *Repositories) (err error) {
 		// Create the mongo store, if we needed parameters, such as connection strings they could be inputted here
 		s.mongo, err = store.NewMongo(uri)
 		if err != nil {
 			return
 		}
-		database := s.mongo.Client.Database(name)
+		database := s.mongo.Connection.Database(name)
 
 		s.Author = mongo.NewAuthorRepository(database)
 		s.Book = mongo.NewBookRepository(database)
@@ -84,20 +84,20 @@ func WithMongoStore(uri, name string) Configuration {
 
 // WithPostgresStore applies a postgres store to the Repository
 func WithPostgresStore(dataSourceName string) Configuration {
-	return func(s *Repository) (err error) {
+	return func(s *Repositories) (err error) {
 		// Create the postgres store, if we needed parameters, such as connection strings they could be inputted here
 		s.postgres, err = store.NewSQL(dataSourceName)
 		if err != nil {
 			return
 		}
 
-		if err = store.Migrate(dataSourceName); err != nil {
+		if err = store.RunMigrations(dataSourceName); err != nil {
 			return
 		}
 
-		s.Author = postgres.NewAuthorRepository(s.postgres.Client)
-		s.Book = postgres.NewBookRepository(s.postgres.Client)
-		s.Member = postgres.NewMemberRepository(s.postgres.Client)
+		s.Author = postgres.NewAuthorRepository(s.postgres.Connection)
+		s.Book = postgres.NewBookRepository(s.postgres.Connection)
+		s.Member = postgres.NewMemberRepository(s.postgres.Connection)
 
 		return
 	}

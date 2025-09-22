@@ -1,42 +1,43 @@
 package epay
 
 import (
-	"context"
-	"fmt"
+	"errors"
+	"net/http"
 	"net/url"
 )
 
-func (c *Client) Charge(ctx context.Context, token, transactionID, amount string) (err error) {
-	path, err := url.Parse(c.credentials.URL)
+func (c *Client) Charge(transactionID, amount string) (err error) {
+	// preparation of request params
+	params := url.Values{}
+	params.Add("amount", amount)
+
+	// setup request handler
+	path := c.credential.Endpoint + "/operation/" + transactionID + "/charge?" + params.Encode()
+	resBytes, status, err := c.handler("POST", path, "", "", nil, true)
 	if err != nil {
 		return
 	}
-	path = path.JoinPath("/operation", transactionID, "/charge")
 
-	params := url.Values{
-		"amount": []string{amount},
-	}
-	path.RawQuery = params.Encode()
-
-	headers := map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": fmt.Sprintf("Bearer %s", token),
+	// check response status
+	if status != http.StatusOK {
+		err = errors.New(string(resBytes))
 	}
 
-	return c.request(ctx, true, "POST", path.String(), nil, headers, nil)
+	return
 }
 
-func (c *Client) Cancel(ctx context.Context, token, transactionID string) (err error) {
-	path, err := url.Parse(c.credentials.URL)
+func (c *Client) Cancel(transactionID string) (err error) {
+	// setup request handler
+	path := c.credential.Endpoint + "/operation/" + transactionID + "/cancel"
+	resBytes, status, err := c.handler("POST", path, "", "", nil, true)
 	if err != nil {
 		return
 	}
-	path = path.JoinPath("/operation", transactionID, "/cancel")
 
-	headers := map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": fmt.Sprintf("Bearer %s", token),
+	// check response status
+	if status != http.StatusOK {
+		err = errors.New(string(resBytes))
 	}
 
-	return c.request(ctx, true, "POST", path.String(), nil, headers, nil)
+	return
 }

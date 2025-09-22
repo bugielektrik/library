@@ -47,7 +47,7 @@ func (h *MemberHandler) Routes() chi.Router {
 func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.subscriptionService.ListMembers(r.Context())
 	if err != nil {
-		response.InternalServerError(w, r, err)
+		response.InternalServerError(w, r, err, nil)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.subscriptionService.CreateMember(r.Context(), req)
 	if err != nil {
-		response.InternalServerError(w, r, err)
+		response.InternalServerError(w, r, err, nil)
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -130,7 +130,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -153,7 +153,7 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -177,7 +177,7 @@ func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}

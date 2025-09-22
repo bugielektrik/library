@@ -14,7 +14,7 @@ import (
 
 // ListMembers retrieves all members from the repository.
 func (s *Service) ListMembers(ctx context.Context) ([]member.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("list_members")
+	logger := log.FromContext(ctx).Named("list_members")
 
 	// Retrieve members from the repository
 	members, err := s.memberRepository.List(ctx)
@@ -28,7 +28,7 @@ func (s *Service) ListMembers(ctx context.Context) ([]member.Response, error) {
 
 // CreateMember adds a new member to the repository.
 func (s *Service) CreateMember(ctx context.Context, req member.Request) (member.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("create_member").With(zap.Any("member", req))
+	logger := log.FromContext(ctx).Named("create_member").With(zap.Any("member", req))
 
 	// Create a new member entity from the request
 	newMember := member.New(req)
@@ -47,7 +47,7 @@ func (s *Service) CreateMember(ctx context.Context, req member.Request) (member.
 
 // GetMember retrieves a member by ID from the repository.
 func (s *Service) GetMember(ctx context.Context, id string) (member.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("get_member").With(zap.String("id", id))
+	logger := log.FromContext(ctx).Named("get_member").With(zap.String("id", id))
 
 	// Retrieve the member from the repository
 	memberData, err := s.memberRepository.Get(ctx, id)
@@ -65,7 +65,7 @@ func (s *Service) GetMember(ctx context.Context, id string) (member.Response, er
 
 // UpdateMember updates an existing member in the repository.
 func (s *Service) UpdateMember(ctx context.Context, id string, req member.Request) error {
-	logger := log.LoggerFromContext(ctx).Named("update_member").With(zap.String("id", id), zap.Any("member", req))
+	logger := log.FromContext(ctx).Named("update_member").With(zap.String("id", id), zap.Any("member", req))
 
 	// Create an updated member entity from the request
 	updatedMember := member.New(req)
@@ -85,7 +85,7 @@ func (s *Service) UpdateMember(ctx context.Context, id string, req member.Reques
 
 // DeleteMember deletes a member by ID from the repository.
 func (s *Service) DeleteMember(ctx context.Context, id string) error {
-	logger := log.LoggerFromContext(ctx).Named("delete_member").With(zap.String("id", id))
+	logger := log.FromContext(ctx).Named("delete_member").With(zap.String("id", id))
 
 	// Delete the member from the repository
 	err := s.memberRepository.Delete(ctx, id)
@@ -102,7 +102,7 @@ func (s *Service) DeleteMember(ctx context.Context, id string) error {
 
 // ListMemberBooks retrieves all books borrowed by a member.
 func (s *Service) ListMemberBooks(ctx context.Context, memberID string) ([]book.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("list_member_books").With(zap.String("id", memberID))
+	logger := log.FromContext(ctx).Named("list_member_books").With(zap.String("id", memberID))
 
 	// Retrieve the member from the repository
 	memberData, err := s.memberRepository.Get(ctx, memberID)

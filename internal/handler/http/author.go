@@ -46,7 +46,7 @@ func (h *AuthorHandler) Routes() chi.Router {
 func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.libraryService.ListAuthors(r.Context())
 	if err != nil {
-		response.InternalServerError(w, r, err)
+		response.InternalServerError(w, r, err, nil)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.libraryService.AddAuthor(r.Context(), req)
 	if err != nil {
-		response.InternalServerError(w, r, err)
+		response.InternalServerError(w, r, err, nil)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -129,7 +129,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}
@@ -152,7 +152,7 @@ func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
 		default:
-			response.InternalServerError(w, r, err)
+			response.InternalServerError(w, r, err, nil)
 		}
 		return
 	}

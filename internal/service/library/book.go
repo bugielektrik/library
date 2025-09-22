@@ -14,7 +14,7 @@ import (
 
 // ListBooks retrieves all books from the repository.
 func (s *Service) ListBooks(ctx context.Context) ([]book.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("list_books")
+	logger := log.FromContext(ctx).Named("list_books")
 
 	// Retrieve the list of books from the repository
 	books, err := s.bookRepository.List(ctx)
@@ -27,7 +27,7 @@ func (s *Service) ListBooks(ctx context.Context) ([]book.Response, error) {
 
 // CreateBook adds a new book to the repository.
 func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("create_book").With(zap.Any("book", req))
+	logger := log.FromContext(ctx).Named("create_book").With(zap.Any("book", req))
 
 	// Create a new book entity from the request
 	newBook := book.New(req)
@@ -50,7 +50,7 @@ func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Respon
 
 // GetBook retrieves a book by ID from the repository.
 func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("get_book").With(zap.String("id", id))
+	logger := log.FromContext(ctx).Named("get_book").With(zap.String("id", id))
 
 	// Try to get the book from the cache
 	bookEntity, err := s.bookCache.Get(ctx, id)
@@ -79,7 +79,7 @@ func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error)
 
 // UpdateBook updates an existing book in the repository.
 func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) error {
-	logger := log.LoggerFromContext(ctx).Named("update_book").With(zap.String("id", id), zap.Any("book", req))
+	logger := log.FromContext(ctx).Named("update_book").With(zap.String("id", id), zap.Any("book", req))
 
 	// Create an updated book entity from the request
 	updatedBook := book.New(req)
@@ -105,7 +105,7 @@ func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) e
 
 // DeleteBook deletes a book by ID from the repository.
 func (s *Service) DeleteBook(ctx context.Context, id string) error {
-	logger := log.LoggerFromContext(ctx).Named("delete_book").With(zap.String("id", id))
+	logger := log.FromContext(ctx).Named("delete_book").With(zap.String("id", id))
 
 	// Delete the book from the repository
 	err := s.bookRepository.Delete(ctx, id)
@@ -128,7 +128,7 @@ func (s *Service) DeleteBook(ctx context.Context, id string) error {
 
 // ListBookAuthors retrieves all authors of a book by book ID.
 func (s *Service) ListBookAuthors(ctx context.Context, id string) ([]author.Response, error) {
-	logger := log.LoggerFromContext(ctx).Named("list_book_authors").With(zap.String("id", id))
+	logger := log.FromContext(ctx).Named("list_book_authors").With(zap.String("id", id))
 
 	// Retrieve the book entity from the repository
 	bookEntity, err := s.bookRepository.Get(ctx, id)
