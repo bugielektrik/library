@@ -11,17 +11,13 @@ import (
 	"library-service/docs"
 	"library-service/internal/config"
 	"library-service/internal/handler/http"
-	"library-service/internal/service/library"
-	"library-service/internal/service/payment"
-	"library-service/internal/service/subscription"
+	"library-service/internal/service"
 	"library-service/pkg/server/router"
 )
 
 type Dependencies struct {
-	Configs             *config.Configs
-	PaymentService      *payment.Service
-	LibraryService      *library.Service
-	SubscriptionService *subscription.Service
+	Configs  *config.Configs
+	Services *service.Services
 }
 
 // Configuration is an alias for a function that will take in a pointer to a Handler and modify it
@@ -87,9 +83,9 @@ func WithHTTPHandler() Configuration {
 		h.HTTP.Get("/swagger/*", httpSwagger.WrapHandler)
 
 		// Add all routes to the http handler
-		authorHandler := http.NewAuthorHandler(h.dependencies.LibraryService)
-		bookHandler := http.NewBookHandler(h.dependencies.LibraryService)
-		memberHandler := http.NewMemberHandler(h.dependencies.SubscriptionService)
+		authorHandler := http.NewAuthorHandler(h.dependencies.Services.Library)
+		bookHandler := http.NewBookHandler(h.dependencies.Services.Library)
+		memberHandler := http.NewMemberHandler(h.dependencies.Services.Subscription)
 
 		// Mount all the routes
 		h.HTTP.Route("/", func(r chi.Router) {

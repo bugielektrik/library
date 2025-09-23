@@ -43,11 +43,11 @@ func New(configs ...Configuration) (s *Repositories, err error) {
 // Close closes the repository and prevents new queries from starting.
 // Close then waits for all queries that have started processing on the server to finish.
 func (r *Repositories) Close() {
-	if r.postgres.Connection != nil {
+	if r.postgres != nil && r.postgres.Connection != nil {
 		r.postgres.Connection.Close()
 	}
 
-	if r.mongo.Connection != nil {
+	if r.mongo != nil && r.mongo.Connection != nil {
 		r.mongo.Connection.Disconnect(nil)
 	}
 }

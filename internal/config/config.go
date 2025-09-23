@@ -21,9 +21,7 @@ const (
 
 // Configs holds all application configuration groups loaded from environment.
 type Configs struct {
-	APP      AppConfig
-	EPAY     ClientConfig
-	POSTGRES StoreConfig
+	APP AppConfig
 }
 
 type AppConfig struct {
@@ -91,9 +89,7 @@ func New() (*Configs, error) {
 
 	// Map prefixes to the corresponding destination struct pointers.
 	targets := map[string]interface{}{
-		"APP":      &cfg.APP,
-		"EPAY":     &cfg.EPAY,
-		"POSTGRES": &cfg.POSTGRES,
+		"APP": &cfg.APP,
 	}
 
 	// Process each prefix; return early on error with context.

@@ -5,12 +5,13 @@ import (
 	"library-service/internal/cache/redis"
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
+	"library-service/internal/repository"
 	"library-service/pkg/store"
 )
 
+// Dependencies holds the dependencies required for creating caches
 type Dependencies struct {
-	AuthorRepository author.Repository
-	BookRepository   book.Repository
+	Repositories *repository.Repositories
 }
 
 // Configuration is an alias for a function that will take in a pointer to a Cache and modify it
@@ -27,10 +28,10 @@ type Caches struct {
 
 // New takes a variable amount of Configuration functions and returns a new Cache
 // Each Configuration will be called in the order they are passed in
-func New(d Dependencies, configs ...Configuration) (s *Caches, err error) {
+func New(dependencies Dependencies, configs ...Configuration) (s *Caches, err error) {
 	// Create the cache
 	s = &Caches{
-		dependencies: d,
+		dependencies: dependencies,
 	}
 
 	// Apply all Configurations passed in
@@ -56,8 +57,8 @@ func (r *Caches) Close() {
 func WithMemoryStore() Configuration {
 	return func(s *Caches) (err error) {
 		// Create the memory database, if we needed parameters, such as connection strings they could be inputted here
-		s.Author = memory.NewAuthorCache(s.dependencies.AuthorRepository)
-		s.Book = memory.NewBookCache(s.dependencies.BookRepository)
+		s.Author = memory.NewAuthorCache(s.dependencies.Repositories.Author)
+		s.Book = memory.NewBookCache(s.dependencies.Repositories.Book)
 
 		return
 	}
@@ -72,8 +73,8 @@ func WithRedisStore(url string) Configuration {
 			return
 		}
 
-		s.Author = redis.NewAuthorCache(s.redis.Connection, s.dependencies.AuthorRepository)
-		s.Book = redis.NewBookCache(s.redis.Connection, s.dependencies.BookRepository)
+		s.Author = redis.NewAuthorCache(s.redis.Connection, s.dependencies.Repositories.Author)
+		s.Book = redis.NewBookCache(s.redis.Connection, s.dependencies.Repositories.Book)
 
 		return
 	}
