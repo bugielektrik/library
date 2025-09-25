@@ -46,11 +46,11 @@ func New(dependencies Dependencies, configs ...Configuration) (s *Services, err 
 // WithLibraryService configures the library service with repositories and caches
 func WithLibraryService() Configuration {
 	return func(s *Services) (err error) {
-		s.Library, err = library.New(
-			library.WithAuthorRepository(s.dependencies.Repositories.Author),
-			library.WithBookRepository(s.dependencies.Repositories.Book),
-			library.WithAuthorCache(s.dependencies.Caches.Author),
-			library.WithBookCache(s.dependencies.Caches.Book),
+		s.Library = library.New(
+			s.dependencies.Repositories.Author,
+			s.dependencies.Repositories.Book,
+			s.dependencies.Caches.Author,
+			s.dependencies.Caches.Book,
 		)
 		return err
 	}
@@ -60,9 +60,9 @@ func WithLibraryService() Configuration {
 // Note: This creates a circular dependency that should be resolved through dependency injection
 func WithSubscriptionService() Configuration {
 	return func(s *Services) (err error) {
-		s.Subscription, err = subscription.New(
-			subscription.WithMemberRepository(s.dependencies.Repositories.Member),
-			subscription.WithLibraryService(s.Library),
+		s.Subscription = subscription.New(
+			s.dependencies.Repositories.Member,
+			s.Library,
 		)
 		return err
 	}

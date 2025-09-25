@@ -1,12 +1,10 @@
 ### List of members from the store
 GET http://localhost/api/v1/members
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
 
 ### Add a new member to the store
 POST http://localhost/api/v1/members
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
 
 {
     "fullName": "fullName",
@@ -19,12 +17,10 @@ Authorization: Bearer {{access_token}}
 ### Read the member from the store
 GET http://localhost/api/v1/members/1
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
 
 ### Update the member in the store
 PUT http://localhost/api/v1/members/1
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
 
 {
     "fullName": "fullName",
@@ -37,9 +33,7 @@ Authorization: Bearer {{access_token}}
 ### Delete the member from the store
 DELETE http://localhost/api/v1/members/1
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
 
 ### List of member books from the store
 GET http://localhost/api/v1/members/1/books
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
