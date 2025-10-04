@@ -25,12 +25,12 @@ func NewBookCache(c *redis.Client, r book.Repository) *BookCache {
 }
 
 // Get retrieves a book entity by its ID from the cache.
-func (c *BookCache) Get(ctx context.Context, id string) (book.Entity, error) {
+func (c *BookCache) Get(ctx context.Context, id string) (book.Book, error) {
 	// Check if data is available in Redis cache
 	data, err := c.cache.Get(ctx, id).Result()
 	if err == nil {
 		// Data found in cache, unmarshal JSON into struct
-		var dest book.Entity
+		var dest book.Book
 		if err = json.Unmarshal([]byte(data), &dest); err != nil {
 			return dest, err
 		}
@@ -57,7 +57,7 @@ func (c *BookCache) Get(ctx context.Context, id string) (book.Entity, error) {
 }
 
 // Set stores a book entity in the cache.
-func (c *BookCache) Set(ctx context.Context, id string, data book.Entity) error {
+func (c *BookCache) Set(ctx context.Context, id string, data book.Book) error {
 	payload, err := json.Marshal(data)
 	if err != nil {
 		return err

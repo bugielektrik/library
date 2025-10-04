@@ -27,20 +27,20 @@ type Response struct {
 	Books    []string `json:"books"`
 }
 
-// ParseFromEntity creates a new Response from a given Entity.
-func ParseFromEntity(entity Entity) Response {
+// ParseFromMember creates a new Response from a given Member.
+func ParseFromMember(member Member) Response {
 	return Response{
-		ID:       entity.ID,
-		FullName: *entity.FullName,
-		Books:    entity.Books,
+		ID:       member.ID,
+		FullName: *member.FullName,
+		Books:    member.Books,
 	}
 }
 
-// ParseFromEntities creates a slice of Responses from a slice of Entities.
-func ParseFromEntities(entities []Entity) []Response {
-	responses := make([]Response, len(entities))
-	for i, entity := range entities {
-		responses[i] = ParseFromEntity(entity)
+// ParseFromMembers creates a slice of Responses from a slice of Members.
+func ParseFromMembers(members []Member) []Response {
+	responses := make([]Response, len(members))
+	for i, member := range members {
+		responses[i] = ParseFromMember(member)
 	}
 	return responses
 }

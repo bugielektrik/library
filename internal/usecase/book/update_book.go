@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
-	store "library-service/internal/infrastructure/database"
-	log "library-service/internal/infrastructure/logger"
+	"library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
 )
 

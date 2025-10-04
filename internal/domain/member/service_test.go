@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"library-service/pkg/errors"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestService_ValidateSubscriptionType(t *testing.T) {
@@ -229,28 +230,28 @@ func TestService_IsSubscriptionActive(t *testing.T) {
 	tomorrow := now.AddDate(0, 0, 1)
 
 	tests := []struct {
-		name        string
+		name         string
 		subscribedAt time.Time
-		expiresAt   time.Time
-		expected    bool
+		expiresAt    time.Time
+		expected     bool
 	}{
 		{
-			name:        "active subscription",
+			name:         "active subscription",
 			subscribedAt: yesterday,
-			expiresAt:   tomorrow,
-			expected:    true,
+			expiresAt:    tomorrow,
+			expected:     true,
 		},
 		{
-			name:        "expired subscription",
+			name:         "expired subscription",
 			subscribedAt: yesterday,
-			expiresAt:   yesterday.Add(1 * time.Hour),
-			expected:    false,
+			expiresAt:    yesterday.Add(1 * time.Hour),
+			expected:     false,
 		},
 		{
-			name:        "future subscription",
+			name:         "future subscription",
 			subscribedAt: tomorrow,
-			expiresAt:   tomorrow.AddDate(0, 1, 0),
-			expected:    false,
+			expiresAt:    tomorrow.AddDate(0, 1, 0),
+			expected:     false,
 		},
 	}
 
@@ -330,20 +331,20 @@ func TestService_ValidateMember(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		member    Entity
+		member    Member
 		wantError bool
 		errorType *errors.Error
 	}{
 		{
 			name: "valid member",
-			member: Entity{
+			member: Member{
 				FullName: &validName,
 			},
 			wantError: false,
 		},
 		{
 			name: "missing full name",
-			member: Entity{
+			member: Member{
 				FullName: nil,
 			},
 			wantError: true,
@@ -351,7 +352,7 @@ func TestService_ValidateMember(t *testing.T) {
 		},
 		{
 			name: "empty full name",
-			member: Entity{
+			member: Member{
 				FullName: &emptyString,
 			},
 			wantError: true,

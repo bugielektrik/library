@@ -388,7 +388,7 @@ curl http://localhost:8080/health/redis
 # Check port availability
 lsof -i :8080
 
-# Check database connection
+# Check store connection
 psql -h localhost -U library -d library
 
 # Check logs

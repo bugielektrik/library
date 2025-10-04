@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 
 	"library-service/internal/domain/member"
-	"library-service/internal/infrastructure/database"
+	"library-service/internal/infrastructure/store"
 )
 
 type MemberRepository struct {
@@ -23,22 +23,22 @@ func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	return &MemberRepository{db: db}
 }
 
-// List retrieves all members from the database.
-func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
+// List retrieves all members from the store.
+func (r *MemberRepository) List(ctx context.Context) ([]member.Member, error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
 		ORDER BY id`
 
-	var members []member.Entity
+	var members []member.Member
 	if err := r.db.SelectContext(ctx, &members, query); err != nil {
 		return nil, err
 	}
 	return members, nil
 }
 
-// Add inserts a new member into the database.
-func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
+// Add inserts a new member into the store.
+func (r *MemberRepository) Add(ctx context.Context, data member.Member) (string, error) {
 	query := `
 		INSERT INTO members (full_name, books)
 		VALUES ($1, $2)
@@ -56,14 +56,14 @@ func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string,
 	return id, nil
 }
 
-// Get retrieves a member by ID from the database.
-func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
+// Get retrieves a member by ID from the store.
+func (r *MemberRepository) Get(ctx context.Context, id string) (member.Member, error) {
 	query := `
 		SELECT id, full_name, books
 		FROM members
 		WHERE id=$1`
 
-	var member member.Entity
+	var member member.Member
 	if err := r.db.GetContext(ctx, &member, query, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return member, store.ErrorNotFound
@@ -73,8 +73,8 @@ func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, e
 	return member, nil
 }
 
-// Update modifies an existing member in the database.
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
+// Update modifies an existing member in the store.
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Member) error {
 	sets, args := r.prepareUpdateArgs(data)
 	if len(args) == 0 {
 		return nil
@@ -94,7 +94,7 @@ func (r *MemberRepository) Update(ctx context.Context, id string, data member.En
 }
 
 // prepareUpdateArgs prepares the arguments for the update query.
-func (r *MemberRepository) prepareUpdateArgs(data member.Entity) ([]string, []interface{}) {
+func (r *MemberRepository) prepareUpdateArgs(data member.Member) ([]string, []interface{}) {
 	var sets []string
 	var args []interface{}
 
@@ -111,7 +111,7 @@ func (r *MemberRepository) prepareUpdateArgs(data member.Entity) ([]string, []in
 	return sets, args
 }
 
-// Delete removes a member by ID from the database.
+// Delete removes a member by ID from the store.
 func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	query := `
 		DELETE FROM members

@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
-	store "library-service/internal/infrastructure/database"
-	log "library-service/internal/infrastructure/logger"
+	"library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
 )
 
@@ -76,7 +76,7 @@ func (uc *GetBookUseCase) Execute(ctx context.Context, req GetBookRequest) (GetB
 }
 
 // toResponse converts book entity to response
-func (uc *GetBookUseCase) toResponse(entity book.Entity) GetBookResponse {
+func (uc *GetBookUseCase) toResponse(entity book.Book) GetBookResponse {
 	return GetBookResponse{
 		ID:      entity.ID,
 		Name:    safeString(entity.Name),

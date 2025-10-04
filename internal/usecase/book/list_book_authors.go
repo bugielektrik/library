@@ -8,8 +8,8 @@ import (
 
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
-	store "library-service/internal/infrastructure/database"
-	log "library-service/internal/infrastructure/logger"
+	"library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
 )
 
@@ -35,8 +35,8 @@ type ListBookAuthorsResponse struct {
 // ListBookAuthorsUseCase handles retrieving all authors of a book
 // This is a complex usecase that orchestrates multiple repository calls
 type ListBookAuthorsUseCase struct {
-	bookRepo   book.Repository
-	authorRepo author.Repository
+	bookRepo    book.Repository
+	authorRepo  author.Repository
 	authorCache author.Cache
 }
 

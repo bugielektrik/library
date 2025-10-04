@@ -267,6 +267,5 @@ if err := uc.repo.Create(ctx, entity); err != nil {
 
 ## References
 
-- [Use Case Documentation](./doc.go)
 - [Domain Layer](../domain/README.md)
 - [Development Guide](../../docs/guides/DEVELOPMENT.md)

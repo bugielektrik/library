@@ -34,7 +34,7 @@ func NewPaginator(page, pageSize int) *Paginator {
 	}
 }
 
-// Offset calculates the offset for database queries
+// Offset calculates the offset for store queries
 func (p *Paginator) Offset() int {
 	return (p.Page - 1) * p.PageSize
 }

@@ -195,7 +195,7 @@ func (v *ISBNValidator) ValidateISBN10(isbn string) bool {
 ### Structured Logging
 
 ```go
-// pkg/logger/logger.go
+// pkg/log/log.go
 type Logger struct {
     level  Level
     output io.Writer
@@ -298,7 +298,7 @@ func (c *Config) Validate() error {
         return errors.New("invalid server port")
     }
     if c.Database.Name == "" {
-        return errors.New("database name is required")
+        return errors.New("store name is required")
     }
     return nil
 }
@@ -388,16 +388,13 @@ mkdir pkg/newpackage
 # 2. Create main file
 touch pkg/newpackage/newpackage.go
 
-# 3. Add package documentation
-# pkg/newpackage/doc.go
-
 // Package newpackage provides utilities for X.
 package newpackage
 
-# 4. Write tests
+# 3. Write tests
 touch pkg/newpackage/newpackage_test.go
 
-# 5. Update this README
+# 4. Update this README
 ```
 
 ## Usage Examples
@@ -442,7 +439,7 @@ if err := v.ValidateRequired(book.Name, "book name"); err != nil {
 ### Logging
 
 ```go
-import "library-service/pkg/logger"
+import "library-service/pkg/log"
 
 log := logger.New(logger.INFO)
 

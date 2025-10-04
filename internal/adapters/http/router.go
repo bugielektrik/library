@@ -5,7 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 
-	"library-service/internal/adapters/http/handlers"
+	v1 "library-service/internal/adapters/http/handlers"
 	httpmiddleware "library-service/internal/adapters/http/middleware"
 	"library-service/internal/infrastructure/config"
 	"library-service/internal/usecase"

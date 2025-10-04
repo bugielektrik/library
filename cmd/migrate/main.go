@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	store "library-service/internal/infrastructure/database"
+	"library-service/internal/infrastructure/store"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	flag.IntVar(&steps, "steps", 0, "Number of migration steps (0 = all)")
 	flag.Parse()
 
-	// Get database DSN from environment
+	// Get store DSN from environment
 	dsn := os.Getenv("POSTGRES_DSN")
 	if dsn == "" {
 		log.Fatal("POSTGRES_DSN environment variable is required")

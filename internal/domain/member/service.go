@@ -128,8 +128,8 @@ func (s *Service) CanUpgradeSubscription(currentType, targetType string) error {
 	return nil
 }
 
-// ValidateMember validates member entity according to business rules
-func (s *Service) ValidateMember(member Entity) error {
+// ValidateMember validates member according to business rules
+func (s *Service) ValidateMember(member Member) error {
 	if member.FullName == nil || *member.FullName == "" {
 		return errors.ErrInvalidMemberData.WithDetails("field", "full_name")
 	}

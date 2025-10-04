@@ -39,8 +39,8 @@ type Response struct {
 	Authors []string `json:"authors"`
 }
 
-// ParseFromEntity converts a book entity to a response payload.
-func ParseFromEntity(data Entity) Response {
+// ParseFromBook converts a book to a response payload.
+func ParseFromBook(data Book) Response {
 	return Response{
 		ID:      data.ID,
 		Name:    *data.Name,
@@ -50,11 +50,11 @@ func ParseFromEntity(data Entity) Response {
 	}
 }
 
-// ParseFromEntities converts a list of book entities to a list of response payloads.
-func ParseFromEntities(data []Entity) []Response {
+// ParseFromBooks converts a list of books to a list of response payloads.
+func ParseFromBooks(data []Book) []Response {
 	res := make([]Response, len(data))
-	for i, entity := range data {
-		res[i] = ParseFromEntity(entity)
+	for i, book := range data {
+		res[i] = ParseFromBook(book)
 	}
 	return res
 }

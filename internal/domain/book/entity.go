@@ -1,7 +1,7 @@
 package book
 
-// Entity represents a book in the system.
-type Entity struct {
+// Book represents a book in the system.
+type Book struct {
 	// ID is the unique identifier for the book.
 	ID string `db:"id" bson:"_id"`
 
@@ -19,8 +19,8 @@ type Entity struct {
 }
 
 // New creates a new Book instance.
-func New(req Request) Entity {
-	return Entity{
+func New(req Request) Book {
+	return Book{
 		Name:    &req.Name,
 		Genre:   &req.Genre,
 		ISBN:    &req.ISBN,

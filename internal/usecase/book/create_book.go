@@ -6,9 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
+	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
-
-	log "library-service/internal/infrastructure/logger"
 )
 
 // CreateBookRequest represents the input for creating a book
@@ -91,14 +90,14 @@ func (uc *CreateBookUseCase) Execute(ctx context.Context, req CreateBookRequest)
 	return uc.toResponse(bookEntity), nil
 }
 
-// toResponse converts book entity to response
-func (uc *CreateBookUseCase) toResponse(entity book.Entity) CreateBookResponse {
+// toResponse converts book to response
+func (uc *CreateBookUseCase) toResponse(b book.Book) CreateBookResponse {
 	return CreateBookResponse{
-		ID:      entity.ID,
-		Name:    safeString(entity.Name),
-		Genre:   safeString(entity.Genre),
-		ISBN:    safeString(entity.ISBN),
-		Authors: entity.Authors,
+		ID:      b.ID,
+		Name:    safeString(b.Name),
+		Genre:   safeString(b.Genre),
+		ISBN:    safeString(b.ISBN),
+		Authors: b.Authors,
 	}
 }
 

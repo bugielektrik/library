@@ -25,17 +25,17 @@ func NewAuthorCache(r author.Repository) *AuthorCache {
 }
 
 // Get retrieves an author entity by its ID from the cache or repository.
-func (c *AuthorCache) Get(ctx context.Context, id string) (author.Entity, error) {
+func (c *AuthorCache) Get(ctx context.Context, id string) (author.Author, error) {
 	// Check if data is available in the cache
 	if data, found := c.cache.Get(id); found {
 		// Data found in the cache, return it
-		return data.(author.Entity), nil
+		return data.(author.Author), nil
 	}
 
 	// Data not found in the cache, retrieve it from the repository
 	entity, err := c.repository.Get(ctx, id)
 	if err != nil {
-		return author.Entity{}, err
+		return author.Author{}, err
 	}
 
 	// Store the retrieved data in the cache for future use
@@ -45,7 +45,7 @@ func (c *AuthorCache) Get(ctx context.Context, id string) (author.Entity, error)
 }
 
 // Set stores an author entity in the cache.
-func (c *AuthorCache) Set(ctx context.Context, id string, entity author.Entity) error {
+func (c *AuthorCache) Set(ctx context.Context, id string, entity author.Author) error {
 	c.cache.Set(id, entity, cache.DefaultExpiration)
 	return nil
 }

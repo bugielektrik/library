@@ -1,13 +1,13 @@
 package repository
 
 import (
-	"library-service/internal/domain/author"
-	"library-service/internal/domain/book"
-	"library-service/internal/domain/member"
 	"library-service/internal/adapters/repository/memory"
 	"library-service/internal/adapters/repository/mongo"
 	"library-service/internal/adapters/repository/postgres"
-	store "library-service/internal/infrastructure/database"
+	"library-service/internal/domain/author"
+	"library-service/internal/domain/book"
+	"library-service/internal/domain/member"
+	store "library-service/internal/infrastructure/store"
 )
 
 // Configuration function type for repository setup
@@ -36,7 +36,7 @@ func NewRepositories(configs ...Configuration) (*Repositories, error) {
 	return repos, nil
 }
 
-// Close closes all database connections
+// Close closes all store connections
 func (r *Repositories) Close() {
 	if r.postgres != nil && r.postgres.Connection != nil {
 		r.postgres.Connection.Close()

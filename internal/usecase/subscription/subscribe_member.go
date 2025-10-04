@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/member"
-	store "library-service/internal/infrastructure/database"
-	log "library-service/internal/infrastructure/logger"
+	"library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
 )
 
@@ -21,10 +21,10 @@ type SubscribeMemberRequest struct {
 
 // SubscribeMemberResponse represents the output of subscribing a member
 type SubscribeMemberResponse struct {
-	MemberID      string
-	SubscribedAt  time.Time
-	ExpiresAt     time.Time
-	Status        string
+	MemberID         string
+	SubscribedAt     time.Time
+	ExpiresAt        time.Time
+	Status           string
 	SubscriptionType string
 }
 
@@ -98,7 +98,7 @@ func (uc *SubscribeMemberUseCase) Execute(ctx context.Context, req SubscribeMemb
 	expiresAt := uc.memberService.CalculateExpirationDate(now, req.DurationMonths)
 
 	// In a real system, you would:
-	// - Create subscription record in database
+	// - Create subscription record in store
 	// - Process payment
 	// - Grant access to library features
 	// - Send confirmation email
@@ -121,7 +121,7 @@ func (uc *SubscribeMemberUseCase) Execute(ctx context.Context, req SubscribeMemb
 
 // hasActiveSubscription checks if member has an active subscription
 // In a real system, this would query a subscriptions table
-func (uc *SubscribeMemberUseCase) hasActiveSubscription(m member.Entity) bool {
+func (uc *SubscribeMemberUseCase) hasActiveSubscription(m member.Member) bool {
 	// Placeholder: In production, check against subscriptions repository
 	// For now, always return false to allow subscriptions
 	return false

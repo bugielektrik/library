@@ -56,7 +56,7 @@ func (s *Service) ValidateISBN(isbn string) error {
 }
 
 // ValidateBook validates book entity according to business rules
-func (s *Service) ValidateBook(book Entity) error {
+func (s *Service) ValidateBook(book Book) error {
 	if book.Name == nil || *book.Name == "" {
 		return errors.ErrInvalidBookData.WithDetails("field", "name")
 	}
@@ -85,7 +85,7 @@ func (s *Service) ValidateBook(book Entity) error {
 // Business rule: A book cannot be deleted if it has active loans or reservations
 // For now, this is a placeholder - in a real system, this would check against
 // a loans/reservations repository
-func (s *Service) CanBookBeDeleted(book Entity) error {
+func (s *Service) CanBookBeDeleted(book Book) error {
 	// Placeholder implementation
 	// In production, this would check:
 	// - No active loans for this book

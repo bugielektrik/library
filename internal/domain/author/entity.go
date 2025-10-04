@@ -1,7 +1,7 @@
 package author
 
-// Entity represents an author in the system.
-type Entity struct {
+// Author represents an author in the system.
+type Author struct {
 	// ID is the unique identifier for the author.
 	ID string `db:"id" bson:"_id"`
 
@@ -16,8 +16,8 @@ type Entity struct {
 }
 
 // New creates a new Author instance.
-func New(req Request) Entity {
-	return Entity{
+func New(req Request) Author {
+	return Author{
 		FullName:  &req.FullName,
 		Pseudonym: &req.Pseudonym,
 		Specialty: &req.Specialty,

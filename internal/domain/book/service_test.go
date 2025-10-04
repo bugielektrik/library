@@ -3,8 +3,9 @@ package book
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"library-service/pkg/errors"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestService_ValidateISBN(t *testing.T) {
@@ -94,13 +95,13 @@ func TestService_ValidateBook(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		book      Entity
+		book      Book
 		wantError bool
 		errorType *errors.Error
 	}{
 		{
 			name: "valid book",
-			book: Entity{
+			book: Book{
 				Name:    &validName,
 				Genre:   &validGenre,
 				ISBN:    &validISBN,
@@ -110,7 +111,7 @@ func TestService_ValidateBook(t *testing.T) {
 		},
 		{
 			name: "missing name",
-			book: Entity{
+			book: Book{
 				Name:    nil,
 				Genre:   &validGenre,
 				ISBN:    &validISBN,
@@ -121,7 +122,7 @@ func TestService_ValidateBook(t *testing.T) {
 		},
 		{
 			name: "empty name",
-			book: Entity{
+			book: Book{
 				Name:    &emptyString,
 				Genre:   &validGenre,
 				ISBN:    &validISBN,
@@ -132,7 +133,7 @@ func TestService_ValidateBook(t *testing.T) {
 		},
 		{
 			name: "missing genre",
-			book: Entity{
+			book: Book{
 				Name:    &validName,
 				Genre:   nil,
 				ISBN:    &validISBN,
@@ -143,7 +144,7 @@ func TestService_ValidateBook(t *testing.T) {
 		},
 		{
 			name: "missing ISBN",
-			book: Entity{
+			book: Book{
 				Name:    &validName,
 				Genre:   &validGenre,
 				ISBN:    nil,
@@ -154,7 +155,7 @@ func TestService_ValidateBook(t *testing.T) {
 		},
 		{
 			name: "invalid ISBN format",
-			book: Entity{
+			book: Book{
 				Name:    &validName,
 				Genre:   &validGenre,
 				ISBN:    stringPtr("invalid"),
@@ -165,7 +166,7 @@ func TestService_ValidateBook(t *testing.T) {
 		},
 		{
 			name: "no authors",
-			book: Entity{
+			book: Book{
 				Name:    &validName,
 				Genre:   &validGenre,
 				ISBN:    &validISBN,
@@ -246,19 +247,19 @@ func TestService_CanBookBeDeleted(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		book      Entity
+		book      Book
 		wantError bool
 	}{
 		{
 			name: "book with ID can be checked",
-			book: Entity{
+			book: Book{
 				ID: "book-123",
 			},
 			wantError: false,
 		},
 		{
 			name: "book without ID fails",
-			book: Entity{
+			book: Book{
 				ID: "",
 			},
 			wantError: true,

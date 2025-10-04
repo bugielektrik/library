@@ -126,10 +126,8 @@ To add a new domain (e.g., `loan`):
 3. **Add business logic**: `service.go` (if needed)
 4. **Define interfaces**: `repository.go`, `cache.go`
 5. **Write tests**: `service_test.go` (100% coverage)
-6. **Add package doc**: `doc.go`
 
 ## References
 
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Domain-Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html)
-- [Package Documentation](./doc.go)

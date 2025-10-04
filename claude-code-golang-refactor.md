@@ -309,7 +309,7 @@ func LoadConfig() (*Config, error)
 
 // Testing
 "github.com/stretchr/testify"
-"github.com/golang/mock"
+"github.com/golang/mocks"
 
 // Validation
 "github.com/go-playground/validator/v10"

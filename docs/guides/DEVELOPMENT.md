@@ -212,7 +212,7 @@ func TestService_ValidateISBN(t *testing.T) {
 ### Integration Tests
 
 ```bash
-# Run with database
+# Run with store
 DB_HOST=localhost make test-integration
 ```
 

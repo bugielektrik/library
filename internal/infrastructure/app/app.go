@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"library-service/internal/adapters/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,10 +15,8 @@ import (
 	"library-service/internal/adapters/cache"
 	"library-service/internal/adapters/repository"
 	"library-service/internal/infrastructure/config"
-	"library-service/internal/infrastructure/server"
+	"library-service/internal/infrastructure/log"
 	"library-service/internal/usecase"
-
-	log "library-service/internal/infrastructure/logger"
 )
 
 // App represents the application with all its dependencies
@@ -27,7 +26,7 @@ type App struct {
 	repositories *repository.Repositories
 	caches       *cache.Caches
 	usecases     *usecase.Container
-	server       *server.Server
+	server       *http.Server
 }
 
 // New creates a new application instance
@@ -86,7 +85,7 @@ func New() (*App, error) {
 	app.logger.Info("usecases initialized")
 
 	// Initialize HTTP server
-	srv, err := server.NewHTTPServer(cfg, usecases, app.logger)
+	srv, err := http.NewHTTPServer(cfg, usecases, app.logger)
 	if err != nil {
 		app.logger.Error("failed to initialize server", zap.Error(err))
 		return nil, err

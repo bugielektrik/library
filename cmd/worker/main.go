@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/infrastructure/config"
-	log "library-service/internal/infrastructure/logger"
+	"library-service/internal/infrastructure/log"
 )
 
 // Worker handles background jobs and tasks

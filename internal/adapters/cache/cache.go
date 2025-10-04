@@ -7,7 +7,7 @@ import (
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 
-	store "library-service/internal/infrastructure/database"
+	"library-service/internal/infrastructure/store"
 )
 
 // Dependencies holds cache dependencies

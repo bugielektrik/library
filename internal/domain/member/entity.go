@@ -1,7 +1,7 @@
 package member
 
-// Entity represents a member in the system.
-type Entity struct {
+// Member represents a member in the system.
+type Member struct {
 	// ID is the unique identifier for the member.
 	ID string `db:"id" bson:"_id"`
 
@@ -13,8 +13,8 @@ type Entity struct {
 }
 
 // New creates a new Member instance.
-func New(req Request) Entity {
-	return Entity{
+func New(req Request) Member {
+	return Member{
 		FullName: &req.FullName,
 		Books:    req.Books,
 	}

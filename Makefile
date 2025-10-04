@@ -141,13 +141,13 @@ clean:
 	@rm -f coverage.out coverage.html
 	@echo "$(GREEN)Cleaned!$(NC)"
 
-## migrate-up: Run database migrations
+## migrate-up: Run store migrations
 .PHONY: migrate-up
 migrate-up:
 	@echo "$(YELLOW)Running migrations...$(NC)"
 	$(GO) run ./cmd/migrate up
 
-## migrate-down: Rollback database migrations
+## migrate-down: Rollback store migrations
 .PHONY: migrate-down
 migrate-down:
 	@echo "$(YELLOW)Rolling back migrations...$(NC)"

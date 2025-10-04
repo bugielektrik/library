@@ -1,76 +1,37 @@
-// Package usecase contains the application business logic and orchestration.
+// Package usecase contains application-specific business rules and use case orchestration.
 //
-// This is the application layer of Clean Architecture, containing:
-//   - Use case implementations (one per business operation)
-//   - Use case DTOs for input/output
-//   - Orchestration of domain services and repositories
-//   - Transaction management
+// This package implements the use case layer of clean architecture, coordinating
+// domain entities and services to fulfill specific application requirements.
 //
-// Dependency Rule:
-// Use cases depend on domain layer (inward) but never on adapters or infrastructure.
-// They use repository interfaces defined in the domain layer.
+// Responsibilities:
+//   - Orchestrate domain entities and services
+//   - Define transaction boundaries
+//   - Transform between DTOs and domain models
+//   - Implement application-specific workflows
 //
-// Use Case Packages:
-//   - book: Book-related operations (create, update, delete, list)
-//   - member: Member and subscription operations
-//   - author: Author management operations
-//   - subscription: Subscription-specific business flows
+// Design principles:
+//   - One use case per business operation
+//   - Single Responsibility Principle
+//   - Dependency injection via constructors
+//   - Use cases depend only on domain interfaces
 //
-// Design Patterns:
-//   - One Use Case per File: Single responsibility principle
-//   - Constructor Injection: Dependencies injected via constructor
-//   - DTO Pattern: Separate DTOs from domain entities
-//   - Error Wrapping: Contextual error messages with error chains
+// Structure:
+//   - Each use case is a separate file (e.g., create_book.go)
+//   - Use cases have Execute() methods for invocation
+//   - Request/Response DTOs defined per use case
+//   - Dependencies injected through constructors
 //
-// Example Use Case Structure:
+// Example use case structure:
 //
-//	// Use case struct with dependencies
 //	type CreateBookUseCase struct {
-//	    bookRepo    book.Repository
-//	    bookService *book.Service
-//	    bookCache   book.Cache
+//		repo    book.Repository
+//		service *book.Service
 //	}
 //
-//	// Constructor with dependency injection
-//	func NewCreateBookUseCase(
-//	    repo book.Repository,
-//	    service *book.Service,
-//	    cache book.Cache,
-//	) *CreateBookUseCase {
-//	    return &CreateBookUseCase{
-//	        bookRepo:    repo,
-//	        bookService: service,
-//	        bookCache:   cache,
-//	    }
+//	func (uc *CreateBookUseCase) Execute(ctx context.Context, req CreateBookRequest) (CreateBookResponse, error) {
+//		// 1. Validate input
+//		// 2. Create domain entity
+//		// 3. Persist via repository
+//		// 4. Return response
 //	}
-//
-//	// Execute method orchestrates the flow
-//	func (uc *CreateBookUseCase) Execute(ctx context.Context, input CreateBookInput) (*book.Entity, error) {
-//	    // 1. Map DTO to entity
-//	    entity := input.ToEntity()
-//
-//	    // 2. Validate with domain service
-//	    if err := uc.bookService.ValidateBook(entity); err != nil {
-//	        return nil, fmt.Errorf("validation failed: %w", err)
-//	    }
-//
-//	    // 3. Check business rules
-//	    existing, _ := uc.bookRepo.GetByISBN(ctx, entity.ISBN)
-//	    if existing != nil {
-//	        return nil, errors.New("book already exists")
-//	    }
-//
-//	    // 4. Persist
-//	    if err := uc.bookRepo.Create(ctx, entity); err != nil {
-//	        return nil, fmt.Errorf("failed to create book: %w", err)
-//	    }
-//
-//	    // 5. Cache
-//	    _ = uc.bookCache.Set(ctx, entity)
-//
-//	    return &entity, nil
-//	}
-//
-// Use cases are thin orchestrators that delegate business logic to domain services,
-// ensuring the domain layer remains the source of truth for business rules.
 package usecase

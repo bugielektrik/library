@@ -10,31 +10,31 @@ import (
 	"library-service/internal/domain/book"
 )
 
-// BookRepository handles CRUD operations for books in an in-memory database.
+// BookRepository handles CRUD operations for books in an in-memory store.
 type BookRepository struct {
-	db map[string]book.Entity
+	db map[string]book.Book
 	sync.RWMutex
 }
 
 // NewBookRepository creates a new BookRepository.
 func NewBookRepository() *BookRepository {
-	return &BookRepository{db: make(map[string]book.Entity)}
+	return &BookRepository{db: make(map[string]book.Book)}
 }
 
-// List retrieves all books from the in-memory database.
-func (r *BookRepository) List(ctx context.Context) ([]book.Entity, error) {
+// List retrieves all books from the in-memory store.
+func (r *BookRepository) List(ctx context.Context) ([]book.Book, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	books := make([]book.Entity, 0, len(r.db))
+	books := make([]book.Book, 0, len(r.db))
 	for _, data := range r.db {
 		books = append(books, data)
 	}
 	return books, nil
 }
 
-// Add inserts a new book into the in-memory database.
-func (r *BookRepository) Add(ctx context.Context, data book.Entity) (string, error) {
+// Add inserts a new book into the in-memory store.
+func (r *BookRepository) Add(ctx context.Context, data book.Book) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -44,20 +44,20 @@ func (r *BookRepository) Add(ctx context.Context, data book.Entity) (string, err
 	return id, nil
 }
 
-// Get retrieves a book by ID from the in-memory database.
-func (r *BookRepository) Get(ctx context.Context, id string) (book.Entity, error) {
+// Get retrieves a book by ID from the in-memory store.
+func (r *BookRepository) Get(ctx context.Context, id string) (book.Book, error) {
 	r.RLock()
 	defer r.RUnlock()
 
 	data, ok := r.db[id]
 	if !ok {
-		return book.Entity{}, sql.ErrNoRows
+		return book.Book{}, sql.ErrNoRows
 	}
 	return data, nil
 }
 
-// Update modifies an existing book in the in-memory database.
-func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) error {
+// Update modifies an existing book in the in-memory store.
+func (r *BookRepository) Update(ctx context.Context, id string, data book.Book) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -68,7 +68,7 @@ func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity
 	return nil
 }
 
-// Delete removes a book by ID from the in-memory database.
+// Delete removes a book by ID from the in-memory store.
 func (r *BookRepository) Delete(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()

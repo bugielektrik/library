@@ -63,7 +63,7 @@ else
 fi
 echo ""
 
-# Wait for database
+# Wait for store
 if command -v docker-compose &> /dev/null; then
     echo "⏳ Waiting for database to be ready..."
     sleep 3

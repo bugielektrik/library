@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"library-service/internal/infrastructure/database"
+	"library-service/internal/infrastructure/store"
 )
 
 // MemberRepository handles CRUD operations for members in MongoDB.
@@ -25,14 +25,14 @@ func NewMemberRepository(db *mongo.Database) *MemberRepository {
 }
 
 // List retrieves all members from the MongoDB collection.
-func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
+func (r *MemberRepository) List(ctx context.Context) ([]member.Member, error) {
 	cur, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
 	defer cur.Close(ctx)
 
-	var members []member.Entity
+	var members []member.Member
 	if err = cur.All(ctx, &members); err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
 }
 
 // Add inserts a new member into the MongoDB collection.
-func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
+func (r *MemberRepository) Add(ctx context.Context, data member.Member) (string, error) {
 	res, err := r.collection.InsertOne(ctx, data)
 	if err != nil {
 		return "", err
@@ -52,13 +52,13 @@ func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string,
 }
 
 // Get retrieves a member by ID from the MongoDB collection.
-func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
+func (r *MemberRepository) Get(ctx context.Context, id string) (member.Member, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return member.Entity{}, err
+		return member.Member{}, err
 	}
 
-	var member member.Entity
+	var member member.Member
 	if err = r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&member); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return member, store.ErrorNotFound
@@ -70,7 +70,7 @@ func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, e
 }
 
 // Update modifies an existing member in the MongoDB collection.
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
+func (r *MemberRepository) Update(ctx context.Context, id string, data member.Member) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (r *MemberRepository) Update(ctx context.Context, id string, data member.En
 }
 
 // prepareUpdateData prepares the data for the update query.
-func (r *MemberRepository) prepareUpdateData(data member.Entity) bson.M {
+func (r *MemberRepository) prepareUpdateData(data member.Member) bson.M {
 	updateData := bson.M{}
 
 	if data.FullName != nil {
