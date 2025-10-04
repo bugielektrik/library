@@ -84,11 +84,15 @@ internal/
 │
 ├── usecase/            # Application business rules
 │   ├── book/          # Book use cases (CreateBook, UpdateBook, etc.)
-│   └── member/        # Member use cases
+│   └── subscription/  # Subscription use cases
 │
 ├── adapters/           # External interfaces
 │   ├── http/          # HTTP handlers (REST API)
 │   ├── repository/    # Database implementations
+│   │   ├── postgres/  # PostgreSQL implementations
+│   │   ├── mongo/     # MongoDB implementations
+│   │   ├── memory/    # In-memory implementations
+│   │   └── mocks/     # Mock implementations for testing
 │   ├── cache/         # Redis cache implementations
 │   ├── grpc/          # gRPC server
 │   ├── email/         # SMTP email adapter
@@ -97,9 +101,10 @@ internal/
 └── infrastructure/     # Technical concerns
     ├── auth/          # JWT authentication
     ├── config/        # Environment configuration
-    ├── database/      # PostgreSQL connection
-    ├── http/          # HTTP server setup
-    └── logger/        # Zap structured logging
+    ├── store/         # Database and cache store management
+    ├── log/           # Zap structured logging
+    ├── server/        # Server configuration
+    └── app/           # Application initialization
 ```
 
 ### Key Architectural Patterns
@@ -112,6 +117,35 @@ internal/
 
 ## Domain-Driven Design Concepts
 
+### Domain Entities
+Each domain has specific typed entities (refactored from generic "Entity"):
+
+```go
+// internal/domain/book/entity.go
+type Book struct {
+    ID      string
+    Name    *string
+    Genre   *string
+    ISBN    *string
+    Authors []string
+}
+
+// internal/domain/member/entity.go
+type Member struct {
+    ID       string
+    FullName *string
+    Books    []string
+}
+
+// internal/domain/author/entity.go
+type Author struct {
+    ID        string
+    FullName  *string
+    Pseudonym *string
+    Specialty *string
+}
+```
+
 ### Domain Services
 Each domain has a service for business logic that doesn't belong to a single entity:
 
@@ -120,7 +154,8 @@ Each domain has a service for business logic that doesn't belong to a single ent
 type Service struct{}
 
 func (s *Service) ValidateISBN(isbn string) error     // ISBN validation logic
-func (s *Service) CanBookBeDeleted(book Entity) error // Business rule check
+func (s *Service) ValidateBook(book Book) error       // Book validation
+func (s *Service) CanBookBeDeleted(book Book) error   // Business rule check
 ```
 
 ### Repository Interfaces
@@ -129,9 +164,11 @@ Defined in domain, implemented in adapters:
 ```go
 // internal/domain/book/repository.go
 type Repository interface {
-    Create(ctx context.Context, book Entity) error
-    GetByID(ctx context.Context, id string) (Entity, error)
-    // ...
+    List(ctx context.Context) ([]Book, error)
+    Add(ctx context.Context, data Book) (string, error)
+    Get(ctx context.Context, id string) (Book, error)
+    Update(ctx context.Context, id string, data Book) error
+    Delete(ctx context.Context, id string) error
 }
 ```
 
@@ -198,12 +235,43 @@ LOG_LEVEL=debug
 - Swagger UI: http://localhost:8080/swagger/ (when running)
 - Generate docs: `make gen-docs`
 
+## Recent Refactoring (Google Go Style Guide Compliance)
+
+The codebase was refactored to follow Google Go Style Guide best practices:
+
+### Type System Changes
+- **Before**: Generic `Entity` type in all domains
+- **After**: Specific types (`Book`, `Member`, `Author`)
+- All ~60 files updated with proper type references
+- DTO functions renamed: `ParseFromEntity` → `ParseFromBook/Member/Author`
+
+### File Organization Changes
+- `database/` → `store/` (clearer naming)
+- `logger/` → `log/` (Go convention)
+- `mock/` → `mocks/` (Go convention)
+- HTTP files simplified: `book_handler.go` → `book.go`
+- DTOs simplified: `book_dto.go` → `book.go`
+
+### Documentation Added
+- Package-level `doc.go` files for all packages:
+  - `internal/domain/doc.go` - Core domain layer overview
+  - `internal/domain/book/doc.go` - Book domain with ISBN validation
+  - `internal/domain/member/doc.go` - Member and subscription management
+  - `internal/domain/author/doc.go` - Author management
+  - `internal/usecase/doc.go` - Use case layer
+  - `internal/adapters/doc.go` - Adapters layer
+  - `internal/infrastructure/doc.go` - Infrastructure layer
+  - `pkg/doc.go` - Shared utilities
+- Comprehensive godoc comments with usage examples
+- Architecture documentation in domain layer
+
 ## Code Standards
 
 ### File Organization
 - One use case per file
 - File size < 300 lines (max 500)
 - Cyclomatic complexity < 10
+- Package documentation in `doc.go` files
 
 ### Error Handling
 ```go
@@ -214,11 +282,14 @@ return fmt.Errorf("failed to create book: %w", err)
 return errors.ErrInvalidISBN
 ```
 
-### Naming Conventions
-- Use cases: `CreateBookUseCase`, `UpdateMemberUseCase`
-- Services: `BookService`, `MemberService`
-- Repositories: `BookRepository` interface, `PostgresBookRepository` implementation
-- Handlers: `BookHandler`, `MemberHandler`
+### Naming Conventions (Google Go Style Guide)
+- **Domain entities**: Specific types (`Book`, `Member`, `Author`) not generic `Entity`
+- **Use cases**: `CreateBookUseCase`, `UpdateMemberUseCase`
+- **Services**: `Service` (package-scoped in each domain package)
+- **Repositories**: `Repository` interface, implementations like `PostgresRepository`
+- **Files**: Snake case for multi-word concepts (`create_book.go`, `subscribe_member.go`)
+- **Imports**: Organized in groups (standard → external → internal) with blank lines
+- **Package documentation**: All packages have `doc.go` files with godoc comments
 
 ## Performance Considerations
 
