@@ -19,6 +19,9 @@ make init                # Download dependencies
 make up                  # Start PostgreSQL and Redis via Docker
 make migrate-up          # Run store migrations
 make run                 # Start API server (port 8080)
+
+# Or use the combined dev command
+make dev                 # Runs: up → migrate-up → run
 ```
 
 ### Development Workflow
@@ -62,6 +65,25 @@ make up                  # Start services (PostgreSQL, Redis)
 make down                # Stop services
 make docker-logs         # View container logs
 make restart             # Restart all services
+make docker-build        # Build Docker images
+```
+
+### Other Useful Commands
+```bash
+# Tools and generators
+make install-tools       # Install golangci-lint, mockgen, swag
+make gen-mocks          # Generate mocks with go generate
+make gen-docs           # Generate Swagger API documentation
+
+# Module management
+make mod-tidy           # Tidy and vendor go modules
+make mod-update         # Update all dependencies
+
+# Quality checks
+make check              # Run fmt, vet, lint together
+make security           # Run gosec security checks
+make benchmark          # Run performance benchmarks
+make version            # Show version information
 ```
 
 ## High-Level Architecture
@@ -210,6 +232,20 @@ for _, tt := range tests {
 - Test fixtures in `test/fixtures/`
 - Benchmark files: `*_benchmark_test.go`
 - Run benchmarks: `make benchmark`
+
+## Key Dependencies
+
+The project uses the following main dependencies:
+- **HTTP Router**: `github.com/go-chi/chi/v5` - Lightweight, composable router
+- **Database**: `github.com/jmoiron/sqlx` with `github.com/lib/pq` (PostgreSQL)
+- **Migrations**: `github.com/golang-migrate/migrate/v4`
+- **Validation**: `github.com/go-playground/validator/v10`
+- **Logging**: `go.uber.org/zap` - Structured logging
+- **Config**: `github.com/kelseyhightower/envconfig` - Environment-based config
+- **Cache**: `github.com/redis/go-redis/v9` - Redis client
+- **Testing**: `github.com/stretchr/testify` - Testing toolkit
+- **MongoDB**: `go.mongodb.org/mongo-driver` - MongoDB driver (optional)
+- **gRPC**: `google.golang.org/grpc` - gRPC server/client
 
 ## Important Configuration
 
@@ -364,6 +400,17 @@ Use cases define transaction boundaries. Repositories should not manage transact
 - Business rule validation in domain services
 - Use `github.com/go-playground/validator/v10` for struct validation
 
+### Linting Configuration
+The project uses `.golangci.yml` with 25+ linters:
+- **Core**: gofmt, goimports, govet, errcheck, staticcheck, unused
+- **Quality**: misspell, unconvert, prealloc, nakedret, gocritic, revive
+- **Security**: gosec
+- **Complexity**: gocyclo (max: 10), gocognit (max: 20)
+- **Duplication**: dupl (threshold: 100)
+- **Error handling**: nilerr, wrapcheck
+- **SQL**: sqlclosecheck, rowserrcheck
+- **Context**: noctx, contextcheck
+
 ## CI/CD Pipeline
 
 GitHub Actions workflows available:
@@ -400,3 +447,37 @@ psql $DATABASE_URL -c "SELECT 1"
 # Redis connection test
 redis-cli ping
 ```
+
+## Additional Documentation
+
+The project includes extensive documentation for deeper understanding:
+
+### Getting Started Guides
+- **[Quick Start (5 min)](./docs/guides/QUICKSTART.md)** - Get running in 5 minutes
+- **[Development Guide](./docs/guides/DEVELOPMENT.md)** - Comprehensive workflow
+- **[Contributing Guidelines](./docs/guides/CONTRIBUTING.md)** - How to contribute
+
+### Architecture Documentation
+- **[Architecture Overview](./docs/architecture.md)** - System design principles
+- **[Package Overview](./docs/package-overview.md)** - Package structure and dependencies
+- **[Architecture Decisions (ADRs)](./docs/adr/README.md)** - Key architectural decisions
+  - [ADR-001: Clean Architecture](./docs/adr/001-clean-architecture.md)
+  - [ADR-002: Domain Services](./docs/adr/002-domain-services.md)
+  - [ADR-003: Dependency Injection](./docs/adr/003-dependency-injection.md)
+
+### Code Examples
+- **[Basic CRUD](./examples/basic_crud/)** - Complete CRUD workflow example
+- **[Domain Services](./examples/domain_service/)** - Business logic patterns
+- **[Testing Patterns](./examples/testing/)** - Testing strategies and mocks
+
+### Layer-Specific READMEs
+- **[Domain Layer](./internal/domain/README.md)** - Business logic and entities
+- **[Use Case Layer](./internal/usecase/README.md)** - Application use cases
+- **[Adapter Layer](./internal/adapters/README.md)** - External interfaces
+- **[Command Line Apps](./cmd/README.md)** - Entry points (API, worker, migrate)
+- **[Shared Packages](./pkg/README.md)** - Reusable utilities
+
+### Testing Resources
+- **[Test Fixtures](./test/fixtures/README.md)** - Shared test data and helpers
+- **Integration Tests**: `./test/integration/` with `//go:build integration` tag
+- **Benchmarks**: `*_benchmark_test.go` files throughout the codebase

@@ -14,6 +14,7 @@ import (
 
 	"library-service/internal/adapters/cache"
 	"library-service/internal/adapters/repository"
+	"library-service/internal/infrastructure/auth"
 	"library-service/internal/infrastructure/config"
 	"library-service/internal/infrastructure/log"
 	"library-service/internal/usecase"
@@ -25,6 +26,7 @@ type App struct {
 	config       *config.Config
 	repositories *repository.Repositories
 	caches       *cache.Caches
+	authServices *usecase.AuthServices
 	usecases     *usecase.Container
 	server       *http.Server
 }
@@ -70,6 +72,19 @@ func New() (*App, error) {
 	app.caches = caches
 	app.logger.Info("caches initialized")
 
+	// Initialize auth services
+	authServices := &usecase.AuthServices{
+		JWTService: auth.NewJWTService(
+			cfg.JWT.Secret,
+			cfg.JWT.AccessTokenTTL,
+			cfg.JWT.RefreshTokenTTL,
+			cfg.JWT.Issuer,
+		),
+		PasswordService: auth.NewPasswordService(),
+	}
+	app.authServices = authServices
+	app.logger.Info("auth services initialized")
+
 	// Initialize usecases
 	usecaseRepos := &usecase.Repositories{
 		Book:   repos.Book,
@@ -80,12 +95,12 @@ func New() (*App, error) {
 		Book:   caches.Book,
 		Author: caches.Author,
 	}
-	usecases := usecase.NewContainer(usecaseRepos, usecaseCaches)
+	usecases := usecase.NewContainer(usecaseRepos, usecaseCaches, authServices)
 	app.usecases = usecases
 	app.logger.Info("usecases initialized")
 
 	// Initialize HTTP server
-	srv, err := http.NewHTTPServer(cfg, usecases, app.logger)
+	srv, err := http.NewHTTPServer(cfg, usecases, authServices, app.logger)
 	if err != nil {
 		app.logger.Error("failed to initialize server", zap.Error(err))
 		return nil, err

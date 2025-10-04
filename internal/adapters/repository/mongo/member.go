@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"time"
 	"library-service/internal/domain/member"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -125,4 +126,19 @@ func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+// GetByEmail retrieves a member by email (stub implementation)
+func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (member.Member, error) {
+	return member.Member{}, errors.New("not implemented")
+}
+
+// UpdateLastLogin updates last login time (stub implementation)
+func (r *MemberRepository) UpdateLastLogin(ctx context.Context, id string, loginTime time.Time) error {
+	return errors.New("not implemented")
+}
+
+// EmailExists checks if email exists (stub implementation)
+func (r *MemberRepository) EmailExists(ctx context.Context, email string) (bool, error) {
+	return false, errors.New("not implemented")
 }

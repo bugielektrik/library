@@ -1,6 +1,11 @@
-# Claude Code Go Project Architecture Refactoring Prompt
+# Claude Code Go Project Architecture Refactoring Guide
 
 ## Refactor the Go codebase architecture to optimize for vibecoding workflow with Claude Code.
+
+## 📚 Reference Documentation
+- **Google Go Style Guide**: https://google.github.io/styleguide/go/best-practices
+- **Effective Go**: https://go.dev/doc/effective_go
+- **Standard Go Project Layout**: https://github.com/golang-standards/project-layout
 
 ## Current Architecture Overview
 - **Go version:** [e.g., 1.21.5]
@@ -250,6 +255,69 @@ func LoadConfig() (*Config, error)
 
 ## Go-Specific Standards
 
+### 📋 Comprehensive Refactoring Checklist
+
+#### 1. Code Structure & Organization
+- [ ] Package names: lowercase, single word, no underscores
+- [ ] One package per directory
+- [ ] Imports grouped: standard → external → internal (with blank lines)
+- [ ] Consistent file naming: `snake_case.go`
+
+#### 2. Naming Conventions
+- [ ] **Exported**: `CamelCase` for public APIs
+- [ ] **Unexported**: `camelCase` for internal use
+- [ ] **Interfaces**: verb + "er" suffix (e.g., `Reader`, `Writer`, `UserCreator`)
+- [ ] **Constants**: `CamelCase` or `SCREAMING_SNAKE_CASE` for exported
+- [ ] **Acronyms**: Keep consistent case (e.g., `URLParser`, not `UrlParser`)
+- [ ] **Receiver names**: 1-2 letters, consistent across methods
+- [ ] **Struct naming**: PascalCase for exported, camelCase for unexported
+
+#### 3. Function & Method Design
+- [ ] Functions do one thing well
+- [ ] Early returns for error cases
+- [ ] Named return values only when they clarify
+- [ ] Prefer value receivers unless mutation needed
+- [ ] Context as first parameter in functions
+- [ ] Errors as last return value
+
+#### 4. Error Handling Best Practices
+```go
+// ✅ Good - Add context and wrap errors
+if err != nil {
+    return fmt.Errorf("processing user %d: %w", userID, err)
+}
+
+// ❌ Bad - No context
+if err != nil {
+    return err
+}
+```
+- [ ] Check errors immediately
+- [ ] Add context with `fmt.Errorf` and `%w` for wrapping
+- [ ] Custom error types for API boundaries
+- [ ] Never ignore errors (use `_` explicitly if intentional)
+
+#### 5. Concurrency Patterns
+- [ ] Goroutines must have clear lifecycle
+- [ ] Use `context.Context` for cancellation
+- [ ] Channels: sender closes, receiver checks
+- [ ] Prefer `sync.Once` for one-time initialization
+
+#### 6. Testing Standards
+- [ ] Table-driven tests with subtests
+- [ ] Test file naming: `*_test.go`
+- [ ] Benchmark critical paths: `Benchmark*`
+- [ ] Example tests for documentation: `Example*`
+- [ ] Minimum 80% code coverage
+- [ ] Integration tests tagged with `//go:build integration`
+
+#### 7. Documentation Requirements
+- [ ] Package comment before `package` declaration
+- [ ] Exported items have godoc comments
+- [ ] Comments start with item name
+- [ ] Use `// TODO(username):` for future work
+- [ ] Code examples in godoc where helpful
+
 ### Code Organization
 - **Package naming:** Lowercase, single word, no underscores
 - **File naming:** lowercase with underscores (e.g., `user_service.go`)
@@ -263,6 +331,11 @@ func LoadConfig() (*Config, error)
 - **Named returns** only for documentation purposes
 - **Context as first parameter** in functions
 - **Errors as last return value**
+- **Prefer simplicity**: Clear code > clever code
+- **Fail fast**: Return errors early
+- **Make zero values useful**
+- **Design APIs for testability**
+- **Use interfaces for abstraction, not just for mocking**
 
 ### Performance Guidelines
 - **Preallocate slices** when size is known
@@ -271,7 +344,9 @@ func LoadConfig() (*Config, error)
 - **Profile with pprof** for bottlenecks
 - **Minimize allocations** in hot paths
 
-## Constraints
+## Constraints & Exclusions
+
+### Must Maintain
 - Must maintain backward compatibility with existing REST API
 - Cannot break existing client SDKs
 - Database schema changes require migration scripts
@@ -280,7 +355,11 @@ func LoadConfig() (*Config, error)
 - Keep compile time under 30 seconds
 - Docker image size under 50MB
 
-## Non-Goals (Don't Change)
+### Do Not Refactor
+- `/vendor/` - External dependencies
+- `*.pb.go` - Generated protobuf files
+- `/generated/` - Any generated code
+- `/.git/` - Version control
 - Existing protobuf definitions
 - Database schema (only add migrations)
 - Third-party service integrations
@@ -334,6 +413,14 @@ linters:
 
 ## Migration Strategy
 
+### 🔄 Refactoring Strategy Overview
+1. **Phase 1**: Fix critical issues (compilation, tests)
+2. **Phase 2**: Apply naming conventions and code organization
+3. **Phase 3**: Restructure packages if needed
+4. **Phase 4**: Improve error handling
+5. **Phase 5**: Add missing documentation
+6. **Phase 6**: Optimize and add benchmarks
+
 ### Phase 1: Foundation (Week 1)
 - [ ] Set up new directory structure
 - [ ] Create domain entities and value objects
@@ -362,15 +449,51 @@ linters:
 - [ ] Create health check endpoints
 - [ ] Performance testing and optimization
 
+### 🛠️ Validation Commands
+
+Run these commands after each refactoring phase:
+
+```bash
+# Format code
+go fmt ./...
+goimports -w .
+
+# Vet for suspicious constructs
+go vet ./...
+
+# Lint for style issues
+golangci-lint run
+
+# Test with coverage
+go test -cover ./...
+
+# Generate coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# Race detection
+go test -race ./...
+
+# Check for security issues
+gosec ./...
+```
+
 ## Success Metrics
-- **Test Coverage:** >80% for business logic, >60% overall
-- **Build Time:** <30 seconds for full build
-- **Test Execution:** <2 minutes for unit tests
-- **Cyclomatic Complexity:** <10 per function
-- **Code Duplication:** <3% (measured by dupl)
-- **Response Time:** p99 <100ms for API endpoints
-- **Memory Usage:** <100MB for typical load
-- **Zero data races** detected by race detector
+
+### 📊 Success Criteria
+- [ ] Zero linting errors (`golangci-lint run`)
+- [ ] All tests passing (`go test ./...`)
+- [ ] Coverage ≥ 80% for business logic, ≥ 60% overall
+- [ ] No `go vet` warnings
+- [ ] Documentation for all exported items
+- [ ] Consistent style across entire codebase
+- [ ] **Build Time:** <30 seconds for full build
+- [ ] **Test Execution:** <2 minutes for unit tests
+- [ ] **Cyclomatic Complexity:** <10 per function
+- [ ] **Code Duplication:** <3% (measured by dupl)
+- [ ] **Response Time:** p99 <100ms for API endpoints
+- [ ] **Memory Usage:** <100MB for typical load
+- [ ] **Zero data races** detected by race detector
 
 ## Current Code Problems
 
@@ -568,5 +691,22 @@ go vet ./...
 Please analyze the current structure and implement improvements following Go best practices and idiomatic patterns. Focus on creating a maintainable, testable, and performant Go application architecture.
 
 **Priority:** Start with [highest risk module] and create a working example before proceeding with full refactoring.
+
+## 📝 Important Reminders
+
+### Development Best Practices
+- Run tests after each major change
+- Commit frequently with descriptive messages
+- Use feature branches for large refactors
+- Document breaking changes in CHANGELOG.md
+
+### Core Principles
+**Remember**: Good code is not just working code, it's code that others (including future you) can understand, maintain, and extend.
+
+- **Prefer simplicity**: Clear code > clever code
+- **Fail fast**: Return errors early
+- **Make zero values useful**: Design structs so their zero value is ready to use
+- **Design for testability**: Make dependencies explicit and interfaces narrow
+- **Use interfaces wisely**: For abstraction, not just for mocking
 
 **Note:** If you encounter any unclear requirements or need to make architectural decisions, please ask for clarification rather than making assumptions.

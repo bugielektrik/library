@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -85,4 +86,48 @@ func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	delete(r.db, id)
 
 	return nil
+}
+
+// GetByEmail retrieves a member by email from the in-memory store.
+func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (member.Member, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, entity := range r.db {
+		if entity.Email == email {
+			return entity, nil
+		}
+	}
+
+	return member.Member{}, sql.ErrNoRows
+}
+
+// UpdateLastLogin updates the last login timestamp for a member.
+func (r *MemberRepository) UpdateLastLogin(ctx context.Context, id string, loginTime time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	entity, exists := r.db[id]
+	if !exists {
+		return sql.ErrNoRows
+	}
+
+	entity.LastLoginAt = &loginTime
+	r.db[id] = entity
+
+	return nil
+}
+
+// EmailExists checks if an email already exists in the in-memory store.
+func (r *MemberRepository) EmailExists(ctx context.Context, email string) (bool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, entity := range r.db {
+		if entity.Email == email {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

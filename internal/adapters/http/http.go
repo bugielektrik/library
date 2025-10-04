@@ -18,12 +18,13 @@ type Server struct {
 }
 
 // NewHTTPServer creates a new HTTP server
-func NewHTTPServer(cfg *config.Config, usecases *usecase.Container, logger *zap.Logger) (*Server, error) {
+func NewHTTPServer(cfg *config.Config, usecases *usecase.Container, authSvcs *usecase.AuthServices, logger *zap.Logger) (*Server, error) {
 	// Create router
 	router := NewRouter(RouterConfig{
-		Config:   cfg,
-		Usecases: usecases,
-		Logger:   logger,
+		Config:       cfg,
+		Usecases:     usecases,
+		AuthServices: authSvcs,
+		Logger:       logger,
 	})
 
 	// Create HTTP server

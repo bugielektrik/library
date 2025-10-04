@@ -123,6 +123,20 @@ var (
 		Message:    "Business rule violation",
 		HTTPStatus: http.StatusUnprocessableEntity,
 	}
+
+	// Authentication errors
+	ErrInvalidCredentials = &Error{
+		Code:       "INVALID_CREDENTIALS",
+		Message:    "Invalid email or password",
+		HTTPStatus: http.StatusUnauthorized,
+	}
+
+	ErrInvalidToken = &Error{
+		Code:       "INVALID_TOKEN",
+		Message:    "Invalid or expired token",
+		HTTPStatus: http.StatusUnauthorized,
+	}
+
 )
 
 // New creates a new domain error

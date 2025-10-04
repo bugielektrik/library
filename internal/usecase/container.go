@@ -1,8 +1,10 @@
 package usecase
 
 import (
+	"library-service/internal/infrastructure/auth"
 	bookuc "library-service/internal/usecase/book"
 	subscriptionuc "library-service/internal/usecase/subscription"
+	authuc "library-service/internal/usecase/auth"
 
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
@@ -21,6 +23,12 @@ type Container struct {
 
 	// Subscription usecases
 	SubscribeMember *subscriptionuc.SubscribeMemberUseCase
+
+	// Auth usecases
+	RegisterMember   *authuc.RegisterUseCase
+	LoginMember      *authuc.LoginUseCase
+	RefreshToken     *authuc.RefreshTokenUseCase
+	ValidateToken    *authuc.ValidateTokenUseCase
 }
 
 // Repositories holds all repository interfaces
@@ -36,8 +44,14 @@ type Caches struct {
 	Author author.Cache
 }
 
+// AuthServices holds all authentication services
+type AuthServices struct {
+	JWTService      *auth.JWTService
+	PasswordService *auth.PasswordService
+}
+
 // NewContainer creates a new usecase container with all dependencies injected
-func NewContainer(repos *Repositories, caches *Caches) *Container {
+func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices) *Container {
 	// Create domain services
 	bookService := book.NewService()
 	memberService := member.NewService()
@@ -53,5 +67,11 @@ func NewContainer(repos *Repositories, caches *Caches) *Container {
 
 		// Subscription usecases
 		SubscribeMember: subscriptionuc.NewSubscribeMemberUseCase(repos.Member, memberService),
+
+		// Auth usecases
+		RegisterMember:   authuc.NewRegisterUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService, memberService),
+		LoginMember:      authuc.NewLoginUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService),
+		RefreshToken:     authuc.NewRefreshTokenUseCase(repos.Member, authSvcs.JWTService),
+		ValidateToken:    authuc.NewValidateTokenUseCase(repos.Member, authSvcs.JWTService),
 	}
 }

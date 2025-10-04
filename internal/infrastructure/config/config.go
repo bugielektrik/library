@@ -13,8 +13,8 @@ import (
 
 const (
 	defaultAppMode    = "dev"
-	defaultAppPort    = ":80"
-	defaultAppHost    = "http://localhost:80"
+	defaultAppPort    = ":8080"
+	defaultAppHost    = "http://localhost:8080"
 	defaultAppPath    = "/"
 	defaultAppTimeout = 60 * time.Second
 )
@@ -22,6 +22,7 @@ const (
 // Configs holds all application configuration groups loaded from environment.
 type Configs struct {
 	App AppConfig
+	JWT JWTConfig
 }
 
 // Config is an alias for Configs for backwards compatibility
@@ -33,6 +34,14 @@ type AppConfig struct {
 	Host    string
 	Path    string
 	Timeout time.Duration
+}
+
+// JWTConfig holds JWT authentication configuration
+type JWTConfig struct {
+	Secret          string        `required:"true" envconfig:"JWT_SECRET"`
+	AccessTokenTTL  time.Duration `default:"24h" envconfig:"JWT_ACCESS_TTL"`
+	RefreshTokenTTL time.Duration `default:"168h" envconfig:"JWT_REFRESH_TTL"` // 7 days
+	Issuer          string        `default:"library-service" envconfig:"JWT_ISSUER"`
 }
 
 type ClientConfig struct {
@@ -93,6 +102,7 @@ func New() (*Configs, error) {
 	// Map prefixes to the corresponding destination struct pointers.
 	targets := map[string]interface{}{
 		"APP": &cfg.App,
+		"JWT": &cfg.JWT,
 	}
 
 	// Process each prefix; return early on error with context.

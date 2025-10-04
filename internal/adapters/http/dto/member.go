@@ -19,7 +19,9 @@ type UpdateMemberRequest struct {
 // MemberResponse represents the response for a member
 type MemberResponse struct {
 	ID       string   `json:"id"`
+	Email    string   `json:"email,omitempty"`
 	FullName string   `json:"full_name"`
+	Role     string   `json:"role,omitempty"`
 	Books    []string `json:"books"`
 }
 
@@ -49,7 +51,9 @@ func (r UpdateMemberRequest) ToMemberRequest() member.Request {
 func FromMemberEntity(entity member.Member) MemberResponse {
 	return MemberResponse{
 		ID:       entity.ID,
+		Email:    entity.Email,
 		FullName: safeString(entity.FullName),
+		Role:     string(entity.Role),
 		Books:    entity.Books,
 	}
 }
@@ -58,7 +62,9 @@ func FromMemberEntity(entity member.Member) MemberResponse {
 func FromMemberResponse(resp member.Response) MemberResponse {
 	return MemberResponse{
 		ID:       resp.ID,
+		Email:    resp.Email,
 		FullName: resp.FullName,
+		Role:     resp.Role,
 		Books:    resp.Books,
 	}
 }

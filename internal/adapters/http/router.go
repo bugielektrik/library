@@ -13,9 +13,10 @@ import (
 
 // RouterConfig holds router configuration
 type RouterConfig struct {
-	Config   *config.Config
-	Usecases *usecase.Container
-	Logger   *zap.Logger
+	Config       *config.Config
+	Usecases     *usecase.Container
+	AuthServices *usecase.AuthServices
+	Logger       *zap.Logger
 }
 
 // NewRouter creates a new HTTP router with all routes configured
@@ -31,7 +32,17 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 	r.Use(middleware.Timeout(cfg.Config.App.Timeout))
 	r.Use(middleware.Heartbeat("/health"))
 
+	// Create auth middleware
+	authMiddleware := httpmiddleware.NewAuthMiddleware(cfg.AuthServices.JWTService)
+
 	// Create handlers
+	authHandler := v1.NewAuthHandler(
+		cfg.Usecases.RegisterMember,
+		cfg.Usecases.LoginMember,
+		cfg.Usecases.RefreshToken,
+		cfg.Usecases.ValidateToken,
+	)
+
 	bookHandler := v1.NewBookHandler(
 		cfg.Usecases.CreateBook,
 		cfg.Usecases.GetBook,
@@ -43,7 +54,25 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Mount("/books", bookHandler.Routes())
+		// Auth routes (public)
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", authHandler.Register)
+			r.Post("/login", authHandler.Login)
+			r.Post("/refresh", authHandler.RefreshToken)
+
+			// Protected auth routes
+			r.Group(func(r chi.Router) {
+				r.Use(authMiddleware.Authenticate)
+				r.Get("/me", authHandler.GetCurrentMember)
+			})
+		})
+
+		// Book routes (protected)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Authenticate)
+			r.Mount("/books", bookHandler.Routes())
+		})
+
 		// TODO: Add author and member handlers
 	})
 
