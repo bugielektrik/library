@@ -1,0 +1,96 @@
+package repository
+
+import (
+	"library-service/internal/domain/author"
+	"library-service/internal/domain/book"
+	"library-service/internal/domain/member"
+	"library-service/internal/adapters/repository/memory"
+	"library-service/internal/adapters/repository/mongo"
+	"library-service/internal/adapters/repository/postgres"
+	store "library-service/internal/infrastructure/database"
+)
+
+// Configuration function type for repository setup
+type Configuration func(*Repositories) error
+
+// Repositories holds all repository implementations
+type Repositories struct {
+	mongo    *store.Mongo
+	postgres *store.SQL
+
+	Author author.Repository
+	Book   book.Repository
+	Member member.Repository
+}
+
+// NewRepositories creates a new repository container
+func NewRepositories(configs ...Configuration) (*Repositories, error) {
+	repos := &Repositories{}
+
+	for _, cfg := range configs {
+		if err := cfg(repos); err != nil {
+			return nil, err
+		}
+	}
+
+	return repos, nil
+}
+
+// Close closes all database connections
+func (r *Repositories) Close() {
+	if r.postgres != nil && r.postgres.Connection != nil {
+		r.postgres.Connection.Close()
+	}
+	if r.mongo != nil && r.mongo.Connection != nil {
+		r.mongo.Connection.Disconnect(nil)
+	}
+}
+
+// WithMemoryStore configures in-memory repositories
+func WithMemoryStore() Configuration {
+	return func(r *Repositories) error {
+		r.Author = memory.NewAuthorRepository()
+		r.Book = memory.NewBookRepository()
+		r.Member = memory.NewMemberRepository()
+		return nil
+	}
+}
+
+// WithPostgresStore configures PostgreSQL repositories
+func WithPostgresStore(dsn string) Configuration {
+	return func(r *Repositories) error {
+		db, err := store.NewSQL(dsn)
+		if err != nil {
+			return err
+		}
+		r.postgres = db
+
+		if err := store.RunMigrations(dsn); err != nil {
+			return err
+		}
+
+		r.Author = postgres.NewAuthorRepository(db.Connection)
+		r.Book = postgres.NewBookRepository(db.Connection)
+		r.Member = postgres.NewMemberRepository(db.Connection)
+
+		return nil
+	}
+}
+
+// WithMongoStore configures MongoDB repositories
+func WithMongoStore(uri, dbName string) Configuration {
+	return func(r *Repositories) error {
+		db, err := store.NewMongo(uri)
+		if err != nil {
+			return err
+		}
+		r.mongo = db
+		database := db.Connection.Database(dbName)
+
+		r.Author = mongo.NewAuthorRepository(database)
+		r.Book = mongo.NewBookRepository(database)
+		r.Member = mongo.NewMemberRepository(database)
+
+		return nil
+	}
+}

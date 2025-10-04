@@ -1,0 +1,17 @@
+with-expecter: true
+dir: "internal/repository/mock"
+outpkg: mock
+filename: "{{.InterfaceName | snakecase}}.go"
+mockname: "Mock{{.InterfaceName}}"
+packages:
+  library-service/internal/domain/book:
+    interfaces:
+      Repository:
+      Cache:
+  library-service/internal/domain/author:
+    interfaces:
+      Repository:
+      Cache:
+  library-service/internal/domain/member:
+    interfaces:
+      Repository:

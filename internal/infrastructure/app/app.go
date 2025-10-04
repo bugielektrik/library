@@ -1,0 +1,133 @@
+// Package app provides application lifecycle management following clean architecture
+package app
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"go.uber.org/zap"
+
+	"library-service/internal/adapters/cache"
+	"library-service/internal/adapters/repository"
+	"library-service/internal/infrastructure/config"
+	"library-service/internal/infrastructure/server"
+	"library-service/internal/usecase"
+
+	log "library-service/internal/infrastructure/logger"
+)
+
+// App represents the application with all its dependencies
+type App struct {
+	logger       *zap.Logger
+	config       *config.Config
+	repositories *repository.Repositories
+	caches       *cache.Caches
+	usecases     *usecase.Container
+	server       *server.Server
+}
+
+// New creates a new application instance
+func New() (*App, error) {
+	app := &App{}
+
+	// Initialize logger first
+	logger, err := log.NewLogger()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+	}
+	app.logger = logger
+
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		app.logger.Error("failed to load config", zap.Error(err))
+		return nil, err
+	}
+	app.config = cfg
+	app.logger.Info("configuration loaded", zap.String("mode", cfg.App.Mode))
+
+	// Initialize repositories
+	repos, err := repository.NewRepositories(repository.WithMemoryStore())
+	if err != nil {
+		app.logger.Error("failed to initialize repositories", zap.Error(err))
+		return nil, err
+	}
+	app.repositories = repos
+	app.logger.Info("repositories initialized")
+
+	// Initialize caches
+	caches, err := cache.NewCaches(
+		cache.Dependencies{Repositories: repos},
+		cache.WithMemoryStore(),
+	)
+	if err != nil {
+		app.logger.Error("failed to initialize caches", zap.Error(err))
+		return nil, err
+	}
+	app.caches = caches
+	app.logger.Info("caches initialized")
+
+	// Initialize usecases
+	usecaseRepos := &usecase.Repositories{
+		Book:   repos.Book,
+		Author: repos.Author,
+		Member: repos.Member,
+	}
+	usecaseCaches := &usecase.Caches{
+		Book:   caches.Book,
+		Author: caches.Author,
+	}
+	usecases := usecase.NewContainer(usecaseRepos, usecaseCaches)
+	app.usecases = usecases
+	app.logger.Info("usecases initialized")
+
+	// Initialize HTTP server
+	srv, err := server.NewHTTPServer(cfg, usecases, app.logger)
+	if err != nil {
+		app.logger.Error("failed to initialize server", zap.Error(err))
+		return nil, err
+	}
+	app.server = srv
+	app.logger.Info("server initialized")
+
+	return app, nil
+}
+
+// Run starts the application and handles graceful shutdown
+func (a *App) Run() error {
+	// Start server
+	if err := a.server.Start(); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+
+	a.logger.Info("application started",
+		zap.String("port", a.config.App.Port),
+		zap.String("mode", a.config.App.Mode),
+	)
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	a.logger.Info("shutting down application...")
+
+	// Graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err := a.server.Shutdown(ctx); err != nil {
+		a.logger.Error("server shutdown error", zap.Error(err))
+	}
+
+	if a.repositories != nil {
+		a.repositories.Close()
+	}
+
+	a.logger.Info("application stopped")
+	return nil
+}

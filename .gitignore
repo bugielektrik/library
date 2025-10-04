@@ -21,3 +21,6 @@
 *.bin
 *.log
 .env
+
+# Deprecated files (migration artifacts)
+/deprecated/

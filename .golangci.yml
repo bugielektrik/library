@@ -1,0 +1,257 @@
+# golangci-lint configuration for Library Management System
+# Optimized for Clean Architecture and vibecoding workflow
+
+run:
+  # Timeout for analysis
+  timeout: 5m
+
+  # Include test files
+  tests: true
+
+  # Build tags to include
+  build-tags:
+    - integration
+    - e2e
+
+  # Skip directories
+  skip-dirs:
+    - vendor
+    - deprecated
+    - docs
+
+  # Skip files
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.gen\\.go$"
+    - "mock_.*\\.go$"
+
+output:
+  # Format of output
+  format: colored-line-number
+
+  # Print lines of code with issue
+  print-issued-lines: true
+
+  # Print linter name in the end of issue text
+  print-linter-name: true
+
+linters:
+  # Enable specific linters
+  enable-all: false
+  enable:
+    # Core linters
+    - gofmt           # Gofmt checks whether code was gofmt-ed
+    - goimports       # Checks missing or unreferenced package imports
+    - govet           # Vet examines Go source code
+    - errcheck        # Checks for unchecked errors
+    - staticcheck     # Advanced static analysis
+    - unused          # Checks for unused constants, variables, functions and types
+    - gosimple        # Simplifies code
+    - ineffassign     # Detects ineffectual assignments
+
+    # Code quality
+    - misspell        # Finds commonly misspelled English words
+    - unconvert       # Removes unnecessary type conversions
+    - prealloc        # Finds slice declarations that could potentially be preallocated
+    - nakedret        # Finds naked returns in functions
+    - gocritic        # Provides diagnostics that check for bugs, performance and style issues
+    - revive          # Fast, configurable, extensible linter
+
+    # Security
+    - gosec           # Security checker
+
+    # Complexity
+    - gocyclo         # Cyclomatic complexity checker
+    - gocognit        # Cognitive complexity checker
+
+    # Code duplication
+    - dupl            # Code clone detection
+
+    # Error handling
+    - nilerr          # Finds code returning nil even if it checks for an error
+    - wrapcheck       # Checks that errors from external packages are wrapped
+
+    # SQL
+    - sqlclosecheck   # Checks that sql.Rows and sql.Stmt are closed
+    - rowserrcheck    # Checks whether Err of rows is checked
+
+    # Context handling
+    - noctx           # Finds sending http request without context.Context
+    - contextcheck    # Check whether the function uses a non-inherited context
+
+    # Other
+    - bodyclose       # Checks whether HTTP response body is closed
+    - exportloopref   # Checks for pointers to enclosing loop variables
+    - dogsled         # Checks assignments with too many blank identifiers
+    - whitespace      # Detects leading and trailing whitespace
+    - gomodguard      # Allow and block lists for direct module dependencies
+
+linters-settings:
+  # Cyclomatic complexity
+  gocyclo:
+    min-complexity: 10
+
+  # Cognitive complexity
+  gocognit:
+    min-complexity: 20
+
+  # go vet settings
+  govet:
+    check-shadowing: true
+    enable-all: true
+
+  # Error check settings
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+
+  # Misspell settings
+  misspell:
+    locale: US
+
+  # Naked return settings
+  nakedret:
+    max-func-lines: 30
+
+  # Revive settings
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+
+  # gosec settings
+  gosec:
+    excludes:
+      - G104  # Audit errors not checked
+      - G304  # File path provided as taint input
+
+  # Code duplication threshold
+  dupl:
+    threshold: 100
+
+  # gofmt settings
+  gofmt:
+    simplify: true
+
+  # goimports settings
+  goimports:
+    local-prefixes: library-service
+
+  # prealloc settings
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: true
+
+  # wrapcheck settings
+  wrapcheck:
+    ignoreSigs:
+      - ".Errorf("
+      - "errors.New("
+      - "errors.Unwrap("
+      - ".Wrap("
+      - ".Wrapf("
+
+issues:
+  # List of regexps of issue texts to exclude
+  exclude:
+    - "at least one file in a package should have a package comment"
+    - "should have a package comment"
+    - "don't use an underscore in package name"
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - gocognit
+        - wrapcheck
+
+    # Exclude linters from generated files
+    - path: "mock_.*\\.go"
+      linters:
+        - all
+
+    # Exclude linters from vendor
+    - path: vendor/
+      linters:
+        - all
+
+    # Exclude linters from deprecated folder
+    - path: deprecated/
+      linters:
+        - all
+
+    # Exclude linters from migrations
+    - path: migrations/
+      linters:
+        - gocyclo
+        - dupl
+
+    # Exclude dot imports from tests
+    - path: _test\.go
+      text: "should not use dot imports"
+
+    # Exclude some rules in main packages
+    - path: cmd/.*/main\.go
+      linters:
+        - gocyclo
+        - gocognit
+
+  # Maximum issues count per one linter
+  max-issues-per-linter: 50
+
+  # Maximum count of issues with the same text
+  max-same-issues: 3
+
+  # Show only new issues
+  new: false
+
+  # Fix found issues (if it's supported by the linter)
+  fix: false
+
+severity:
+  # Default value is empty string.
+  # Set the default severity for issues.
+  # If severity rules are defined and the issues do not match or no severity is provided to the rule
+  # this will be the default severity applied.
+  # Severities should match the supported severity names of the selected out format.
+  # - Code Climate: https://docs.codeclimate.com/docs/issues#issue-severity
+  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
+  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
+  default-severity: warning
+
+  # The default value is false.
+  # If set to true severity-rules regular expressions become case sensitive.
+  case-sensitive: false
+
+  # When a list of severity rules are provided, severity information will be added to lint issues.
+  # Severity rules have the same filtering capability as exclude rules except you are allowed to specify one matcher per severity rule.
+  # Only affects out formats that support setting severity information.
+  rules:
+    - linters:
+        - gosec
+      severity: error
+    - linters:
+        - errcheck
+      severity: warning
