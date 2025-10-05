@@ -2,482 +2,484 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **📚 Full Documentation:** See [`.claude`](./.claude/) directory for comprehensive guides
+
 ## Project Overview
 
-Library Management System - A Go REST API service built with Clean Architecture principles. The project is optimized for vibecoding with fast feedback loops and clear separation of concerns.
+Library Management System - A Go-based REST API following Clean Architecture principles, optimized for vibecoding with Claude Code. The system manages books, authors, members, and subscriptions with JWT authentication.
 
-**Module Name:** `library-service`
-**Go Version:** 1.25.0
-**Architecture:** Clean Architecture (Onion/Hexagonal)
+**Key Technologies:** Go 1.25, PostgreSQL, Redis, Chi router, JWT, Docker
 
-## Essential Commands
+## Documentation Index
 
-### Quick Start
-```bash
-# Initialize and start development environment
-make init                # Download dependencies
-make up                  # Start PostgreSQL and Redis via Docker
-make migrate-up          # Run store migrations
-make run                 # Start API server (port 8080)
+- **[Quick Start & Navigation](./.claude/README.md)** - 30-second quick reference
+- **[Commands Reference](./.claude/commands.md)** - All essential commands
+- **[Setup Guide](./.claude/setup.md)** - First-time setup and troubleshooting
+- **[Architecture](./.claude/architecture.md)** - Clean architecture patterns
+- **[Development Workflow](./.claude/development.md)** - Daily development tasks
+- **[Testing Guide](./.claude/testing.md)** - Testing patterns and strategies
+- **[API Documentation](./.claude/api.md)** - REST API endpoints
+- **[Code Standards](./.claude/standards.md)** - Go best practices and conventions
 
-# Or use the combined dev command
-make dev                 # Runs: up → migrate-up → run
-```
+## Architecture (Clean Architecture)
 
-### Development Workflow
-```bash
-# Core development commands
-make test                # Run all tests (< 2 seconds)
-make test-unit           # Unit tests only (with -short flag)
-make test-integration    # Integration tests only
-make test-coverage       # Generate HTML coverage report
-
-# Single test execution
-go test -v -run TestSpecificTest ./internal/domain/book
-
-# Code quality
-make fmt                 # Format code
-make vet                 # Run go vet
-make lint                # Run golangci-lint (25+ linters)
-make ci                  # Full CI pipeline: fmt → vet → lint → test → build
-
-# Building
-make build               # Build all binaries (api, worker, migrate)
-make build-api           # Build API server only
-CGO_ENABLED=0 go build -o /tmp/library-api ./cmd/api     # Quick build to temp
-CGO_ENABLED=0 go build -o /tmp/library-worker ./cmd/worker  # Quick worker build
-CGO_ENABLED=0 go build -o /tmp/library-migrate ./cmd/migrate # Quick migrate build
-./scripts/build.sh       # Build all with version info
-```
-
-### Database Operations
-```bash
-# Migrations
-make migrate-create name=add_new_table  # Create new migration
-make migrate-up                         # Apply pending migrations
-make migrate-down                       # Rollback last migration
-go run cmd/migrate/main.go up          # Direct migration command
-```
-
-### Docker Development
-```bash
-make up                  # Start services (PostgreSQL, Redis)
-make down                # Stop services
-make docker-logs         # View container logs
-make restart             # Restart all services
-make docker-build        # Build Docker images
-```
-
-### Other Useful Commands
-```bash
-# Tools and generators
-make install-tools       # Install golangci-lint, mockgen, swag
-make gen-mocks          # Generate mocks with go generate
-make gen-docs           # Generate Swagger API documentation
-
-# Module management
-make mod-tidy           # Tidy and vendor go modules
-make mod-update         # Update all dependencies
-
-# Quality checks
-make check              # Run fmt, vet, lint together
-make security           # Run gosec security checks
-make benchmark          # Run performance benchmarks
-make version            # Show version information
-```
-
-## High-Level Architecture
-
-The codebase follows Clean Architecture with strict dependency rules:
-
-```
-Domain → Use Case → Adapters → Infrastructure
-(inner)                           (outer)
-```
-
-### Layer Structure
+The codebase follows strict dependency rules: **Domain → Use Case → Adapters → Infrastructure**
 
 ```
 internal/
-├── domain/              # Core business logic (zero dependencies)
+├── domain/              # Business logic (ZERO external dependencies)
 │   ├── book/           # Book entity, service, repository interface
-│   ├── member/         # Member entity, service, repository interface
-│   └── author/         # Author entity, repository interface
-│
-├── usecase/            # Application business rules
-│   ├── book/          # Book use cases (CreateBook, UpdateBook, etc.)
-│   └── subscription/  # Subscription use cases
-│
-├── adapters/           # External interfaces
-│   ├── http/          # HTTP handlers (REST API)
-│   ├── repository/    # Database implementations
-│   │   ├── postgres/  # PostgreSQL implementations
-│   │   ├── mongo/     # MongoDB implementations
-│   │   ├── memory/    # In-memory implementations
-│   │   └── mocks/     # Mock implementations for testing
-│   ├── cache/         # Redis cache implementations
-│   ├── grpc/          # gRPC server
-│   ├── email/         # SMTP email adapter
-│   └── payment/       # Stripe/PayPal adapters
-│
+│   ├── member/         # Member entity, service (subscriptions)
+│   └── author/         # Author entity
+├── usecase/            # Application orchestration (depends on domain)
+│   ├── book/           # CreateBook, UpdateBook, etc.
+│   ├── auth/           # Register, Login, RefreshToken
+│   └── subscription/   # SubscribeMember
+├── adapters/           # External interfaces (HTTP, DB, cache)
+│   ├── http/           # Chi handlers, middleware, DTOs
+│   ├── repository/     # PostgreSQL/MongoDB/Memory implementations
+│   └── cache/          # Redis/Memory cache implementations
 └── infrastructure/     # Technical concerns
-    ├── auth/          # JWT authentication
-    ├── config/        # Environment configuration
-    ├── store/         # Database and cache store management
-    ├── log/           # Zap structured logging
-    ├── server/        # Server configuration
-    └── app/           # Application initialization
+    ├── auth/           # JWT token generation/validation
+    ├── store/          # Database connections
+    └── server/         # HTTP server configuration
 ```
 
-### Key Architectural Patterns
+**Critical Rule:** Domain layer must NEVER import from outer layers. Use cases define behavior, adapters provide implementations.
 
-1. **Repository Pattern**: Interfaces in domain layer, implementations in adapters
-2. **Domain Services**: Complex business logic encapsulated in service objects
-3. **Use Case Per Operation**: Single responsibility, one use case per business operation
-4. **Constructor Dependency Injection**: All dependencies passed via constructors
-5. **DTO Pattern**: Separate data transfer objects for each layer
+## Common Commands
 
-## Domain-Driven Design Concepts
+### Building
+```bash
+make build              # Build all binaries (api, worker, migrate)
+make build-api          # Build API server only → bin/library-api
+make build-worker       # Build worker only → bin/library-worker
+make build-migrate      # Build migration tool → bin/library-migrate
+```
 
-### Domain Entities
-Each domain has specific typed entities (refactored from generic "Entity"):
+### Running Locally
+```bash
+# Full stack (recommended for development)
+make dev                # Starts docker services + migrations + API server
 
+# Individual services
+make run                # Run API server (requires PostgreSQL/Redis running)
+make run-worker         # Run background worker
+make up                 # Start docker-compose (PostgreSQL + Redis)
+make down               # Stop docker services
+
+# Quick start (5 minutes)
+make init && make up && make migrate-up && make run
+```
+
+### Testing
+```bash
+make test               # All tests with race detection + coverage
+make test-unit          # Unit tests only (fast, no database)
+make test-integration   # Integration tests (requires database)
+make test-coverage      # Generate HTML coverage report
+
+# Run specific package tests
+go test -v ./internal/domain/book/...
+go test -v -run TestCreateBook ./internal/usecase/book/
+```
+
+### Code Quality
+```bash
+make ci                 # Full CI pipeline: fmt → vet → lint → test → build
+make lint               # Run golangci-lint (25+ linters enabled)
+make fmt                # Format code with gofmt + goimports
+make vet                # Run go vet for suspicious constructs
+```
+
+### Database Migrations
+```bash
+make migrate-up         # Apply all pending migrations
+make migrate-down       # Rollback last migration
+make migrate-create name=add_book_ratings  # Create new migration
+
+# Direct usage (requires POSTGRES_DSN env var)
+go run cmd/migrate/main.go up
+go run cmd/migrate/main.go down
+POSTGRES_DSN="postgres://library:library123@localhost:5432/library?sslmode=disable" go run cmd/migrate/main.go up
+```
+
+### Development Tools
+```bash
+make install-tools      # Install golangci-lint, mockgen, swag
+make gen-mocks          # Generate test mocks
+make gen-docs           # Generate Swagger/OpenAPI docs
+make benchmark          # Run performance benchmarks
+```
+
+## Development Workflow
+
+### Adding a New Feature
+
+**Example: Adding a "Loan" domain**
+
+1. **Domain Layer** (business logic first):
+   ```bash
+   # Create domain structure
+   mkdir -p internal/domain/loan
+   touch internal/domain/loan/{entity.go,service.go,repository.go,dto.go}
+   ```
+   - Define `Loan` entity with business rules
+   - Create `LoanService` for complex logic (e.g., overdue fees, borrowing limits)
+   - Define `Repository` interface (NOT implementation)
+   - Write unit tests with 100% coverage
+
+2. **Use Case Layer** (orchestration):
+   ```bash
+   mkdir -p internal/usecase/loan
+   touch internal/usecase/loan/{create_loan.go,return_loan.go}
+   ```
+   - Create use cases that orchestrate domain services
+   - Each use case = one file (single responsibility)
+   - Mock repositories in tests
+
+3. **Adapter Layer** (HTTP + DB):
+   ```bash
+   # Repository implementation
+   touch internal/adapters/repository/postgres/loan.go
+
+   # HTTP handlers
+   touch internal/adapters/http/handlers/loan.go
+   touch internal/adapters/http/dto/loan.go
+   ```
+   - Implement repository interface for PostgreSQL
+   - Create HTTP handlers (thin layer, delegate to use cases)
+   - Add DTOs for request/response mapping
+
+4. **Wire Dependencies** (`internal/usecase/container.go`):
+   - Add repositories to `Repositories` struct
+   - Add use cases to `Container` struct
+   - Update `NewContainer()` to inject dependencies
+
+5. **Migrations**:
+   ```bash
+   make migrate-create name=create_loans_table
+   # Edit migrations/postgres/XXXXXX_create_loans_table.up.sql
+   make migrate-up
+   ```
+
+### Testing Guidelines
+
+**Unit Tests (Domain/Use Cases):**
 ```go
-// internal/domain/book/entity.go
-type Book struct {
-    ID      string
-    Name    *string
-    Genre   *string
-    ISBN    *string
-    Authors []string
-}
-
-// internal/domain/member/entity.go
-type Member struct {
-    ID       string
-    FullName *string
-    Books    []string
-}
-
-// internal/domain/author/entity.go
-type Author struct {
-    ID        string
-    FullName  *string
-    Pseudonym *string
-    Specialty *string
+// Table-driven tests (Go standard)
+func TestBookService_ValidateISBN(t *testing.T) {
+    tests := []struct {
+        name    string
+        isbn    string
+        wantErr bool
+    }{
+        {"valid ISBN-13", "978-0-306-40615-7", false},
+        {"invalid checksum", "978-0-306-40615-8", true},
+    }
+    // ...
 }
 ```
 
-### Domain Services
-Each domain has a service for business logic that doesn't belong to a single entity:
+**Integration Tests:**
+- Use build tags: `//go:build integration`
+- Test against real PostgreSQL (docker-compose)
+- Run with: `make test-integration`
 
+**Coverage Requirements:**
+- Domain layer: 100% (critical business logic)
+- Use cases: 80%+
+- Overall: 60%+
+
+## Key Implementation Patterns
+
+### 1. Dependency Injection (Constructor Pattern)
 ```go
-// internal/domain/book/service.go
-type Service struct{}
-
-func (s *Service) ValidateISBN(isbn string) error     // ISBN validation logic
-func (s *Service) ValidateBook(book Book) error       // Book validation
-func (s *Service) CanBookBeDeleted(book Book) error   // Business rule check
-```
-
-### Repository Interfaces
-Defined in domain, implemented in adapters:
-
-```go
-// internal/domain/book/repository.go
-type Repository interface {
-    List(ctx context.Context) ([]Book, error)
-    Add(ctx context.Context, data Book) (string, error)
-    Get(ctx context.Context, id string) (Book, error)
-    Update(ctx context.Context, id string, data Book) error
-    Delete(ctx context.Context, id string) error
-}
-```
-
-### Use Cases
-One file per operation, clear naming:
-
-```go
-// internal/usecase/book/create_book.go
+// Use case with explicit dependencies
 type CreateBookUseCase struct {
-    repo    book.Repository
-    service *book.Service
+    bookRepo    book.Repository     // Interface from domain
+    bookCache   book.Cache          // Interface from domain
+    bookService *book.Service       // Domain service
+}
+
+func NewCreateBookUseCase(repo book.Repository, cache book.Cache, svc *book.Service) *CreateBookUseCase {
+    return &CreateBookUseCase{repo, cache, svc}
 }
 ```
 
-## Testing Patterns
+### 2. Domain Services vs Use Cases
+- **Domain Service** (`internal/domain/book/service.go`): Pure business rules
+  - ISBN validation with checksum algorithm
+  - Business constraints (e.g., "can't delete book with active loans")
+  - No database, no HTTP, no external dependencies
 
-### Table-Driven Tests
+- **Use Case** (`internal/usecase/book/create_book.go`): Orchestration
+  - Calls domain service for validation
+  - Persists to repository
+  - Updates cache
+  - Returns result
+
+### 3. Error Handling
 ```go
-tests := []struct {
-    name      string
-    input     string
-    wantError bool
-}{
-    {"valid case", "input", false},
-    {"error case", "bad", true},
+// Wrap errors with context (use %w for unwrapping)
+if err := s.repo.Create(ctx, book); err != nil {
+    return fmt.Errorf("creating book in repository: %w", err)
 }
 
-for _, tt := range tests {
-    t.Run(tt.name, func(t *testing.T) {
-        // test logic
-    })
+// Domain errors (defined in pkg/errors/domain.go)
+return errors.ErrNotFound          // 404
+return errors.ErrAlreadyExists     // 409
+return errors.ErrValidation        // 400
+```
+
+### 4. Repository Pattern
+```go
+// Interface in domain (internal/domain/book/repository.go)
+type Repository interface {
+    Create(ctx context.Context, book Entity) error
+    GetByID(ctx context.Context, id string) (Entity, error)
+    Update(ctx context.Context, book Entity) error
+    Delete(ctx context.Context, id string) error
+    List(ctx context.Context, filter ListFilter) ([]Entity, error)
+}
+
+// Implementation in adapters (internal/adapters/repository/postgres/book.go)
+type PostgresBookRepository struct {
+    db *sqlx.DB
 }
 ```
 
-### Test Organization
-- `*_test.go` files alongside implementation
-- `//go:build integration` tag for integration tests
-- Mock generation: `go generate ./...`
-- Test fixtures in `test/fixtures/`
-- Benchmark files: `*_benchmark_test.go`
-- Run benchmarks: `make benchmark`
+## Authentication System
 
-## Key Dependencies
+**JWT-based authentication with access/refresh tokens:**
 
-The project uses the following main dependencies:
-- **HTTP Router**: `github.com/go-chi/chi/v5` - Lightweight, composable router
-- **Database**: `github.com/jmoiron/sqlx` with `github.com/lib/pq` (PostgreSQL)
-- **Migrations**: `github.com/golang-migrate/migrate/v4`
-- **Validation**: `github.com/go-playground/validator/v10`
-- **Logging**: `go.uber.org/zap` - Structured logging
-- **Config**: `github.com/kelseyhightower/envconfig` - Environment-based config
-- **Cache**: `github.com/redis/go-redis/v9` - Redis client
-- **Testing**: `github.com/stretchr/testify` - Testing toolkit
-- **MongoDB**: `go.mongodb.org/mongo-driver` - MongoDB driver (optional)
-- **gRPC**: `google.golang.org/grpc` - gRPC server/client
-
-## Important Configuration
-
-### Environment Variables
 ```bash
-# Copy and edit .env file
+# Register user
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Test123!@#","full_name":"John Doe"}'
+
+# Login (returns access_token + refresh_token)
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Test123!@#"}'
+
+# Use access token for protected endpoints
+curl -X GET http://localhost:8080/api/v1/books \
+  -H "Authorization: Bearer <access_token>"
+```
+
+**Token Configuration:**
+- Access token: 24h (configurable via `JWT_EXPIRY`)
+- Refresh token: 7 days
+- Secret key: `JWT_SECRET` environment variable (MUST change in production)
+
+## Environment Configuration
+
+**Setup:**
+```bash
 cp .env.example .env
-
-# Key variables:
-DATABASE_URL=postgres://user:pass@localhost/library
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-secret-key
-LOG_LEVEL=debug
+# Edit .env with your settings (especially JWT_SECRET, DB credentials)
 ```
 
-### Database Connection
-- PostgreSQL 15+ required
-- Connection pooling: max 25 connections
-- Migrations in `migrations/` directory
+**Critical Variables:**
+- `POSTGRES_DSN`: Database connection string
+- `JWT_SECRET`: Token signing key (REQUIRED)
+- `REDIS_HOST`: Cache server (optional, uses memory cache if unavailable)
+- `APP_MODE`: `dev` (verbose logs) or `prod` (JSON logs)
 
-### API Documentation
-- OpenAPI spec: `api/openapi/swagger.yaml`
-- Swagger UI: http://localhost:8080/swagger/ (when running)
-- Generate docs: `make gen-docs`
-
-## Recent Refactoring (Google Go Style Guide Compliance)
-
-The codebase was refactored to follow Google Go Style Guide best practices:
-
-### Type System Changes
-- **Before**: Generic `Entity` type in all domains
-- **After**: Specific types (`Book`, `Member`, `Author`)
-- All ~60 files updated with proper type references
-- DTO functions renamed: `ParseFromEntity` → `ParseFromBook/Member/Author`
-
-### File Organization Changes
-- `database/` → `store/` (clearer naming)
-- `logger/` → `log/` (Go convention)
-- `mock/` → `mocks/` (Go convention)
-- HTTP files simplified: `book_handler.go` → `book.go`
-- DTOs simplified: `book_dto.go` → `book.go`
-
-### Documentation Added
-- Package-level `doc.go` files for all packages:
-  - `internal/domain/doc.go` - Core domain layer overview
-  - `internal/domain/book/doc.go` - Book domain with ISBN validation
-  - `internal/domain/member/doc.go` - Member and subscription management
-  - `internal/domain/author/doc.go` - Author management
-  - `internal/usecase/doc.go` - Use case layer
-  - `internal/adapters/doc.go` - Adapters layer
-  - `internal/infrastructure/doc.go` - Infrastructure layer
-  - `pkg/doc.go` - Shared utilities
-- Comprehensive godoc comments with usage examples
-- Architecture documentation in domain layer
-
-## Code Standards
-
-### File Organization
-- One use case per file
-- File size < 300 lines (max 500)
-- Cyclomatic complexity < 10
-- Package documentation in `doc.go` files
-
-### Error Handling
-```go
-// Wrap errors with context
-return fmt.Errorf("failed to create book: %w", err)
-
-// Custom domain errors
-return errors.ErrInvalidISBN
-```
-
-### Naming Conventions (Google Go Style Guide)
-- **Domain entities**: Specific types (`Book`, `Member`, `Author`) not generic `Entity`
-- **Use cases**: `CreateBookUseCase`, `UpdateMemberUseCase`
-- **Services**: `Service` (package-scoped in each domain package)
-- **Repositories**: `Repository` interface, implementations like `PostgresRepository`
-- **Files**: Snake case for multi-word concepts (`create_book.go`, `subscribe_member.go`)
-- **Imports**: Organized in groups (standard → external → internal) with blank lines
-- **Package documentation**: All packages have `doc.go` files with godoc comments
-
-## Performance Considerations
-
-### Build Optimization
-- Build time < 5 seconds
-- Binary size ~15-20MB with CGO_ENABLED=0
-- Use `CGO_ENABLED=0` for production builds
-
-### Caching Strategy
-- Redis for frequently accessed data
-- 5-minute TTL for read cache
-- Write-through cache updates
-
-### Database Queries
-- Use prepared statements
-- Implement pagination for lists
-- Add indexes on frequently queried columns
-
-## Common Tasks
-
-### Adding a New Domain
-1. Create domain folder: `internal/domain/newdomain/`
-2. Define entity, service, repository interface
-3. Create use cases in `internal/usecase/newdomain/`
-4. Implement repository in `internal/adapters/repository/`
-5. Add HTTP handlers in `internal/adapters/http/`
-6. Wire dependencies in `cmd/api/main.go`
-
-### Running Background Jobs
+**Docker Development:**
 ```bash
-make run-worker          # Start worker process
-go run cmd/worker/main.go
+cd deployments/docker
+docker-compose up -d  # PostgreSQL on :5432, Redis on :6379
 ```
 
-### Debugging
+## Dependency Management
+
 ```bash
-# Enable debug logging
-export LOG_LEVEL=debug
-
-# Run with race detector
-go test -race ./...
-
-# Profile benchmarks
-go test -bench=. -cpuprofile=cpu.prof
-go tool pprof cpu.prof
-
-# VSCode debugging - 5 launch configurations available:
-# - Debug API Server
-# - Debug Worker
-# - Debug Migration
-# - Debug Current Test
-# - Debug Current File
+go mod tidy             # Clean up dependencies
+go mod vendor           # Vendor dependencies (project uses vendoring)
+go get <package>        # Add new dependency
 ```
 
-## Project-Specific Patterns
+**Major Dependencies:**
+- **Chi** (`go-chi/chi/v5`): HTTP router
+- **sqlx** (`jmoiron/sqlx`): Database queries
+- **Zap** (`uber.org/zap`): Structured logging
+- **JWT** (`golang-jwt/jwt/v5`): Authentication
+- **Validator** (`go-playground/validator/v10`): Input validation
 
-### Dependency Injection Setup
-All dependencies are wired manually in `cmd/api/main.go` using constructor injection. No DI framework is used.
+## Code Style Enforcement
 
-### Request Flow
-1. HTTP Request → Handler (adapters/http)
-2. Handler → Use Case (usecase)
-3. Use Case → Domain Service (domain)
-4. Use Case → Repository (adapters/repository)
-5. Response flows back in reverse
+**Linter Configuration:** `.golangci.yml` (25+ linters enabled)
 
-### Transaction Handling
-Use cases define transaction boundaries. Repositories should not manage transactions.
+**Key Rules:**
+- Cyclomatic complexity: ≤10 per function
+- Cognitive complexity: ≤20
+- No naked returns in functions >30 lines
+- All errors must be checked or explicitly ignored
+- Context as first parameter in functions
+- Errors as last return value
 
-### Validation Strategy
-- Input validation in handlers
-- Business rule validation in domain services
-- Use `github.com/go-playground/validator/v10` for struct validation
-
-### Linting Configuration
-The project uses `.golangci.yml` with 25+ linters:
-- **Core**: gofmt, goimports, govet, errcheck, staticcheck, unused
-- **Quality**: misspell, unconvert, prealloc, nakedret, gocritic, revive
-- **Security**: gosec
-- **Complexity**: gocyclo (max: 10), gocognit (max: 20)
-- **Duplication**: dupl (threshold: 100)
-- **Error handling**: nilerr, wrapcheck
-- **SQL**: sqlclosecheck, rowserrcheck
-- **Context**: noctx, contextcheck
-
-## CI/CD Pipeline
-
-GitHub Actions workflows available:
-- **ci.yml**: Main CI pipeline (lint, test, build, security scan)
-- **claude-code-review.yml**: Automated code review
-- **claude.yml**: PR assistant
-
-Workflow runs on every push:
-1. Lint with golangci-lint
-2. Run tests with coverage
-3. Build binaries
-4. Security scan with gosec
-
-Local CI simulation: `make ci`
+**Auto-fix:**
+```bash
+gofmt -w .              # Format code
+goimports -w .          # Fix imports
+```
 
 ## Troubleshooting
 
-### Common Issues
-- **Import cycles**: Check dependency direction (domain ← usecase ← adapters)
-- **Test failures**: Ensure database is migrated (`make migrate-up`)
-- **Lint errors**: Run `make fmt` before `make lint`
-- **Connection refused**: Check if PostgreSQL/Redis are running (`make up`)
-- **Module not found**: Run `go mod tidy` or `make mod-tidy`
-- **Build failures**: Ensure Go 1.25 is installed
-
-### Debug Commands
+**"connection refused" errors:**
 ```bash
-# Check running services
+# Ensure PostgreSQL/Redis are running
+make up
 docker-compose -f deployments/docker/docker-compose.yml ps
-
-# Database connection test
-psql $DATABASE_URL -c "SELECT 1"
-
-# Redis connection test
-redis-cli ping
 ```
 
-## Additional Documentation
+**Migration errors:**
+```bash
+# Check database connection
+psql -h localhost -U library -d library
 
-The project includes extensive documentation for deeper understanding:
+# Reset database (destructive!)
+make migrate-down
+make migrate-up
+```
 
-### Getting Started Guides
-- **[Quick Start (5 min)](./docs/guides/QUICKSTART.md)** - Get running in 5 minutes
-- **[Development Guide](./docs/guides/DEVELOPMENT.md)** - Comprehensive workflow
-- **[Contributing Guidelines](./docs/guides/CONTRIBUTING.md)** - How to contribute
+**Test failures:**
+```bash
+# Ensure test database is clean
+make test-integration  # Uses docker-compose with isolated test DB
+```
 
-### Architecture Documentation
-- **[Architecture Overview](./docs/architecture.md)** - System design principles
-- **[Package Overview](./docs/package-overview.md)** - Package structure and dependencies
-- **[Architecture Decisions (ADRs)](./docs/adr/README.md)** - Key architectural decisions
-  - [ADR-001: Clean Architecture](./docs/adr/001-clean-architecture.md)
-  - [ADR-002: Domain Services](./docs/adr/002-domain-services.md)
-  - [ADR-003: Dependency Injection](./docs/adr/003-dependency-injection.md)
+**Build performance:**
+- Build time: ~5 seconds (target)
+- Test execution: ~2 seconds for unit tests
+- Use `CGO_ENABLED=0` for static binaries (already in Makefile)
 
-### Code Examples
-- **[Basic CRUD](./examples/basic_crud/)** - Complete CRUD workflow example
-- **[Domain Services](./examples/domain_service/)** - Business logic patterns
-- **[Testing Patterns](./examples/testing/)** - Testing strategies and mocks
+## Performance Benchmarks
 
-### Layer-Specific READMEs
-- **[Domain Layer](./internal/domain/README.md)** - Business logic and entities
-- **[Use Case Layer](./internal/usecase/README.md)** - Application use cases
-- **[Adapter Layer](./internal/adapters/README.md)** - External interfaces
-- **[Command Line Apps](./cmd/README.md)** - Entry points (API, worker, migrate)
-- **[Shared Packages](./pkg/README.md)** - Reusable utilities
+Run benchmarks before/after optimizations:
+```bash
+make benchmark
+# OR
+go test -bench=. -benchmem ./internal/domain/book/
+go test -bench=. -benchmem ./internal/usecase/book/
+```
 
-### Testing Resources
-- **[Test Fixtures](./test/fixtures/README.md)** - Shared test data and helpers
-- **Integration Tests**: `./test/integration/` with `//go:build integration` tag
-- **Benchmarks**: `*_benchmark_test.go` files throughout the codebase
+## Documentation
+
+**Architecture Docs:**
+- `docs/architecture.md` - Full system architecture
+- `docs/adr/` - Architecture Decision Records
+- `docs/guides/QUICKSTART.md` - 5-minute setup guide
+
+**API Documentation:**
+```bash
+# Generate Swagger docs
+make gen-docs
+
+# View Swagger UI (with server running)
+open http://localhost:8080/swagger/index.html
+```
+
+**Package Documentation:**
+- Each layer has a `README.md` explaining its purpose
+- All exported types/functions have godoc comments
+- Domain services have extensive documentation with examples
+
+## Important Files
+
+- `Makefile` - All common commands (30+ targets)
+- `.golangci.yml` - Linter configuration
+- `internal/usecase/container.go` - Dependency injection wiring
+- `internal/infrastructure/app/app.go` - Application bootstrap
+- `deployments/docker/docker-compose.yml` - Local development stack
+- `migrations/postgres/` - Database schema changes
+
+## Quick Reference
+
+```bash
+# Start coding (first time)
+make init && make up && make migrate-up
+
+# Daily development
+make dev                # Start everything
+
+# Before commit
+make ci                 # Run full CI pipeline locally
+
+# Add new feature (follow this order)
+# 1. Domain (entity + service + tests)       → internal/domain/{entity}/
+# 2. Use case (orchestration + tests)        → internal/usecase/{entity}/
+# 3. Adapter (HTTP handler + repository)     → internal/adapters/
+# 4. Wire in container.go                    → internal/usecase/container.go
+# 5. Migration (if needed)                   → make migrate-create name=...
+```
+
+## Project-Specific Notes
+
+### Dependency Wiring Location
+
+**Two-Step Wiring Process:**
+
+**Step 1: Application Bootstrap** (`internal/infrastructure/app/app.go`):
+```go
+// Boot order (lines 35-100):
+1. Logger initialization
+2. Config loading
+3. Repositories (DB layer):
+   - WithMemoryStore() for tests/development
+   - WithPostgresStore(dsn) for production (runs migrations automatically)
+   - WithMongoStore(dsn) alternative
+4. Caches (Redis/Memory) - requires repositories as dependency
+5. Auth Services (JWT + Password) - infrastructure services
+6. Use cases container - wires everything together
+7. HTTP Server - receives use cases
+```
+
+**Repository Configuration Pattern:**
+```go
+// Development/Testing
+repos, err := repository.NewRepositories(repository.WithMemoryStore())
+
+// Production
+repos, err := repository.NewRepositories(repository.WithPostgresStore(cfg.Database.DSN))
+```
+The `WithPostgresStore()` function automatically runs migrations before returning.
+
+**Step 2: Use Case Container** (`internal/usecase/container.go`):
+When adding new features:
+1. Add repository interface to `Repositories` struct (line 35)
+2. Add cache interface to `Caches` struct if needed (line 43)
+3. Add use case to `Container` struct (line 15)
+4. Create **domain service** in `NewContainer()` (line 56) - e.g., `book.NewService()`
+5. Wire use case with dependencies in return statement (line 61+)
+
+**Critical Distinction:**
+- **Infrastructure Services** (JWT, Password): Created in `app.go`, passed to container
+- **Domain Services** (Book, Member): Created in `container.go` `NewContainer()` function
+
+**Current Container Structure:**
+- **Book use cases:** CreateBook, GetBook, ListBooks, UpdateBook, DeleteBook, ListBookAuthors
+- **Auth use cases:** RegisterMember, LoginMember, RefreshToken, ValidateToken
+- **Subscription use cases:** SubscribeMember
+- **Infrastructure services:** JWTService (from config), PasswordService (bcrypt, cost=10)
+- **Domain services:** BookService, MemberService
+
+### Migration Locations
+- **Postgres migrations:** `migrations/postgres/`
+- **Naming:** Timestamped with descriptive names (e.g., `000001_create_books_table.up.sql`)
+- **Always create both:** `.up.sql` and `.down.sql` files
+
+### Test Data & Fixtures
+- Shared test fixtures: `test/fixtures/`
+- Integration test helpers: `test/testdb/setup.go`
+- Build tags for integration tests: `//go:build integration`
+
+### Pre-approved Commands
+These commands are safe to run without asking:
+- `make test`, `make test-unit`, `make test-coverage`
+- `make fmt`, `make vet`, `make lint`
+- `go test ./internal/domain/...`
+- `go run cmd/api/main.go` (local development)
