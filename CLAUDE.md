@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Library Management System - A Go-based REST API following Clean Architecture principles, optimized for vibecoding with Claude Code. The system manages books, authors, members, and subscriptions with JWT authentication.
 
-**Key Technologies:** Go 1.25, PostgreSQL, Redis, Chi router, JWT, Docker
+**Key Technologies:** Go 1.25, PostgreSQL, Redis, Chi router, JWT, Docker, Swagger/OpenAPI
 
 ## Documentation Index
 
@@ -108,9 +108,63 @@ POSTGRES_DSN="postgres://library:library123@localhost:5432/library?sslmode=disab
 ```bash
 make install-tools      # Install golangci-lint, mockgen, swag
 make gen-mocks          # Generate test mocks
-make gen-docs           # Generate Swagger/OpenAPI docs
+make gen-docs           # Generate Swagger/OpenAPI docs (see API Documentation section)
 make benchmark          # Run performance benchmarks
 ```
+
+## API Documentation
+
+**Swagger UI:** The API documentation is available via interactive Swagger UI at http://localhost:8080/swagger/index.html when the server is running.
+
+**Regenerating Swagger Documentation:**
+```bash
+# Full regeneration (recommended)
+make gen-docs
+
+# Manual regeneration with dependency parsing
+swag init -g cmd/api/main.go -o api/openapi --parseDependency --parseInternal
+```
+
+**Adding API Documentation to Handlers:**
+```go
+// @Summary Create a new book
+// @Description Create a new book with the provided details
+// @Tags books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateBookRequest true "Book details"
+// @Success 201 {object} dto.BookResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /books [post]
+func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
+    // Handler implementation
+}
+```
+
+**Important Swagger Annotations:**
+- `@Summary` - Brief description (required)
+- `@Description` - Detailed explanation
+- `@Tags` - Group endpoints together
+- `@Security BearerAuth` - **Required for all protected endpoints** (all /books routes, /auth/me)
+- `@Param` - Request parameters (body, path, query, header)
+- `@Success` / `@Failure` - Response codes with schemas
+- `@Router` - Endpoint path and HTTP method
+
+**Security Definition:**
+The JWT security scheme is defined in `cmd/api/main.go`:
+```go
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token
+```
+
+**Testing Authentication in Swagger UI:**
+1. Register/Login to get JWT token
+2. Click "Authorize" button in Swagger UI
+3. Enter: `Bearer <your-access-token>`
+4. All protected endpoints will now include the Authorization header
 
 ## Development Workflow
 
@@ -150,6 +204,7 @@ make benchmark          # Run performance benchmarks
    - Implement repository interface for PostgreSQL
    - Create HTTP handlers (thin layer, delegate to use cases)
    - Add DTOs for request/response mapping
+   - **Add Swagger annotations to all handler functions**
 
 4. **Wire Dependencies** (`internal/usecase/container.go`):
    - Add repositories to `Repositories` struct
@@ -161,6 +216,13 @@ make benchmark          # Run performance benchmarks
    make migrate-create name=create_loans_table
    # Edit migrations/postgres/XXXXXX_create_loans_table.up.sql
    make migrate-up
+   ```
+
+6. **Update API Documentation**:
+   ```bash
+   # Regenerate Swagger docs after adding annotations
+   make gen-docs
+   # Verify at http://localhost:8080/swagger/index.html
    ```
 
 ### Testing Guidelines
@@ -274,6 +336,9 @@ curl -X GET http://localhost:8080/api/v1/books \
 - Refresh token: 7 days
 - Secret key: `JWT_SECRET` environment variable (MUST change in production)
 
+**Protected Endpoints:**
+All endpoints under `/api/v1/books/*` and `/api/v1/auth/me` require JWT authentication. These endpoints must have `@Security BearerAuth` in their Swagger annotations.
+
 ## Environment Configuration
 
 **Setup:**
@@ -308,6 +373,7 @@ go get <package>        # Add new dependency
 - **Zap** (`uber.org/zap`): Structured logging
 - **JWT** (`golang-jwt/jwt/v5`): Authentication
 - **Validator** (`go-playground/validator/v10`): Input validation
+- **Swaggo** (`swaggo/swag`, `swaggo/http-swagger`): API documentation
 
 ## Code Style Enforcement
 
@@ -352,6 +418,17 @@ make migrate-up
 make test-integration  # Uses docker-compose with isolated test DB
 ```
 
+**Swagger generation errors:**
+```bash
+# Ensure swag is installed
+make install-tools
+
+# Regenerate with full dependency parsing
+swag init -g cmd/api/main.go -o api/openapi --parseDependency --parseInternal
+
+# Check for annotation errors in handler comments
+```
+
 **Build performance:**
 - Build time: ~5 seconds (target)
 - Test execution: ~2 seconds for unit tests
@@ -367,27 +444,6 @@ go test -bench=. -benchmem ./internal/domain/book/
 go test -bench=. -benchmem ./internal/usecase/book/
 ```
 
-## Documentation
-
-**Architecture Docs:**
-- `docs/architecture.md` - Full system architecture
-- `docs/adr/` - Architecture Decision Records
-- `docs/guides/QUICKSTART.md` - 5-minute setup guide
-
-**API Documentation:**
-```bash
-# Generate Swagger docs
-make gen-docs
-
-# View Swagger UI (with server running)
-open http://localhost:8080/swagger/index.html
-```
-
-**Package Documentation:**
-- Each layer has a `README.md` explaining its purpose
-- All exported types/functions have godoc comments
-- Domain services have extensive documentation with examples
-
 ## Important Files
 
 - `Makefile` - All common commands (30+ targets)
@@ -396,6 +452,9 @@ open http://localhost:8080/swagger/index.html
 - `internal/infrastructure/app/app.go` - Application bootstrap
 - `deployments/docker/docker-compose.yml` - Local development stack
 - `migrations/postgres/` - Database schema changes
+- `cmd/api/main.go` - API entry point and Swagger metadata
+- `internal/adapters/http/router.go` - HTTP route configuration
+- `api/openapi/` - Generated Swagger documentation
 
 ## Quick Reference
 
@@ -413,8 +472,10 @@ make ci                 # Run full CI pipeline locally
 # 1. Domain (entity + service + tests)       → internal/domain/{entity}/
 # 2. Use case (orchestration + tests)        → internal/usecase/{entity}/
 # 3. Adapter (HTTP handler + repository)     → internal/adapters/
-# 4. Wire in container.go                    → internal/usecase/container.go
-# 5. Migration (if needed)                   → make migrate-create name=...
+# 4. Add Swagger annotations to handlers     → @Security, @Summary, @Param, etc.
+# 5. Wire in container.go                    → internal/usecase/container.go
+# 6. Migration (if needed)                   → make migrate-create name=...
+# 7. Regenerate API docs                     → make gen-docs
 ```
 
 ## Project-Specific Notes
@@ -483,3 +544,4 @@ These commands are safe to run without asking:
 - `make fmt`, `make vet`, `make lint`
 - `go test ./internal/domain/...`
 - `go run cmd/api/main.go` (local development)
+- `make gen-docs` (regenerate Swagger documentation)

@@ -3,8 +3,10 @@ package http
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
+	_ "library-service/api/openapi" // swagger docs
 	v1 "library-service/internal/adapters/http/handlers"
 	httpmiddleware "library-service/internal/adapters/http/middleware"
 	"library-service/internal/infrastructure/config"
@@ -31,6 +33,11 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(cfg.Config.App.Timeout))
 	r.Use(middleware.Heartbeat("/health"))
+
+	// Swagger documentation
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 
 	// Create auth middleware
 	authMiddleware := httpmiddleware.NewAuthMiddleware(cfg.AuthServices.JWTService)

@@ -16,10 +16,11 @@ package spec
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/go-openapi/jsonpointer"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/swag/jsonutils"
 )
 
 // Extensions vendor specific extensions
@@ -38,6 +39,24 @@ func (e Extensions) GetString(key string) (string, bool) {
 		return str, ok
 	}
 	return "", false
+}
+
+// GetInt gets a int value from the extensions
+func (e Extensions) GetInt(key string) (int, bool) {
+	realKey := strings.ToLower(key)
+
+	if v, ok := e.GetString(realKey); ok {
+		if r, err := strconv.Atoi(v); err == nil {
+			return r, true
+		}
+	}
+
+	if v, ok := e[realKey]; ok {
+		if r, rOk := v.(float64); rOk {
+			return int(r), true
+		}
+	}
+	return -1, false
 }
 
 // GetBool gets a string value from the extensions
@@ -153,7 +172,7 @@ func (i Info) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return swag.ConcatJSON(b1, b2), nil
+	return jsonutils.ConcatJSON(b1, b2), nil
 }
 
 // UnmarshalJSON marshal this from JSON

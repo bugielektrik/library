@@ -67,6 +67,7 @@ func (h *BookHandler) Routes() chi.Router {
 // @Tags books
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} dto.BookResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /books [get]
@@ -101,6 +102,7 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 // @Tags books
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body dto.CreateBookRequest true "Book data"
 // @Success 201 {object} dto.BookResponse
 // @Failure 400 {object} dto.ErrorResponse
@@ -151,6 +153,7 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 // @Tags books
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Book ID"
 // @Success 200 {object} dto.BookResponse
 // @Failure 404 {object} dto.ErrorResponse
@@ -190,6 +193,7 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Tags books
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Book ID"
 // @Param request body dto.UpdateBookRequest true "Book data"
 // @Success 204
@@ -240,6 +244,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Tags books
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Book ID"
 // @Success 204
 // @Failure 404 {object} dto.ErrorResponse
@@ -270,6 +275,7 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 // @Tags books
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "Book ID"
 // @Success 200 {array} dto.AuthorResponse
 // @Failure 404 {object} dto.ErrorResponse

@@ -1,16 +1,13 @@
+basePath: /api/v1
 definitions:
-  author.Request:
+  jwt.NumericDate:
     properties:
-      fullName:
-        type: string
-      pseudonym:
-        type: string
-      specialty:
+      time.Time:
         type: string
     type: object
-  author.Response:
+  library-service_internal_adapters_http_dto.AuthorResponse:
     properties:
-      fullName:
+      full_name:
         type: string
       id:
         type: string
@@ -19,7 +16,7 @@ definitions:
       specialty:
         type: string
     type: object
-  book.Request:
+  library-service_internal_adapters_http_dto.BookResponse:
     properties:
       authors:
         items:
@@ -34,190 +31,295 @@ definitions:
       name:
         type: string
     type: object
-  book.Response:
+  library-service_internal_adapters_http_dto.CreateBookRequest:
     properties:
       authors:
         items:
           type: string
+        minItems: 1
         type: array
       genre:
-        type: string
-      id:
+        maxLength: 100
+        minLength: 1
         type: string
       isbn:
         type: string
       name:
+        maxLength: 255
+        minLength: 1
         type: string
+    required:
+    - authors
+    - genre
+    - isbn
+    - name
     type: object
-  member.Request:
+  library-service_internal_adapters_http_dto.ErrorDetail:
     properties:
-      books:
-        items:
-          type: string
-        type: array
-      fullName:
+      code:
         type: string
-      id:
-        type: string
-    type: object
-  member.Response:
-    properties:
-      books:
-        items:
-          type: string
-        type: array
-      fullName:
-        type: string
-      id:
-        type: string
-    type: object
-  response.Object:
-    properties:
-      data: {}
+      details:
+        additionalProperties: true
+        type: object
       message:
         type: string
-      success:
-        type: boolean
     type: object
+  library-service_internal_adapters_http_dto.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorDetail'
+    type: object
+  library-service_internal_adapters_http_dto.UpdateBookRequest:
+    properties:
+      authors:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      genre:
+        maxLength: 100
+        minLength: 1
+        type: string
+      isbn:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    type: object
+  library-service_internal_domain_member.Response:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+    type: object
+  library-service_internal_infrastructure_auth.Claims:
+    properties:
+      aud:
+        description: the `aud` (Audience) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+        items:
+          type: string
+        type: array
+      email:
+        type: string
+      exp:
+        allOf:
+        - $ref: '#/definitions/jwt.NumericDate'
+        description: the `exp` (Expiration Time) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+      iat:
+        allOf:
+        - $ref: '#/definitions/jwt.NumericDate'
+        description: the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+      iss:
+        description: the `iss` (Issuer) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+        type: string
+      jti:
+        description: the `jti` (JWT ID) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+        type: string
+      member_id:
+        type: string
+      nbf:
+        allOf:
+        - $ref: '#/definitions/jwt.NumericDate'
+        description: the `nbf` (Not Before) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
+      role:
+        type: string
+      sub:
+        description: the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+        type: string
+    type: object
+  library-service_internal_infrastructure_auth.TokenPair:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        description: Access token expiry in seconds
+        type: integer
+      refresh_token:
+        type: string
+    type: object
+  library-service_internal_usecase_auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  library-service_internal_usecase_auth.LoginResponse:
+    properties:
+      member:
+        $ref: '#/definitions/library-service_internal_domain_member.Response'
+      tokens:
+        $ref: '#/definitions/library-service_internal_infrastructure_auth.TokenPair'
+    type: object
+  library-service_internal_usecase_auth.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  library-service_internal_usecase_auth.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+    type: object
+  library-service_internal_usecase_auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    type: object
+  library-service_internal_usecase_auth.RegisterResponse:
+    properties:
+      member:
+        $ref: '#/definitions/library-service_internal_domain_member.Response'
+      tokens:
+        $ref: '#/definitions/library-service_internal_infrastructure_auth.TokenPair'
+    type: object
+  library-service_internal_usecase_auth.ValidateTokenResponse:
+    properties:
+      claims:
+        $ref: '#/definitions/library-service_internal_infrastructure_auth.Claims'
+      member:
+        $ref: '#/definitions/library-service_internal_domain_member.Response'
+    type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    email: support@library.com
+    name: API Support
+  description: Library management system with clean architecture
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Library Service API
+  version: "2.0"
 paths:
-  /authors:
-    get:
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/author.Response'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: list of authors from the repository
-      tags:
-      - authors
+  /auth/login:
     post:
       consumes:
       - application/json
+      description: Login with email and password to receive JWT tokens
       parameters:
-      - description: body param
+      - description: Login credentials
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/author.Request'
+          $ref: '#/definitions/library-service_internal_usecase_auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/author.Response'
-        "400":
-          description: Bad Request
+            $ref: '#/definitions/library-service_internal_usecase_auth.LoginResponse'
+        "401":
+          description: Invalid credentials
           schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: add a new author to the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      summary: Authenticate a member
       tags:
-      - authors
-  /authors/{id}:
-    delete:
-      consumes:
-      - application/json
-      parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: delete the author from the repository
-      tags:
-      - authors
+      - auth
+  /auth/me:
     get:
-      consumes:
-      - application/json
-      parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
+      description: Get the authenticated member's information from JWT token
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/author.Response'
-        "404":
-          description: Not Found
+            $ref: '#/definitions/library-service_internal_usecase_auth.ValidateTokenResponse'
+        "401":
+          description: Invalid or missing token
           schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: get the author from the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current member
       tags:
-      - authors
-    put:
+      - auth
+  /auth/refresh:
+    post:
       consumes:
       - application/json
+      description: Exchange a valid refresh token for a new access token
       parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: body param
+      - description: Refresh token
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/author.Request'
+          $ref: '#/definitions/library-service_internal_usecase_auth.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_usecase_auth.RefreshTokenResponse'
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new member account with email and password
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_usecase_auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/library-service_internal_usecase_auth.RegisterResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Object'
-        "404":
-          description: Not Found
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "409":
+          description: Email already exists
           schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: update the author in the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      summary: Register a new member
       tags:
-      - authors
+      - auth
   /books:
     get:
       consumes:
@@ -229,41 +331,45 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/book.Response'
+              $ref: '#/definitions/library-service_internal_adapters_http_dto.BookResponse'
             type: array
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Object'
-      summary: list of books from the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all books
       tags:
       - books
     post:
       consumes:
       - application/json
       parameters:
-      - description: body param
+      - description: Book data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/book.Request'
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.CreateBookRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/book.Response'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.BookResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Object'
-      summary: add a new book to the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new book
       tags:
       - books
   /books/{id}:
@@ -271,87 +377,93 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: path param
+      - description: Book ID
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Object'
-      summary: delete the book from the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a book
       tags:
       - books
     get:
       consumes:
       - application/json
       parameters:
-      - description: path param
+      - description: Book ID
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/book.Response'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.BookResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Object'
-      summary: get the book from the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a book by ID
       tags:
       - books
     put:
       consumes:
       - application/json
       parameters:
-      - description: path param
+      - description: Book ID
         in: path
         name: id
         required: true
-        type: integer
-      - description: body param
+        type: string
+      - description: Book data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/book.Request'
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.UpdateBookRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Object'
-      summary: update the book in the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a book
       tags:
       - books
   /books/{id}/authors:
@@ -359,11 +471,11 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: path param
+      - description: Book ID
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -371,183 +483,25 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/author.Response'
+              $ref: '#/definitions/library-service_internal_adapters_http_dto.AuthorResponse'
             type: array
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.Object'
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.Object'
-      summary: list of authors from the repository
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List authors of a book
       tags:
       - books
-  /members:
-    get:
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/member.Response'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: list of members from the repository
-      tags:
-      - members
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: body param
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/member.Request'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/member.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: add a new member to the repository
-      tags:
-      - members
-  /members/{id}:
-    delete:
-      consumes:
-      - application/json
-      parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: delete the member from the repository
-      tags:
-      - members
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/member.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: get the member from the repository
-      tags:
-      - members
-    put:
-      consumes:
-      - application/json
-      parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: body param
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/member.Request'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Object'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: update the member in the repository
-      tags:
-      - members
-  /members/{id}/books:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: path param
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/book.Response'
-            type: array
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Object'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Object'
-      summary: list of books from the repository
-      tags:
-      - members
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

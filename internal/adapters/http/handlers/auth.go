@@ -133,7 +133,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Description Get the authenticated member's information from JWT token
 // @Tags auth
 // @Produce json
-// @Security Bearer
+// @Security BearerAuth
 // @Success 200 {object} authuc.ValidateTokenResponse
 // @Failure 401 {object} dto.ErrorResponse "Invalid or missing token"
 // @Router /auth/me [get]
