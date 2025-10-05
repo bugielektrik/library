@@ -12,6 +12,15 @@ Library Management System - A Go REST API service built with Clean Architecture 
 
 ## 📚 Documentation Index
 
+### 🚨 **NEW CLAUDE CODE INSTANCE? [START HERE →](./CLAUDE-START.md)**
+
+### 🎯 Essential Reading (First 3 Minutes)
+- **[CLAUDE-START.md](./CLAUDE-START.md)** - Boot sequence for new AI instances ⭐ NEW
+- **[Context Guide](./context-guide.md)** - What to read for your specific task ⭐ NEW
+- **[Glossary](./glossary.md)** - Business domain terms and concepts ⭐ NEW
+- **[Codebase Map](./codebase-map.md)** - Find any file in 10 seconds ⭐ NEW
+- **[Cheat Sheet](./cheatsheet.md)** - Single-page quick reference
+
 ### Active Documentation
 - **[Commands](./commands.md)** - All essential commands and quick reference
 - **[Setup](./setup.md)** - First-time setup and troubleshooting
@@ -21,7 +30,25 @@ Library Management System - A Go REST API service built with Clean Architecture 
 - **[API](./api.md)** - API endpoints and design standards
 - **[Standards](./standards.md)** - Code standards and conventions
 
+### Practical Guides
+- **[Quick Wins](./quick-wins.md)** - Safe improvements Claude can suggest ⭐ NEW
+- **[Development Workflows](./development-workflows.md)** - Complete workflows start to finish
+- **[Debugging Guide](./debugging-guide.md)** - Advanced debugging techniques
+- **[Performance](./performance.md)** - Baselines, profiling, optimization
+- **[Onboarding](./onboarding.md)** - 15-minute quick start guide
+- **[Visual Flows](./flows.md)** - ASCII diagrams of request flows
+- **[Gotchas](./gotchas.md)** - Common mistakes to avoid
+- **[Examples](./examples/)** - Copy-paste code examples for common tasks
+- **[Recipes](./recipes.md)** - Quick solutions and command snippets
+- **[Troubleshooting](./troubleshooting.md)** - Solutions to common problems
+- **[FAQ](./faq.md)** - Frequently asked questions
+- **[Checklist](./checklist.md)** - Pre-commit code review checklist
+- **[Prompts](./prompts.md)** - Effective Claude Code prompts
+
 ### Reference Material
+- **[Architecture Decision Records (ADRs)](./adrs/)** - Why key decisions were made
+- **[Security Guide](./security.md)** - Security best practices and common vulnerabilities
+- **[Testing Checklist](./TESTING-CHECKLIST.md)** - Validate documentation effectiveness ⭐ NEW
 - **[Refactoring Guide](./refactoring.md)** - Generic Go Clean Architecture refactoring template
 
 ## ⚡ 30-Second Quick Reference

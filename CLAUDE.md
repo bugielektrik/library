@@ -32,9 +32,9 @@ internal/
 │   ├── member/         # Member entity, service (subscriptions)
 │   └── author/         # Author entity
 ├── usecase/            # Application orchestration (depends on domain)
-│   ├── book/           # CreateBook, UpdateBook, etc.
-│   ├── auth/           # Register, Login, RefreshToken
-│   └── subscription/   # SubscribeMember
+│   ├── bookops/        # CreateBook, UpdateBook, etc. ("ops" suffix)
+│   ├── authops/        # Register, Login, RefreshToken ("ops" suffix)
+│   └── subops/         # SubscribeMember ("ops" suffix)
 ├── adapters/           # External interfaces (HTTP, DB, cache)
 │   ├── http/           # Chi handlers, middleware, DTOs
 │   ├── repository/     # PostgreSQL/MongoDB/Memory implementations
@@ -45,7 +45,10 @@ internal/
     └── server/         # HTTP server configuration
 ```
 
-**Critical Rule:** Domain layer must NEVER import from outer layers. Use cases define behavior, adapters provide implementations.
+**Critical Rules:**
+- Domain layer must NEVER import from outer layers
+- Use case packages use "ops" suffix (e.g., `bookops`) to avoid naming conflicts with domain packages (e.g., `book`)
+- Use cases define behavior via interfaces, adapters provide implementations
 
 ## Common Commands
 
@@ -114,7 +117,7 @@ make benchmark          # Run performance benchmarks
 
 ## API Documentation
 
-**Swagger UI:** The API documentation is available via interactive Swagger UI at http://localhost:8080/swagger/index.html when the server is running.
+**Swagger UI:** http://localhost:8080/swagger/index.html (when server is running)
 
 **Regenerating Swagger Documentation:**
 ```bash
@@ -185,8 +188,8 @@ The JWT security scheme is defined in `cmd/api/main.go`:
 
 2. **Use Case Layer** (orchestration):
    ```bash
-   mkdir -p internal/usecase/loan
-   touch internal/usecase/loan/{create_loan.go,return_loan.go}
+   mkdir -p internal/usecase/loanops  # Note: "ops" suffix
+   touch internal/usecase/loanops/{create_loan.go,return_loan.go}
    ```
    - Create use cases that orchestrate domain services
    - Each use case = one file (single responsibility)
@@ -207,8 +210,8 @@ The JWT security scheme is defined in `cmd/api/main.go`:
    - **Add Swagger annotations to all handler functions**
 
 4. **Wire Dependencies** (`internal/usecase/container.go`):
-   - Add repositories to `Repositories` struct
-   - Add use cases to `Container` struct
+   - Add `Loan book.Repository` to `Repositories` struct
+   - Add `CreateLoan *loanops.CreateLoanUseCase` to `Container` struct
    - Update `NewContainer()` to inject dependencies
 
 5. **Migrations**:
@@ -225,63 +228,110 @@ The JWT security scheme is defined in `cmd/api/main.go`:
    # Verify at http://localhost:8080/swagger/index.html
    ```
 
-### Testing Guidelines
-
-**Unit Tests (Domain/Use Cases):**
-```go
-// Table-driven tests (Go standard)
-func TestBookService_ValidateISBN(t *testing.T) {
-    tests := []struct {
-        name    string
-        isbn    string
-        wantErr bool
-    }{
-        {"valid ISBN-13", "978-0-306-40615-7", false},
-        {"invalid checksum", "978-0-306-40615-8", true},
-    }
-    // ...
-}
-```
-
-**Integration Tests:**
-- Use build tags: `//go:build integration`
-- Test against real PostgreSQL (docker-compose)
-- Run with: `make test-integration`
-
-**Coverage Requirements:**
-- Domain layer: 100% (critical business logic)
-- Use cases: 80%+
-- Overall: 60%+
-
 ## Key Implementation Patterns
 
-### 1. Dependency Injection (Constructor Pattern)
+### 1. Package Naming Convention
+
+**Use Case Packages Use "ops" Suffix:**
+- Domain: `internal/domain/book` (package `book`)
+- Use Case: `internal/usecase/bookops` (package `bookops`)
+
+**Rationale:**
+- Avoids naming conflicts when importing both domain and use case packages
+- No need for import aliases (cleaner, more idiomatic Go)
+- Clear distinction: domain = entities/business rules, use cases = operations/orchestration
+
+**Example:**
 ```go
-// Use case with explicit dependencies
-type CreateBookUseCase struct {
-    bookRepo    book.Repository     // Interface from domain
-    bookCache   book.Cache          // Interface from domain
-    bookService *book.Service       // Domain service
+import (
+    "library-service/internal/domain/book"      // package book
+    "library-service/internal/usecase/bookops"  // package bookops
+)
+
+// Clean references without aliases
+bookEntity := book.NewEntity(...)
+useCase := bookops.NewCreateBookUseCase(...)
+```
+
+### 2. Dependency Injection (Two-Step Wiring)
+
+**Step 1: Application Bootstrap** (`internal/infrastructure/app/app.go`)
+
+Boot order:
+1. Logger initialization
+2. Config loading
+3. **Repositories** (DB layer):
+   - `WithMemoryStore()` for tests/development
+   - `WithPostgresStore(dsn)` for production (runs migrations automatically)
+4. **Caches** (Redis/Memory)
+5. **Auth Services** (JWT + Password)
+6. **Use Cases Container** - wires everything together
+7. **HTTP Server** - receives use cases
+
+**Step 2: Use Case Container** (`internal/usecase/container.go`)
+
+When adding new features:
+1. Add repository interface to `Repositories` struct
+2. Add cache interface to `Caches` struct (if needed)
+3. Add use case to `Container` struct
+4. Create **domain service** in `NewContainer()` - e.g., `book.NewService()`
+5. Wire use case with dependencies in return statement
+
+**Critical Distinction:**
+- **Infrastructure Services** (JWT, Password): Created in `app.go`, passed to container
+- **Domain Services** (Book, Member): Created in `container.go` `NewContainer()` function
+
+### 3. Domain Services vs Use Cases
+
+**Domain Service** (`internal/domain/book/service.go`):
+- Pure business rules (ISBN validation, constraints)
+- NO external dependencies (no database, HTTP, frameworks)
+- Pure functions when possible
+- 100% test coverage (easy to achieve)
+
+**Use Case** (`internal/usecase/bookops/create_book.go`):
+- Orchestrates domain entities and services
+- Calls domain service for validation
+- Persists to repository
+- Updates cache
+- Returns domain entities (not DTOs)
+
+### 4. Repository Pattern
+
+**Interface:** Defined in `internal/domain/{entity}/repository.go`
+**Implementation:** In `internal/adapters/repository/{type}/{entity}.go`
+
+```go
+// Domain defines the contract
+// internal/domain/book/repository.go
+type Repository interface {
+    Create(ctx context.Context, book Entity) error
+    GetByID(ctx context.Context, id string) (Entity, error)
+    Update(ctx context.Context, book Entity) error
+    Delete(ctx context.Context, id string) error
+    List(ctx context.Context, filter ListFilter) ([]Entity, error)
 }
 
-func NewCreateBookUseCase(repo book.Repository, cache book.Cache, svc *book.Service) *CreateBookUseCase {
-    return &CreateBookUseCase{repo, cache, svc}
+// Adapter implements it
+// internal/adapters/repository/postgres/book.go
+type PostgresBookRepository struct {
+    db *sqlx.DB
+}
+
+func (r *PostgresBookRepository) Create(ctx context.Context, book domain.Entity) error {
+    query := `INSERT INTO books (id, name, isbn, genre) VALUES ($1, $2, $3, $4)`
+    _, err := r.db.ExecContext(ctx, query, book.ID, book.Name, book.ISBN, book.Genre)
+    return err
 }
 ```
 
-### 2. Domain Services vs Use Cases
-- **Domain Service** (`internal/domain/book/service.go`): Pure business rules
-  - ISBN validation with checksum algorithm
-  - Business constraints (e.g., "can't delete book with active loans")
-  - No database, no HTTP, no external dependencies
+**Benefits:**
+- Domain is independent of database technology
+- Easy to swap PostgreSQL for MongoDB (just change adapter)
+- Easy to mock for testing
 
-- **Use Case** (`internal/usecase/bookops/create_book.go`): Orchestration
-  - Calls domain service for validation
-  - Persists to repository
-  - Updates cache
-  - Returns result
+### 5. Error Handling
 
-### 3. Error Handling
 ```go
 // Wrap errors with context (use %w for unwrapping)
 if err := s.repo.Create(ctx, book); err != nil {
@@ -292,23 +342,6 @@ if err := s.repo.Create(ctx, book); err != nil {
 return errors.ErrNotFound          // 404
 return errors.ErrAlreadyExists     // 409
 return errors.ErrValidation        // 400
-```
-
-### 4. Repository Pattern
-```go
-// Interface in domain (internal/domain/book/repository.go)
-type Repository interface {
-    Create(ctx context.Context, book Entity) error
-    GetByID(ctx context.Context, id string) (Entity, error)
-    Update(ctx context.Context, book Entity) error
-    Delete(ctx context.Context, id string) error
-    List(ctx context.Context, filter ListFilter) ([]Entity, error)
-}
-
-// Implementation in adapters (internal/adapters/repository/postgres/book.go)
-type PostgresBookRepository struct {
-    db *sqlx.DB
-}
 ```
 
 ## Authentication System
@@ -358,6 +391,42 @@ cp .env.example .env
 cd deployments/docker
 docker-compose up -d  # PostgreSQL on :5432, Redis on :6379
 ```
+
+## Testing Guidelines
+
+**Unit Tests (Domain/Use Cases):**
+```go
+// Table-driven tests (Go standard)
+func TestBookService_ValidateISBN(t *testing.T) {
+    tests := []struct {
+        name    string
+        isbn    string
+        wantErr bool
+    }{
+        {"valid ISBN-13", "978-0-306-40615-7", false},
+        {"invalid checksum", "978-0-306-40615-8", true},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := ValidateISBN(tt.isbn)
+            if (err != nil) != tt.wantErr {
+                t.Errorf("got error %v, wantErr %v", err, tt.wantErr)
+            }
+        })
+    }
+}
+```
+
+**Integration Tests:**
+- Use build tags: `//go:build integration`
+- Test against real PostgreSQL (docker-compose)
+- Run with: `make test-integration`
+
+**Coverage Requirements:**
+- Domain layer: 100% (critical business logic)
+- Use cases: 80%+
+- Overall: 60%+
 
 ## Dependency Management
 
@@ -412,12 +481,6 @@ make migrate-down
 make migrate-up
 ```
 
-**Test failures:**
-```bash
-# Ensure test database is clean
-make test-integration  # Uses docker-compose with isolated test DB
-```
-
 **Swagger generation errors:**
 ```bash
 # Ensure swag is installed
@@ -433,16 +496,6 @@ swag init -g cmd/api/main.go -o api/openapi --parseDependency --parseInternal
 - Build time: ~5 seconds (target)
 - Test execution: ~2 seconds for unit tests
 - Use `CGO_ENABLED=0` for static binaries (already in Makefile)
-
-## Performance Benchmarks
-
-Run benchmarks before/after optimizations:
-```bash
-make benchmark
-# OR
-go test -bench=. -benchmem ./internal/domain/book/
-go test -bench=. -benchmem ./internal/usecase/bookops/
-```
 
 ## Important Files
 
@@ -470,7 +523,7 @@ make ci                 # Run full CI pipeline locally
 
 # Add new feature (follow this order)
 # 1. Domain (entity + service + tests)       → internal/domain/{entity}/
-# 2. Use case (orchestration + tests)        → internal/usecase/{entity}/
+# 2. Use case (orchestration + tests)        → internal/usecase/{entity}ops/  (note "ops" suffix!)
 # 3. Adapter (HTTP handler + repository)     → internal/adapters/
 # 4. Add Swagger annotations to handlers     → @Security, @Summary, @Param, etc.
 # 5. Wire in container.go                    → internal/usecase/container.go
@@ -480,53 +533,22 @@ make ci                 # Run full CI pipeline locally
 
 ## Project-Specific Notes
 
-### Dependency Wiring Location
+### Current Use Cases Structure
 
-**Two-Step Wiring Process:**
+**Book use cases** (`internal/usecase/bookops/`):
+- CreateBook, GetBook, ListBooks, UpdateBook, DeleteBook, ListBookAuthors
 
-**Step 1: Application Bootstrap** (`internal/infrastructure/app/app.go`):
-```go
-// Boot order (lines 35-100):
-1. Logger initialization
-2. Config loading
-3. Repositories (DB layer):
-   - WithMemoryStore() for tests/development
-   - WithPostgresStore(dsn) for production (runs migrations automatically)
-   - WithMongoStore(dsn) alternative
-4. Caches (Redis/Memory) - requires repositories as dependency
-5. Auth Services (JWT + Password) - infrastructure services
-6. Use cases container - wires everything together
-7. HTTP Server - receives use cases
-```
+**Auth use cases** (`internal/usecase/authops/`):
+- RegisterMember, LoginMember, RefreshToken, ValidateToken
 
-**Repository Configuration Pattern:**
-```go
-// Development/Testing
-repos, err := repository.NewRepositories(repository.WithMemoryStore())
+**Subscription use cases** (`internal/usecase/subops/`):
+- SubscribeMember
 
-// Production
-repos, err := repository.NewRepositories(repository.WithPostgresStore(cfg.Database.DSN))
-```
-The `WithPostgresStore()` function automatically runs migrations before returning.
+### Domain Services
 
-**Step 2: Use Case Container** (`internal/usecase/container.go`):
-When adding new features:
-1. Add repository interface to `Repositories` struct (line 35)
-2. Add cache interface to `Caches` struct if needed (line 43)
-3. Add use case to `Container` struct (line 15)
-4. Create **domain service** in `NewContainer()` (line 56) - e.g., `book.NewService()`
-5. Wire use case with dependencies in return statement (line 61+)
-
-**Critical Distinction:**
-- **Infrastructure Services** (JWT, Password): Created in `app.go`, passed to container
-- **Domain Services** (Book, Member): Created in `container.go` `NewContainer()` function
-
-**Current Container Structure:**
-- **Book use cases:** CreateBook, GetBook, ListBooks, UpdateBook, DeleteBook, ListBookAuthors
-- **Auth use cases:** RegisterMember, LoginMember, RefreshToken, ValidateToken
-- **Subscription use cases:** SubscribeMember
-- **Infrastructure services:** JWTService (from config), PasswordService (bcrypt, cost=10)
-- **Domain services:** BookService, MemberService
+**Current domain services:**
+- **BookService** (`internal/domain/book/service.go`): ISBN validation, business constraints
+- **MemberService** (`internal/domain/member/service.go`): Subscription pricing logic
 
 ### Migration Locations
 - **Postgres migrations:** `migrations/postgres/`
@@ -538,10 +560,37 @@ When adding new features:
 - Integration test helpers: `test/testdb/setup.go`
 - Build tags for integration tests: `//go:build integration`
 
+### CI/CD Pipeline
+
+**GitHub Actions Workflow** (`.github/workflows/ci.yml`):
+
+The CI pipeline runs on push to `main`, `develop`, or `feature/*` branches and on PRs:
+
+1. **Lint** - golangci-lint with project configuration
+2. **Test** - All tests with coverage (PostgreSQL + Redis services)
+3. **Build** - Multi-platform binaries (Linux, Darwin, Windows × amd64, arm64)
+4. **Security** - gosec scanner + govulncheck for vulnerabilities
+5. **Integration** - Integration tests (PR only)
+6. **Docker** - Build Docker images (main/develop only)
+7. **Quality** - SonarCloud scan + documentation checks
+
+**Local CI Simulation:**
+```bash
+make ci  # Runs: fmt → vet → lint → test → build
+```
+
+**Key Requirements for PR:**
+- All tests must pass
+- Coverage maintained
+- Linter passes
+- No security vulnerabilities
+- Integration tests pass
+- Documentation updated
+
 ### Pre-approved Commands
 These commands are safe to run without asking:
 - `make test`, `make test-unit`, `make test-coverage`
-- `make fmt`, `make vet`, `make lint`
+- `make fmt`, `make vet`, `make lint`, `make ci`
 - `go test ./internal/domain/...`
 - `go run cmd/api/main.go` (local development)
 - `make gen-docs` (regenerate Swagger documentation)
