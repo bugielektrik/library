@@ -158,7 +158,7 @@ func (s *Service) CanBookBeDeleted(book Entity) error {
 
 **Example - Create Book Use Case:**
 ```go
-// internal/usecase/book/create_book.go
+// internal/usecase/bookops/create_book.go
 type CreateBookUseCase struct {
     bookRepo    book.Repository     // Interface from domain
     bookCache   book.Cache          // Interface from domain
@@ -323,7 +323,7 @@ if err := repo.Create(ctx, book); err != nil {
    - Parse JSON to DTO
    - Call use case
    ↓
-3. Use Case (usecase/book/create_book.go)
+3. Use Case (usecase/bookops/create_book.go)
    - Validate using domain service
    - Create entity
    - Save via repository
@@ -373,7 +373,7 @@ func TestService_ValidateISBN(t *testing.T) {
 
 ### Integration Tests (Use Cases)
 ```go
-// internal/usecase/book/create_book_test.go
+// internal/usecase/bookops/create_book_test.go
 func TestCreateBook(t *testing.T) {
     // Use mocks
     mockRepo := mocks.NewMockRepository()

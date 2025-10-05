@@ -9,7 +9,7 @@ import (
 
 	"library-service/internal/adapters/http/dto"
 	"library-service/internal/adapters/http/middleware"
-	bookuc "library-service/internal/usecase/book"
+	"library-service/internal/usecase/bookops"
 	"library-service/pkg/errors"
 
 	log "library-service/internal/infrastructure/log"
@@ -17,23 +17,23 @@ import (
 
 // BookHandler handles HTTP requests for books
 type BookHandler struct {
-	createBookUC      *bookuc.CreateBookUseCase
-	getBookUC         *bookuc.GetBookUseCase
-	listBooksUC       *bookuc.ListBooksUseCase
-	updateBookUC      *bookuc.UpdateBookUseCase
-	deleteBookUC      *bookuc.DeleteBookUseCase
-	listBookAuthorsUC *bookuc.ListBookAuthorsUseCase
+	createBookUC      *bookops.CreateBookUseCase
+	getBookUC         *bookops.GetBookUseCase
+	listBooksUC       *bookops.ListBooksUseCase
+	updateBookUC      *bookops.UpdateBookUseCase
+	deleteBookUC      *bookops.DeleteBookUseCase
+	listBookAuthorsUC *bookops.ListBookAuthorsUseCase
 	validator         *middleware.Validator
 }
 
 // NewBookHandler creates a new book handler
 func NewBookHandler(
-	createBookUC *bookuc.CreateBookUseCase,
-	getBookUC *bookuc.GetBookUseCase,
-	listBooksUC *bookuc.ListBooksUseCase,
-	updateBookUC *bookuc.UpdateBookUseCase,
-	deleteBookUC *bookuc.DeleteBookUseCase,
-	listBookAuthorsUC *bookuc.ListBookAuthorsUseCase,
+	createBookUC *bookops.CreateBookUseCase,
+	getBookUC *bookops.GetBookUseCase,
+	listBooksUC *bookops.ListBooksUseCase,
+	updateBookUC *bookops.UpdateBookUseCase,
+	deleteBookUC *bookops.DeleteBookUseCase,
+	listBookAuthorsUC *bookops.ListBookAuthorsUseCase,
 ) *BookHandler {
 	return &BookHandler{
 		createBookUC:      createBookUC,
@@ -76,7 +76,7 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	logger := log.FromContext(ctx).Named("book_handler.list")
 
 	// Execute usecase
-	result, err := h.listBooksUC.Execute(ctx, bookuc.ListBooksRequest{})
+	result, err := h.listBooksUC.Execute(ctx, bookops.ListBooksRequest{})
 	if err != nil {
 		h.respondError(w, r, err)
 		return
@@ -125,7 +125,7 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute usecase
-	result, err := h.createBookUC.Execute(ctx, bookuc.CreateBookRequest{
+	result, err := h.createBookUC.Execute(ctx, bookops.CreateBookRequest{
 		Name:    req.Name,
 		Genre:   req.Genre,
 		ISBN:    req.ISBN,
@@ -170,7 +170,7 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute usecase
-	result, err := h.getBookUC.Execute(ctx, bookuc.GetBookRequest{ID: id})
+	result, err := h.getBookUC.Execute(ctx, bookops.GetBookRequest{ID: id})
 	if err != nil {
 		h.respondError(w, r, err)
 		return
@@ -224,7 +224,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute usecase
-	err := h.updateBookUC.Execute(ctx, bookuc.UpdateBookRequest{
+	err := h.updateBookUC.Execute(ctx, bookops.UpdateBookRequest{
 		ID:      id,
 		Name:    req.Name,
 		Genre:   req.Genre,
@@ -261,7 +261,7 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute usecase
-	err := h.deleteBookUC.Execute(ctx, bookuc.DeleteBookRequest{ID: id})
+	err := h.deleteBookUC.Execute(ctx, bookops.DeleteBookRequest{ID: id})
 	if err != nil {
 		h.respondError(w, r, err)
 		return
@@ -292,7 +292,7 @@ func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute usecase
-	result, err := h.listBookAuthorsUC.Execute(ctx, bookuc.ListBookAuthorsRequest{BookID: id})
+	result, err := h.listBookAuthorsUC.Execute(ctx, bookops.ListBookAuthorsRequest{BookID: id})
 	if err != nil {
 		h.respondError(w, r, err)
 		return

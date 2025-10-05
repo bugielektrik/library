@@ -7,24 +7,24 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"library-service/internal/adapters/http/dto"
-	authuc "library-service/internal/usecase/auth"
+	"library-service/internal/usecase/authops"
 	"library-service/pkg/errors"
 )
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
-	registerUseCase      *authuc.RegisterUseCase
-	loginUseCase         *authuc.LoginUseCase
-	refreshTokenUseCase  *authuc.RefreshTokenUseCase
-	validateTokenUseCase *authuc.ValidateTokenUseCase
+	registerUseCase      *authops.RegisterUseCase
+	loginUseCase         *authops.LoginUseCase
+	refreshTokenUseCase  *authops.RefreshTokenUseCase
+	validateTokenUseCase *authops.ValidateTokenUseCase
 }
 
 // NewAuthHandler creates a new auth handler
 func NewAuthHandler(
-	registerUC *authuc.RegisterUseCase,
-	loginUC *authuc.LoginUseCase,
-	refreshUC *authuc.RefreshTokenUseCase,
-	validateUC *authuc.ValidateTokenUseCase,
+	registerUC *authops.RegisterUseCase,
+	loginUC *authops.LoginUseCase,
+	refreshUC *authops.RefreshTokenUseCase,
+	validateUC *authops.ValidateTokenUseCase,
 ) *AuthHandler {
 	return &AuthHandler{
 		registerUseCase:      registerUC,
@@ -52,13 +52,13 @@ func (h *AuthHandler) Routes() chi.Router {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body authuc.RegisterRequest true "Registration details"
-// @Success 201 {object} authuc.RegisterResponse
+// @Param request body authops.RegisterRequest true "Registration details"
+// @Success 201 {object} authops.RegisterResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 409 {object} dto.ErrorResponse "Email already exists"
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req authuc.RegisterRequest
+	var req authops.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		// Add details about the JSON decoding error
 		h.respondError(w, errors.ErrInvalidInput.
@@ -82,12 +82,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body authuc.LoginRequest true "Login credentials"
-// @Success 200 {object} authuc.LoginResponse
+// @Param request body authops.LoginRequest true "Login credentials"
+// @Success 200 {object} authops.LoginResponse
 // @Failure 401 {object} dto.ErrorResponse "Invalid credentials"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req authuc.LoginRequest
+	var req authops.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, errors.ErrInvalidInput.Wrap(err))
 		return
@@ -108,12 +108,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body authuc.RefreshTokenRequest true "Refresh token"
-// @Success 200 {object} authuc.RefreshTokenResponse
+// @Param request body authops.RefreshTokenRequest true "Refresh token"
+// @Success 200 {object} authops.RefreshTokenResponse
 // @Failure 401 {object} dto.ErrorResponse "Invalid or expired refresh token"
 // @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	var req authuc.RefreshTokenRequest
+	var req authops.RefreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.respondError(w, errors.ErrInvalidInput.Wrap(err))
 		return
@@ -134,7 +134,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} authuc.ValidateTokenResponse
+// @Success 200 {object} authops.ValidateTokenResponse
 // @Failure 401 {object} dto.ErrorResponse "Invalid or missing token"
 // @Router /auth/me [get]
 func (h *AuthHandler) GetCurrentMember(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +155,7 @@ func (h *AuthHandler) GetCurrentMember(w http.ResponseWriter, r *http.Request) {
 	token := parts[1]
 
 	// Validate token and get member info
-	req := authuc.ValidateTokenRequest{
+	req := authops.ValidateTokenRequest{
 		AccessToken: token,
 	}
 

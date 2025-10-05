@@ -1,34 +1,33 @@
 package usecase
 
 import (
-	"library-service/internal/infrastructure/auth"
-	bookuc "library-service/internal/usecase/book"
-	subscriptionuc "library-service/internal/usecase/subscription"
-	authuc "library-service/internal/usecase/auth"
-
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
+	"library-service/internal/infrastructure/auth"
+	"library-service/internal/usecase/authops"
+	"library-service/internal/usecase/bookops"
+	"library-service/internal/usecase/subops"
 )
 
 // Container holds all application usecases
 type Container struct {
 	// Book usecases
-	CreateBook      *bookuc.CreateBookUseCase
-	GetBook         *bookuc.GetBookUseCase
-	ListBooks       *bookuc.ListBooksUseCase
-	UpdateBook      *bookuc.UpdateBookUseCase
-	DeleteBook      *bookuc.DeleteBookUseCase
-	ListBookAuthors *bookuc.ListBookAuthorsUseCase
+	CreateBook      *bookops.CreateBookUseCase
+	GetBook         *bookops.GetBookUseCase
+	ListBooks       *bookops.ListBooksUseCase
+	UpdateBook      *bookops.UpdateBookUseCase
+	DeleteBook      *bookops.DeleteBookUseCase
+	ListBookAuthors *bookops.ListBookAuthorsUseCase
 
 	// Subscription usecases
-	SubscribeMember *subscriptionuc.SubscribeMemberUseCase
+	SubscribeMember *subops.SubscribeMemberUseCase
 
 	// Auth usecases
-	RegisterMember   *authuc.RegisterUseCase
-	LoginMember      *authuc.LoginUseCase
-	RefreshToken     *authuc.RefreshTokenUseCase
-	ValidateToken    *authuc.ValidateTokenUseCase
+	RegisterMember   *authops.RegisterUseCase
+	LoginMember      *authops.LoginUseCase
+	RefreshToken     *authops.RefreshTokenUseCase
+	ValidateToken    *authops.ValidateTokenUseCase
 }
 
 // Repositories holds all repository interfaces
@@ -58,20 +57,20 @@ func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices) *
 
 	return &Container{
 		// Book usecases
-		CreateBook:      bookuc.NewCreateBookUseCase(repos.Book, caches.Book, bookService),
-		GetBook:         bookuc.NewGetBookUseCase(repos.Book, caches.Book),
-		ListBooks:       bookuc.NewListBooksUseCase(repos.Book),
-		UpdateBook:      bookuc.NewUpdateBookUseCase(repos.Book, caches.Book),
-		DeleteBook:      bookuc.NewDeleteBookUseCase(repos.Book, caches.Book),
-		ListBookAuthors: bookuc.NewListBookAuthorsUseCase(repos.Book, repos.Author, caches.Author),
+		CreateBook:      bookops.NewCreateBookUseCase(repos.Book, caches.Book, bookService),
+		GetBook:         bookops.NewGetBookUseCase(repos.Book, caches.Book),
+		ListBooks:       bookops.NewListBooksUseCase(repos.Book),
+		UpdateBook:      bookops.NewUpdateBookUseCase(repos.Book, caches.Book),
+		DeleteBook:      bookops.NewDeleteBookUseCase(repos.Book, caches.Book),
+		ListBookAuthors: bookops.NewListBookAuthorsUseCase(repos.Book, repos.Author, caches.Author),
 
 		// Subscription usecases
-		SubscribeMember: subscriptionuc.NewSubscribeMemberUseCase(repos.Member, memberService),
+		SubscribeMember: subops.NewSubscribeMemberUseCase(repos.Member, memberService),
 
 		// Auth usecases
-		RegisterMember:   authuc.NewRegisterUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService, memberService),
-		LoginMember:      authuc.NewLoginUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService),
-		RefreshToken:     authuc.NewRefreshTokenUseCase(repos.Member, authSvcs.JWTService),
-		ValidateToken:    authuc.NewValidateTokenUseCase(repos.Member, authSvcs.JWTService),
+		RegisterMember:   authops.NewRegisterUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService, memberService),
+		LoginMember:      authops.NewLoginUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService),
+		RefreshToken:     authops.NewRefreshTokenUseCase(repos.Member, authSvcs.JWTService),
+		ValidateToken:    authops.NewValidateTokenUseCase(repos.Member, authSvcs.JWTService),
 	}
 }

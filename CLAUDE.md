@@ -81,7 +81,7 @@ make test-coverage      # Generate HTML coverage report
 
 # Run specific package tests
 go test -v ./internal/domain/book/...
-go test -v -run TestCreateBook ./internal/usecase/book/
+go test -v -run TestCreateBook ./internal/usecase/bookops/
 ```
 
 ### Code Quality
@@ -275,7 +275,7 @@ func NewCreateBookUseCase(repo book.Repository, cache book.Cache, svc *book.Serv
   - Business constraints (e.g., "can't delete book with active loans")
   - No database, no HTTP, no external dependencies
 
-- **Use Case** (`internal/usecase/book/create_book.go`): Orchestration
+- **Use Case** (`internal/usecase/bookops/create_book.go`): Orchestration
   - Calls domain service for validation
   - Persists to repository
   - Updates cache
@@ -441,7 +441,7 @@ Run benchmarks before/after optimizations:
 make benchmark
 # OR
 go test -bench=. -benchmem ./internal/domain/book/
-go test -bench=. -benchmem ./internal/usecase/book/
+go test -bench=. -benchmem ./internal/usecase/bookops/
 ```
 
 ## Important Files

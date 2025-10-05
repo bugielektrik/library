@@ -26,7 +26,7 @@ make test-coverage       # Generate HTML coverage report
 
 # Single test execution
 go test -v -run TestSpecificTest ./internal/domain/book
-go test -v ./internal/usecase/book/...
+go test -v ./internal/usecase/bookops/...
 
 # Watch mode (install first: go install github.com/cespare/reflex@latest)
 reflex -r '\.go$' -s -- sh -c 'go test ./...'
@@ -140,10 +140,10 @@ make benchmark
 go test -bench=. -benchmem ./internal/domain/book/
 
 # Verbose output
-go test -v ./internal/usecase/book/
+go test -v ./internal/usecase/bookops/
 
 # Run specific test
-go test -v -run TestCreateBook ./internal/usecase/book/
+go test -v -run TestCreateBook ./internal/usecase/bookops/
 ```
 
 ## API Testing

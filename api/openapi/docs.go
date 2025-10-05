@@ -43,7 +43,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.LoginRequest"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.LoginRequest"
                         }
                     }
                 ],
@@ -51,7 +51,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.LoginResponse"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.LoginResponse"
                         }
                     },
                     "401": {
@@ -82,7 +82,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.ValidateTokenResponse"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.ValidateTokenResponse"
                         }
                     },
                     "401": {
@@ -114,7 +114,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.RefreshTokenRequest"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -122,7 +122,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.RefreshTokenResponse"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.RefreshTokenResponse"
                         }
                     },
                     "401": {
@@ -154,7 +154,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.RegisterRequest"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.RegisterRequest"
                         }
                     }
                 ],
@@ -162,7 +162,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/library-service_internal_usecase_auth.RegisterResponse"
+                            "$ref": "#/definitions/library-service_internal_usecase_authops.RegisterResponse"
                         }
                     },
                     "400": {
@@ -688,7 +688,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.LoginRequest": {
+        "library-service_internal_usecase_authops.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -703,7 +703,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.LoginResponse": {
+        "library-service_internal_usecase_authops.LoginResponse": {
             "type": "object",
             "properties": {
                 "member": {
@@ -714,7 +714,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.RefreshTokenRequest": {
+        "library-service_internal_usecase_authops.RefreshTokenRequest": {
             "type": "object",
             "required": [
                 "refresh_token"
@@ -725,7 +725,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.RefreshTokenResponse": {
+        "library-service_internal_usecase_authops.RefreshTokenResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -736,7 +736,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.RegisterRequest": {
+        "library-service_internal_usecase_authops.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -756,7 +756,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.RegisterResponse": {
+        "library-service_internal_usecase_authops.RegisterResponse": {
             "type": "object",
             "properties": {
                 "member": {
@@ -767,7 +767,7 @@ const docTemplate = `{
                 }
             }
         },
-        "library-service_internal_usecase_auth.ValidateTokenResponse": {
+        "library-service_internal_usecase_authops.ValidateTokenResponse": {
             "type": "object",
             "properties": {
                 "claims": {

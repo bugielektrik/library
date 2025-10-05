@@ -147,7 +147,7 @@ definitions:
       refresh_token:
         type: string
     type: object
-  library-service_internal_usecase_auth.LoginRequest:
+  library-service_internal_usecase_authops.LoginRequest:
     properties:
       email:
         type: string
@@ -157,28 +157,28 @@ definitions:
     - email
     - password
     type: object
-  library-service_internal_usecase_auth.LoginResponse:
+  library-service_internal_usecase_authops.LoginResponse:
     properties:
       member:
         $ref: '#/definitions/library-service_internal_domain_member.Response'
       tokens:
         $ref: '#/definitions/library-service_internal_infrastructure_auth.TokenPair'
     type: object
-  library-service_internal_usecase_auth.RefreshTokenRequest:
+  library-service_internal_usecase_authops.RefreshTokenRequest:
     properties:
       refresh_token:
         type: string
     required:
     - refresh_token
     type: object
-  library-service_internal_usecase_auth.RefreshTokenResponse:
+  library-service_internal_usecase_authops.RefreshTokenResponse:
     properties:
       access_token:
         type: string
       expires_in:
         type: integer
     type: object
-  library-service_internal_usecase_auth.RegisterRequest:
+  library-service_internal_usecase_authops.RegisterRequest:
     properties:
       email:
         type: string
@@ -192,14 +192,14 @@ definitions:
     - full_name
     - password
     type: object
-  library-service_internal_usecase_auth.RegisterResponse:
+  library-service_internal_usecase_authops.RegisterResponse:
     properties:
       member:
         $ref: '#/definitions/library-service_internal_domain_member.Response'
       tokens:
         $ref: '#/definitions/library-service_internal_infrastructure_auth.TokenPair'
     type: object
-  library-service_internal_usecase_auth.ValidateTokenResponse:
+  library-service_internal_usecase_authops.ValidateTokenResponse:
     properties:
       claims:
         $ref: '#/definitions/library-service_internal_infrastructure_auth.Claims'
@@ -230,14 +230,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/library-service_internal_usecase_auth.LoginRequest'
+          $ref: '#/definitions/library-service_internal_usecase_authops.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/library-service_internal_usecase_auth.LoginResponse'
+            $ref: '#/definitions/library-service_internal_usecase_authops.LoginResponse'
         "401":
           description: Invalid credentials
           schema:
@@ -254,7 +254,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/library-service_internal_usecase_auth.ValidateTokenResponse'
+            $ref: '#/definitions/library-service_internal_usecase_authops.ValidateTokenResponse'
         "401":
           description: Invalid or missing token
           schema:
@@ -275,14 +275,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/library-service_internal_usecase_auth.RefreshTokenRequest'
+          $ref: '#/definitions/library-service_internal_usecase_authops.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/library-service_internal_usecase_auth.RefreshTokenResponse'
+            $ref: '#/definitions/library-service_internal_usecase_authops.RefreshTokenResponse'
         "401":
           description: Invalid or expired refresh token
           schema:
@@ -301,14 +301,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/library-service_internal_usecase_auth.RegisterRequest'
+          $ref: '#/definitions/library-service_internal_usecase_authops.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/library-service_internal_usecase_auth.RegisterResponse'
+            $ref: '#/definitions/library-service_internal_usecase_authops.RegisterResponse'
         "400":
           description: Bad Request
           schema:

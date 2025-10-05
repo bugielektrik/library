@@ -177,7 +177,7 @@ go install github.com/go-delve/delve/cmd/dlv@latest
 dlv debug ./cmd/api
 
 # Debug tests
-dlv test ./internal/usecase/book
+dlv test ./internal/usecase/bookops
 
 # Attach to running process
 dlv attach <PID>
@@ -421,7 +421,7 @@ sleep 5  # Wait for startup
 go test -race ./...
 
 # Run multiple times
-go test -count=100 ./internal/usecase/book/
+go test -count=100 ./internal/usecase/bookops/
 ```
 
 **"Linter errors after refactoring"**

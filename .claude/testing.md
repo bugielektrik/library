@@ -54,10 +54,10 @@ make test-coverage       # Generate HTML coverage report
 
 # Specific package
 go test ./internal/domain/book/
-go test -v ./internal/usecase/book/...
+go test -v ./internal/usecase/bookops/...
 
 # Single test
-go test -v -run TestCreateBook ./internal/usecase/book/
+go test -v -run TestCreateBook ./internal/usecase/bookops/
 
 # Watch mode
 reflex -r '\.go$' -s -- go test ./...
@@ -142,7 +142,7 @@ func TestNewEntity(t *testing.T) {
 ### Using Testify Mocks
 
 ```go
-// internal/usecase/book/create_book_test.go
+// internal/usecase/bookops/create_book_test.go
 package book_test
 
 import (
@@ -154,7 +154,7 @@ import (
     
     "library-service/internal/domain/book"
     bookmocks "library-service/internal/adapters/repository/mocks"
-    bookuc "library-service/internal/usecase/book"
+    bookuc "library-service/internal/usecase/bookops"
 )
 
 func TestCreateBookUseCase_Execute(t *testing.T) {
@@ -354,7 +354,7 @@ import (
     "github.com/stretchr/testify/mock"
     
     "library-service/internal/adapters/http/handlers"
-    "library-service/internal/usecase/book"
+    "library-service/internal/usecase/bookops"
     ucmocks "library-service/internal/usecase/mocks"
 )
 

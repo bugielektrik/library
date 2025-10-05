@@ -653,7 +653,7 @@ svc := NewService(
 ```go
 import (
     bookdomain "library-service/internal/domain/book"
-    bookusecase "library-service/internal/usecase/book"
+    bookusecase "library-service/internal/usecase/bookops"
     bookhandler "library-service/internal/adapters/http/handlers"
 )
 ```
