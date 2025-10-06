@@ -87,9 +87,10 @@ func New() (*App, error) {
 
 	// Initialize usecases
 	usecaseRepos := &usecase.Repositories{
-		Book:   repos.Book,
-		Author: repos.Author,
-		Member: repos.Member,
+		Book:        repos.Book,
+		Author:      repos.Author,
+		Member:      repos.Member,
+		Reservation: repos.Reservation,
 	}
 	usecaseCaches := &usecase.Caches{
 		Book:   caches.Book,

@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	log "library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/log"
 )
 
 // responseWriter wraps http.ResponseWriter to capture status code

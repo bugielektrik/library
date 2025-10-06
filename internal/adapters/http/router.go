@@ -59,6 +59,13 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 		cfg.Usecases.ListBookAuthors,
 	)
 
+	reservationHandler := v1.NewReservationHandler(
+		cfg.Usecases.CreateReservation,
+		cfg.Usecases.CancelReservation,
+		cfg.Usecases.GetReservation,
+		cfg.Usecases.ListMemberReservations,
+	)
+
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
 		// Auth routes (public)
@@ -78,6 +85,12 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware.Authenticate)
 			r.Mount("/books", bookHandler.Routes())
+		})
+
+		// Reservation routes (protected)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Authenticate)
+			r.Mount("/reservations", reservationHandler.Routes())
 		})
 
 		// TODO: Add author and member handlers

@@ -54,6 +54,13 @@ definitions:
     - isbn
     - name
     type: object
+  library-service_internal_adapters_http_dto.CreateReservationRequest:
+    properties:
+      book_id:
+        type: string
+    required:
+    - book_id
+    type: object
   library-service_internal_adapters_http_dto.ErrorDetail:
     properties:
       code:
@@ -68,6 +75,25 @@ definitions:
     properties:
       error:
         $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorDetail'
+    type: object
+  library-service_internal_adapters_http_dto.ReservationResponse:
+    properties:
+      book_id:
+        type: string
+      cancelled_at:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      fulfilled_at:
+        type: string
+      id:
+        type: string
+      member_id:
+        type: string
+      status:
+        type: string
     type: object
   library-service_internal_adapters_http_dto.UpdateBookRequest:
     properties:
@@ -498,6 +524,149 @@ paths:
       summary: List authors of a book
       tags:
       - books
+  /reservations:
+    get:
+      consumes:
+      - application/json
+      description: Get all reservations for the authenticated member
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/library-service_internal_adapters_http_dto.ReservationResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List my reservations
+      tags:
+      - reservations
+    post:
+      consumes:
+      - application/json
+      description: Reserve a book for the authenticated member
+      parameters:
+      - description: Reservation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.CreateReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new reservation
+      tags:
+      - reservations
+  /reservations/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancel a reservation (only the owner can cancel)
+      parameters:
+      - description: Reservation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ReservationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel a reservation
+      tags:
+      - reservations
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific reservation
+      parameters:
+      - description: Reservation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ReservationResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a reservation by ID
+      tags:
+      - reservations
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token

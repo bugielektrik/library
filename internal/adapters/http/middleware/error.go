@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/adapters/http/dto"
-	log "library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
 )
 

@@ -4,9 +4,11 @@ import (
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
+	"library-service/internal/domain/reservation"
 	"library-service/internal/infrastructure/auth"
 	"library-service/internal/usecase/authops"
 	"library-service/internal/usecase/bookops"
+	"library-service/internal/usecase/reservationops"
 	"library-service/internal/usecase/subops"
 )
 
@@ -28,13 +30,20 @@ type Container struct {
 	LoginMember      *authops.LoginUseCase
 	RefreshToken     *authops.RefreshTokenUseCase
 	ValidateToken    *authops.ValidateTokenUseCase
+
+	// Reservation usecases
+	CreateReservation      *reservationops.CreateReservationUseCase
+	CancelReservation      *reservationops.CancelReservationUseCase
+	GetReservation         *reservationops.GetReservationUseCase
+	ListMemberReservations *reservationops.ListMemberReservationsUseCase
 }
 
 // Repositories holds all repository interfaces
 type Repositories struct {
-	Book   book.Repository
-	Author author.Repository
-	Member member.Repository
+	Book        book.Repository
+	Author      author.Repository
+	Member      member.Repository
+	Reservation reservation.Repository
 }
 
 // Caches holds all cache interfaces
@@ -54,6 +63,7 @@ func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices) *
 	// Create domain services
 	bookService := book.NewService()
 	memberService := member.NewService()
+	reservationService := reservation.NewService()
 
 	return &Container{
 		// Book usecases
@@ -72,5 +82,11 @@ func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices) *
 		LoginMember:      authops.NewLoginUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService),
 		RefreshToken:     authops.NewRefreshTokenUseCase(repos.Member, authSvcs.JWTService),
 		ValidateToken:    authops.NewValidateTokenUseCase(repos.Member, authSvcs.JWTService),
+
+		// Reservation usecases
+		CreateReservation:      reservationops.NewCreateReservationUseCase(repos.Reservation, repos.Member, reservationService),
+		CancelReservation:      reservationops.NewCancelReservationUseCase(repos.Reservation, reservationService),
+		GetReservation:         reservationops.NewGetReservationUseCase(repos.Reservation),
+		ListMemberReservations: reservationops.NewListMemberReservationsUseCase(repos.Reservation),
 	}
 }

@@ -12,7 +12,7 @@ import (
 	"library-service/internal/usecase/bookops"
 	"library-service/pkg/errors"
 
-	log "library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/log"
 )
 
 // BookHandler handles HTTP requests for books

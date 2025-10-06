@@ -2,7 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **📚 Full Documentation:** See [`.claude`](./.claude/) directory for comprehensive guides
+## 🚨 NEW CLAUDE CODE INSTANCE? **[START HERE → .claude/CLAUDE-START.md](./.claude/CLAUDE-START.md)**
+
+> **📚 Full Documentation:** See [`.claude/`](./.claude/) directory for comprehensive guides
+>
+> **🎯 Not sure what to read?** Check [Context Guide](./.claude/context-guide.md) for task-specific reading lists
 
 ## Project Overview
 
@@ -12,7 +16,13 @@ Library Management System - A Go-based REST API following Clean Architecture pri
 
 ## Documentation Index
 
+### 🚀 Quick Start
+- **[CLAUDE-START.md](./.claude/CLAUDE-START.md)** - 60-second boot sequence for new AI instances ⭐
+- **[Context Guide](./.claude/context-guide.md)** - What to read for your specific task ⭐
 - **[Quick Start & Navigation](./.claude/README.md)** - 30-second quick reference
+- **[Cheat Sheet](./.claude/cheatsheet.md)** - Single-page command reference
+
+### 📖 Essential Documentation
 - **[Commands Reference](./.claude/commands.md)** - All essential commands
 - **[Setup Guide](./.claude/setup.md)** - First-time setup and troubleshooting
 - **[Architecture](./.claude/architecture.md)** - Clean architecture patterns
@@ -20,6 +30,14 @@ Library Management System - A Go-based REST API following Clean Architecture pri
 - **[Testing Guide](./.claude/testing.md)** - Testing patterns and strategies
 - **[API Documentation](./.claude/api.md)** - REST API endpoints
 - **[Code Standards](./.claude/standards.md)** - Go best practices and conventions
+
+### 🎯 Practical Guides
+- **[Quick Wins](./.claude/quick-wins.md)** - Safe improvements you can suggest ⭐
+- **[Development Workflows](./.claude/development-workflows.md)** - Complete workflows start to finish
+- **[Debugging Guide](./.claude/debugging-guide.md)** - Advanced debugging techniques
+- **[Gotchas](./.claude/gotchas.md)** - Common mistakes to avoid
+- **[FAQ](./.claude/faq.md)** - Frequently asked questions
+- **[Troubleshooting](./.claude/troubleshooting.md)** - Solutions to common problems
 
 ## Architecture (Clean Architecture)
 
@@ -30,11 +48,13 @@ internal/
 ├── domain/              # Business logic (ZERO external dependencies)
 │   ├── book/           # Book entity, service, repository interface
 │   ├── member/         # Member entity, service (subscriptions)
-│   └── author/         # Author entity
+│   ├── author/         # Author entity
+│   └── reservation/    # Reservation entity, service (book reservations)
 ├── usecase/            # Application orchestration (depends on domain)
 │   ├── bookops/        # CreateBook, UpdateBook, etc. ("ops" suffix)
 │   ├── authops/        # Register, Login, RefreshToken ("ops" suffix)
-│   └── subops/         # SubscribeMember ("ops" suffix)
+│   ├── subops/         # SubscribeMember ("ops" suffix)
+│   └── reservationops/ # CreateReservation, CancelReservation ("ops" suffix)
 ├── adapters/           # External interfaces (HTTP, DB, cache)
 │   ├── http/           # Chi handlers, middleware, DTOs
 │   ├── repository/     # PostgreSQL/MongoDB/Memory implementations
@@ -111,7 +131,7 @@ POSTGRES_DSN="postgres://library:library123@localhost:5432/library?sslmode=disab
 ```bash
 make install-tools      # Install golangci-lint, mockgen, swag
 make gen-mocks          # Generate test mocks
-make gen-docs           # Generate Swagger/OpenAPI docs (see API Documentation section)
+make gen-docs           # Generate Swagger/OpenAPI docs
 make benchmark          # Run performance benchmarks
 ```
 
@@ -128,23 +148,6 @@ make gen-docs
 swag init -g cmd/api/main.go -o api/openapi --parseDependency --parseInternal
 ```
 
-**Adding API Documentation to Handlers:**
-```go
-// @Summary Create a new book
-// @Description Create a new book with the provided details
-// @Tags books
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param request body dto.CreateBookRequest true "Book details"
-// @Success 201 {object} dto.BookResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Router /books [post]
-func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
-    // Handler implementation
-}
-```
-
 **Important Swagger Annotations:**
 - `@Summary` - Brief description (required)
 - `@Description` - Detailed explanation
@@ -154,78 +157,46 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 - `@Success` / `@Failure` - Response codes with schemas
 - `@Router` - Endpoint path and HTTP method
 
-**Security Definition:**
-The JWT security scheme is defined in `cmd/api/main.go`:
-```go
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Type "Bearer" followed by a space and JWT token
-```
-
-**Testing Authentication in Swagger UI:**
-1. Register/Login to get JWT token
-2. Click "Authorize" button in Swagger UI
-3. Enter: `Bearer <your-access-token>`
-4. All protected endpoints will now include the Authorization header
+See [API Documentation Guide](./.claude/api.md) for complete details and examples.
 
 ## Development Workflow
 
 ### Adding a New Feature
 
-**Example: Adding a "Loan" domain**
+**Follow this order:** Domain → Use Case → Adapters → Wiring → Migration → Documentation
 
-1. **Domain Layer** (business logic first):
-   ```bash
-   # Create domain structure
-   mkdir -p internal/domain/loan
-   touch internal/domain/loan/{entity.go,service.go,repository.go,dto.go}
-   ```
-   - Define `Loan` entity with business rules
-   - Create `LoanService` for complex logic (e.g., overdue fees, borrowing limits)
-   - Define `Repository` interface (NOT implementation)
+See [Development Workflows](./.claude/development-workflows.md) for complete step-by-step guides.
+
+**Quick Example: Adding a "Loan" domain**
+
+1. **Domain Layer** (`internal/domain/loan/`):
+   - Create entity, service, repository interface
    - Write unit tests with 100% coverage
 
-2. **Use Case Layer** (orchestration):
-   ```bash
-   mkdir -p internal/usecase/loanops  # Note: "ops" suffix
-   touch internal/usecase/loanops/{create_loan.go,return_loan.go}
-   ```
+2. **Use Case Layer** (`internal/usecase/loanops/`):
+   - Note: "ops" suffix to avoid naming conflicts
    - Create use cases that orchestrate domain services
-   - Each use case = one file (single responsibility)
    - Mock repositories in tests
 
-3. **Adapter Layer** (HTTP + DB):
-   ```bash
-   # Repository implementation
-   touch internal/adapters/repository/postgres/loan.go
-
-   # HTTP handlers
-   touch internal/adapters/http/handlers/loan.go
-   touch internal/adapters/http/dto/loan.go
-   ```
-   - Implement repository interface for PostgreSQL
-   - Create HTTP handlers (thin layer, delegate to use cases)
-   - Add DTOs for request/response mapping
-   - **Add Swagger annotations to all handler functions**
+3. **Adapter Layer**:
+   - Implement repository (`internal/adapters/repository/postgres/loan.go`)
+   - Create HTTP handlers (`internal/adapters/http/handlers/loan.go`)
+   - Add DTOs and Swagger annotations
 
 4. **Wire Dependencies** (`internal/usecase/container.go`):
-   - Add `Loan book.Repository` to `Repositories` struct
-   - Add `CreateLoan *loanops.CreateLoanUseCase` to `Container` struct
-   - Update `NewContainer()` to inject dependencies
+   - Add repository to `Repositories` struct
+   - Add use cases to `Container` struct
+   - Wire in `NewContainer()` function
 
-5. **Migrations**:
+5. **Database Migration**:
    ```bash
    make migrate-create name=create_loans_table
-   # Edit migrations/postgres/XXXXXX_create_loans_table.up.sql
    make migrate-up
    ```
 
-6. **Update API Documentation**:
+6. **Update Documentation**:
    ```bash
-   # Regenerate Swagger docs after adding annotations
    make gen-docs
-   # Verify at http://localhost:8080/swagger/index.html
    ```
 
 ## Key Implementation Patterns
@@ -241,7 +212,6 @@ The JWT security scheme is defined in `cmd/api/main.go`:
 - No need for import aliases (cleaner, more idiomatic Go)
 - Clear distinction: domain = entities/business rules, use cases = operations/orchestration
 
-**Example:**
 ```go
 import (
     "library-service/internal/domain/book"      // package book
@@ -260,9 +230,7 @@ useCase := bookops.NewCreateBookUseCase(...)
 Boot order:
 1. Logger initialization
 2. Config loading
-3. **Repositories** (DB layer):
-   - `WithMemoryStore()` for tests/development
-   - `WithPostgresStore(dsn)` for production (runs migrations automatically)
+3. **Repositories** (DB layer)
 4. **Caches** (Redis/Memory)
 5. **Auth Services** (JWT + Password)
 6. **Use Cases Container** - wires everything together
@@ -300,30 +268,6 @@ When adding new features:
 
 **Interface:** Defined in `internal/domain/{entity}/repository.go`
 **Implementation:** In `internal/adapters/repository/{type}/{entity}.go`
-
-```go
-// Domain defines the contract
-// internal/domain/book/repository.go
-type Repository interface {
-    Create(ctx context.Context, book Entity) error
-    GetByID(ctx context.Context, id string) (Entity, error)
-    Update(ctx context.Context, book Entity) error
-    Delete(ctx context.Context, id string) error
-    List(ctx context.Context, filter ListFilter) ([]Entity, error)
-}
-
-// Adapter implements it
-// internal/adapters/repository/postgres/book.go
-type PostgresBookRepository struct {
-    db *sqlx.DB
-}
-
-func (r *PostgresBookRepository) Create(ctx context.Context, book domain.Entity) error {
-    query := `INSERT INTO books (id, name, isbn, genre) VALUES ($1, $2, $3, $4)`
-    _, err := r.db.ExecContext(ctx, query, book.ID, book.Name, book.ISBN, book.Genre)
-    return err
-}
-```
 
 **Benefits:**
 - Domain is independent of database technology
@@ -370,7 +314,7 @@ curl -X GET http://localhost:8080/api/v1/books \
 - Secret key: `JWT_SECRET` environment variable (MUST change in production)
 
 **Protected Endpoints:**
-All endpoints under `/api/v1/books/*` and `/api/v1/auth/me` require JWT authentication. These endpoints must have `@Security BearerAuth` in their Swagger annotations.
+All endpoints under `/api/v1/books/*`, `/api/v1/reservations/*`, and `/api/v1/auth/me` require JWT authentication.
 
 ## Environment Configuration
 
@@ -428,6 +372,8 @@ func TestBookService_ValidateISBN(t *testing.T) {
 - Use cases: 80%+
 - Overall: 60%+
 
+See [Testing Guide](./.claude/testing.md) for comprehensive testing strategies.
+
 ## Dependency Management
 
 ```bash
@@ -458,15 +404,17 @@ go get <package>        # Add new dependency
 
 **Auto-fix:**
 ```bash
-gofmt -w .              # Format code
-goimports -w .          # Fix imports
+make fmt                # Format code with gofmt + goimports
+make vet                # Run go vet
+make lint               # Run golangci-lint
 ```
 
 ## Troubleshooting
 
+**Common Issues:**
+
 **"connection refused" errors:**
 ```bash
-# Ensure PostgreSQL/Redis are running
 make up
 docker-compose -f deployments/docker/docker-compose.yml ps
 ```
@@ -477,25 +425,20 @@ docker-compose -f deployments/docker/docker-compose.yml ps
 psql -h localhost -U library -d library
 
 # Reset database (destructive!)
-make migrate-down
-make migrate-up
+make migrate-down && make migrate-up
 ```
 
-**Swagger generation errors:**
+**Port 8080 already in use:**
 ```bash
-# Ensure swag is installed
-make install-tools
-
-# Regenerate with full dependency parsing
-swag init -g cmd/api/main.go -o api/openapi --parseDependency --parseInternal
-
-# Check for annotation errors in handler comments
+lsof -ti:8080 | xargs kill -9
 ```
 
-**Build performance:**
-- Build time: ~5 seconds (target)
-- Test execution: ~2 seconds for unit tests
-- Use `CGO_ENABLED=0` for static binaries (already in Makefile)
+**Tests fail randomly:**
+```bash
+go clean -testcache && make test
+```
+
+See [Troubleshooting Guide](./.claude/troubleshooting.md) for more solutions.
 
 ## Important Files
 
@@ -544,11 +487,15 @@ make ci                 # Run full CI pipeline locally
 **Subscription use cases** (`internal/usecase/subops/`):
 - SubscribeMember
 
+**Reservation use cases** (`internal/usecase/reservationops/`):
+- CreateReservation, CancelReservation, GetReservation, ListMemberReservations
+
 ### Domain Services
 
 **Current domain services:**
 - **BookService** (`internal/domain/book/service.go`): ISBN validation, business constraints
 - **MemberService** (`internal/domain/member/service.go`): Subscription pricing logic
+- **ReservationService** (`internal/domain/reservation/service.go`): Reservation validation, status transitions, expiration logic
 
 ### Migration Locations
 - **Postgres migrations:** `migrations/postgres/`
