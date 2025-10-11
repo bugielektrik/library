@@ -6,26 +6,26 @@ package builders
 import (
 	"time"
 
-	"library-service/internal/domain/payment"
+	"library-service/internal/payments/domain"
 )
 
 // PaymentBuilder provides a fluent interface for building Payment test fixtures.
 type PaymentBuilder struct {
-	payment payment.Payment
+	payment domain.Payment
 }
 
 // NewPayment creates a PaymentBuilder with sensible defaults.
 func NewPayment() *PaymentBuilder {
 	return &PaymentBuilder{
-		payment: payment.Payment{
+		payment: domain.Payment{
 			ID:            "test-payment-id",
 			InvoiceID:     "test-invoice-id",
 			MemberID:      "test-member-id",
 			Amount:        10000, // 100.00 in smallest currency unit
-			Currency:      payment.CurrencyKZT,
-			Status:        payment.StatusPending,
-			PaymentType:   payment.PaymentTypeFine,
-			PaymentMethod: payment.PaymentMethodCard,
+			Currency:      domain.CurrencyKZT,
+			Status:        domain.StatusPending,
+			PaymentType:   domain.PaymentTypeFine,
+			PaymentMethod: domain.PaymentMethodCard,
 			CreatedAt:     time.Now(),
 		},
 	}
@@ -62,19 +62,19 @@ func (b *PaymentBuilder) WithCurrency(currency string) *PaymentBuilder {
 }
 
 // WithStatus sets the payment status.
-func (b *PaymentBuilder) WithStatus(status payment.Status) *PaymentBuilder {
+func (b *PaymentBuilder) WithStatus(status domain.Status) *PaymentBuilder {
 	b.payment.Status = status
 	return b
 }
 
 // WithPaymentType sets the payment type.
-func (b *PaymentBuilder) WithPaymentType(paymentType payment.PaymentType) *PaymentBuilder {
+func (b *PaymentBuilder) WithPaymentType(paymentType domain.PaymentType) *PaymentBuilder {
 	b.payment.PaymentType = paymentType
 	return b
 }
 
 // WithPaymentMethod sets the payment method.
-func (b *PaymentBuilder) WithPaymentMethod(method payment.PaymentMethod) *PaymentBuilder {
+func (b *PaymentBuilder) WithPaymentMethod(method domain.PaymentMethod) *PaymentBuilder {
 	b.payment.PaymentMethod = method
 	return b
 }
@@ -94,43 +94,43 @@ func (b *PaymentBuilder) WithGatewayTransactionID(txnID string) *PaymentBuilder 
 // WithCompletedStatus sets status to completed and adds completion time.
 func (b *PaymentBuilder) WithCompletedStatus() *PaymentBuilder {
 	now := time.Now()
-	b.payment.Status = payment.StatusCompleted
+	b.payment.Status = domain.StatusCompleted
 	b.payment.CompletedAt = &now
 	return b
 }
 
 // WithFailedStatus sets status to failed.
 func (b *PaymentBuilder) WithFailedStatus() *PaymentBuilder {
-	b.payment.Status = payment.StatusFailed
+	b.payment.Status = domain.StatusFailed
 	return b
 }
 
 // WithCancelledStatus sets status to cancelled.
 func (b *PaymentBuilder) WithCancelledStatus() *PaymentBuilder {
-	b.payment.Status = payment.StatusCancelled
+	b.payment.Status = domain.StatusCancelled
 	return b
 }
 
 // WithRefundedStatus sets status to refunded.
 func (b *PaymentBuilder) WithRefundedStatus() *PaymentBuilder {
-	b.payment.Status = payment.StatusRefunded
+	b.payment.Status = domain.StatusRefunded
 	return b
 }
 
 // Build returns the constructed Payment.
-func (b *PaymentBuilder) Build() payment.Payment {
+func (b *PaymentBuilder) Build() domain.Payment {
 	return b.payment
 }
 
 // SavedCardBuilder provides a fluent interface for building SavedCard test fixtures.
 type SavedCardBuilder struct {
-	card payment.SavedCard
+	card domain.SavedCard
 }
 
 // NewSavedCard creates a SavedCardBuilder with sensible defaults.
 func NewSavedCard() *SavedCardBuilder {
 	return &SavedCardBuilder{
-		card: payment.SavedCard{
+		card: domain.SavedCard{
 			ID:          "test-card-id",
 			MemberID:    "test-member-id",
 			CardToken:   "test-token-123",
@@ -196,25 +196,25 @@ func (b *SavedCardBuilder) WithExpired() *SavedCardBuilder {
 }
 
 // Build returns the constructed SavedCard.
-func (b *SavedCardBuilder) Build() payment.SavedCard {
+func (b *SavedCardBuilder) Build() domain.SavedCard {
 	return b.card
 }
 
 // ReceiptBuilder provides a fluent interface for building Receipt test fixtures.
 type ReceiptBuilder struct {
-	receipt payment.Receipt
+	receipt domain.Receipt
 }
 
 // NewReceipt creates a ReceiptBuilder with sensible defaults.
 func NewReceipt() *ReceiptBuilder {
 	return &ReceiptBuilder{
-		receipt: payment.Receipt{
+		receipt: domain.Receipt{
 			ID:            "test-receipt-id",
 			ReceiptNumber: "RCP-2025-001",
 			PaymentID:     "test-payment-id",
 			MemberID:      "test-member-id",
 			Amount:        10000,
-			Currency:      payment.CurrencyKZT,
+			Currency:      domain.CurrencyKZT,
 			ReceiptDate:   time.Now(),
 		},
 	}
@@ -245,6 +245,6 @@ func (b *ReceiptBuilder) WithAmount(amount int64) *ReceiptBuilder {
 }
 
 // Build returns the constructed Receipt.
-func (b *ReceiptBuilder) Build() payment.Receipt {
+func (b *ReceiptBuilder) Build() domain.Receipt {
 	return b.receipt
 }

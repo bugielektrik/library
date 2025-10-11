@@ -4,8 +4,8 @@ import (
 	"library-service/internal/adapters/cache/memory"
 	"library-service/internal/adapters/cache/redis"
 	"library-service/internal/adapters/repository"
-	"library-service/internal/domain/author"
-	"library-service/internal/domain/book"
+	"library-service/internal/books/domain/author"
+	"library-service/internal/books/domain/book"
 
 	"library-service/internal/infrastructure/store"
 )

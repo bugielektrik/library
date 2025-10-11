@@ -1,6 +1,6 @@
 package dto
 
-// Payment callback constants for epayment.kz gateway integration.
+// Payment callback constants for edomain.kz gateway integration.
 //
 // These constants define the standard codes and reasons used in payment
 // gateway callbacks (PaymentCallbackRequest) to indicate transaction outcomes.
@@ -46,15 +46,15 @@ const (
 // Payment status mapping constants
 const (
 	// PaymentStatusSuccess is the internal status for successful payments.
-	// Maps to domain payment.StatusCompleted.
+	// Maps to domain domain.StatusCompleted.
 	PaymentStatusSuccess = "success"
 
 	// PaymentStatusFailed is the internal status for failed payments.
-	// Maps to domain payment.StatusFailed.
+	// Maps to domain domain.StatusFailed.
 	PaymentStatusFailed = "failed"
 )
 
-// IsSuccessfulCallback returns true if the callback indicates a successful payment.
+// IsSuccessfulCallback returns true if the callback indicates a successful domain.
 //
 // A callback is considered successful when both:
 //   - Code is "ok"
@@ -69,7 +69,7 @@ func IsSuccessfulCallback(code, reason string) bool {
 	return code == CallbackCodeOK && reason == CallbackReasonSuccess
 }
 
-// IsFailedCallback returns true if the callback indicates a failed payment.
+// IsFailedCallback returns true if the callback indicates a failed domain.
 //
 // A callback is considered failed when:
 //   - Code is "error", OR

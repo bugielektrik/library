@@ -7,7 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"library-service/internal/domain/book"
+	"library-service/internal/books/domain/book"
 )
 
 // BookCache handles caching operations for books using Redis.

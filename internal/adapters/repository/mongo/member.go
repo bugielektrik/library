@@ -3,7 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
-	"library-service/internal/domain/member"
+	"library-service/internal/members/domain"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,14 +26,14 @@ func NewMemberRepository(db *mongo.Database) *MemberRepository {
 }
 
 // List retrieves all members from the MongoDB collection.
-func (r *MemberRepository) List(ctx context.Context) ([]member.Member, error) {
+func (r *MemberRepository) List(ctx context.Context) ([]domain.Member, error) {
 	cur, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
 	defer cur.Close(ctx)
 
-	var members []member.Member
+	var members []domain.Member
 	if err = cur.All(ctx, &members); err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (r *MemberRepository) List(ctx context.Context) ([]member.Member, error) {
 }
 
 // Add inserts a new member into the MongoDB collection.
-func (r *MemberRepository) Add(ctx context.Context, data member.Member) (string, error) {
+func (r *MemberRepository) Add(ctx context.Context, data domain.Member) (string, error) {
 	res, err := r.collection.InsertOne(ctx, data)
 	if err != nil {
 		return "", err
@@ -53,13 +53,13 @@ func (r *MemberRepository) Add(ctx context.Context, data member.Member) (string,
 }
 
 // Get retrieves a member by ID from the MongoDB collection.
-func (r *MemberRepository) Get(ctx context.Context, id string) (member.Member, error) {
+func (r *MemberRepository) Get(ctx context.Context, id string) (domain.Member, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return member.Member{}, err
+		return domain.Member{}, err
 	}
 
-	var member member.Member
+	var member domain.Member
 	if err = r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&member); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return member, store.ErrorNotFound
@@ -71,7 +71,7 @@ func (r *MemberRepository) Get(ctx context.Context, id string) (member.Member, e
 }
 
 // Update modifies an existing member in the MongoDB collection.
-func (r *MemberRepository) Update(ctx context.Context, id string, data member.Member) error {
+func (r *MemberRepository) Update(ctx context.Context, id string, data domain.Member) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (r *MemberRepository) Update(ctx context.Context, id string, data member.Me
 }
 
 // prepareUpdateData prepares the data for the update query.
-func (r *MemberRepository) prepareUpdateData(data member.Member) bson.M {
+func (r *MemberRepository) prepareUpdateData(data domain.Member) bson.M {
 	updateData := bson.M{}
 
 	if data.FullName != nil {
@@ -129,8 +129,8 @@ func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 }
 
 // GetByEmail retrieves a member by email (stub implementation)
-func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (member.Member, error) {
-	return member.Member{}, errors.New("not implemented")
+func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (domain.Member, error) {
+	return domain.Member{}, errors.New("not implemented")
 }
 
 // UpdateLastLogin updates last login time (stub implementation)

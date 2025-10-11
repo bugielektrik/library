@@ -2,7 +2,7 @@ package transformers
 
 import (
 	"library-service/internal/adapters/http/dto"
-	"library-service/internal/usecase/paymentops"
+	paymentops "library-service/internal/payments/operations/payment"
 )
 
 // PaymentTransformer handles payment domain to DTO transformations

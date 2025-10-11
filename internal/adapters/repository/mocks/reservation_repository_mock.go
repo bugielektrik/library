@@ -4,7 +4,7 @@ package mocks
 
 import (
 	context "context"
-	reservation "library-service/internal/domain/reservation"
+	reservationdomain "library-service/internal/reservations/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -23,7 +23,7 @@ func (_m *MockReservationRepository) EXPECT() *MockReservationRepository_Expecte
 }
 
 // Create provides a mock function with given fields: ctx, _a1
-func (_m *MockReservationRepository) Create(ctx context.Context, _a1 reservation.Reservation) (string, error) {
+func (_m *MockReservationRepository) Create(ctx context.Context, _a1 reservationdomain.Reservation) (string, error) {
 	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
@@ -32,16 +32,16 @@ func (_m *MockReservationRepository) Create(ctx context.Context, _a1 reservation
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, reservation.Reservation) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, reservationdomain.Reservation) (string, error)); ok {
 		return rf(ctx, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, reservation.Reservation) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, reservationdomain.Reservation) string); ok {
 		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, reservation.Reservation) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, reservationdomain.Reservation) error); ok {
 		r1 = rf(ctx, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -57,14 +57,14 @@ type MockReservationRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - _a1 reservation.Reservation
+//   - _a1 reservationdomain.Reservation
 func (_e *MockReservationRepository_Expecter) Create(ctx interface{}, _a1 interface{}) *MockReservationRepository_Create_Call {
 	return &MockReservationRepository_Create_Call{Call: _e.mock.On("Create", ctx, _a1)}
 }
 
-func (_c *MockReservationRepository_Create_Call) Run(run func(ctx context.Context, _a1 reservation.Reservation)) *MockReservationRepository_Create_Call {
+func (_c *MockReservationRepository_Create_Call) Run(run func(ctx context.Context, _a1 reservationdomain.Reservation)) *MockReservationRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reservation.Reservation))
+		run(args[0].(context.Context), args[1].(reservationdomain.Reservation))
 	})
 	return _c
 }
@@ -74,7 +74,7 @@ func (_c *MockReservationRepository_Create_Call) Return(_a0 string, _a1 error) *
 	return _c
 }
 
-func (_c *MockReservationRepository_Create_Call) RunAndReturn(run func(context.Context, reservation.Reservation) (string, error)) *MockReservationRepository_Create_Call {
+func (_c *MockReservationRepository_Create_Call) RunAndReturn(run func(context.Context, reservationdomain.Reservation) (string, error)) *MockReservationRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -127,23 +127,23 @@ func (_c *MockReservationRepository_Delete_Call) RunAndReturn(run func(context.C
 }
 
 // GetActiveByMemberAndBook provides a mock function with given fields: ctx, memberID, bookID
-func (_m *MockReservationRepository) GetActiveByMemberAndBook(ctx context.Context, memberID string, bookID string) ([]reservation.Reservation, error) {
+func (_m *MockReservationRepository) GetActiveByMemberAndBook(ctx context.Context, memberID string, bookID string) ([]reservationdomain.Reservation, error) {
 	ret := _m.Called(ctx, memberID, bookID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetActiveByMemberAndBook")
 	}
 
-	var r0 []reservation.Reservation
+	var r0 []reservationdomain.Reservation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]reservation.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]reservationdomain.Reservation, error)); ok {
 		return rf(ctx, memberID, bookID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []reservation.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []reservationdomain.Reservation); ok {
 		r0 = rf(ctx, memberID, bookID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]reservation.Reservation)
+			r0 = ret.Get(0).([]reservationdomain.Reservation)
 		}
 	}
 
@@ -176,34 +176,34 @@ func (_c *MockReservationRepository_GetActiveByMemberAndBook_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockReservationRepository_GetActiveByMemberAndBook_Call) Return(_a0 []reservation.Reservation, _a1 error) *MockReservationRepository_GetActiveByMemberAndBook_Call {
+func (_c *MockReservationRepository_GetActiveByMemberAndBook_Call) Return(_a0 []reservationdomain.Reservation, _a1 error) *MockReservationRepository_GetActiveByMemberAndBook_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReservationRepository_GetActiveByMemberAndBook_Call) RunAndReturn(run func(context.Context, string, string) ([]reservation.Reservation, error)) *MockReservationRepository_GetActiveByMemberAndBook_Call {
+func (_c *MockReservationRepository_GetActiveByMemberAndBook_Call) RunAndReturn(run func(context.Context, string, string) ([]reservationdomain.Reservation, error)) *MockReservationRepository_GetActiveByMemberAndBook_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByBookID provides a mock function with given fields: ctx, bookID
-func (_m *MockReservationRepository) GetByBookID(ctx context.Context, bookID string) ([]reservation.Reservation, error) {
+func (_m *MockReservationRepository) GetByBookID(ctx context.Context, bookID string) ([]reservationdomain.Reservation, error) {
 	ret := _m.Called(ctx, bookID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByBookID")
 	}
 
-	var r0 []reservation.Reservation
+	var r0 []reservationdomain.Reservation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]reservation.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]reservationdomain.Reservation, error)); ok {
 		return rf(ctx, bookID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []reservation.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []reservationdomain.Reservation); ok {
 		r0 = rf(ctx, bookID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]reservation.Reservation)
+			r0 = ret.Get(0).([]reservationdomain.Reservation)
 		}
 	}
 
@@ -235,33 +235,33 @@ func (_c *MockReservationRepository_GetByBookID_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockReservationRepository_GetByBookID_Call) Return(_a0 []reservation.Reservation, _a1 error) *MockReservationRepository_GetByBookID_Call {
+func (_c *MockReservationRepository_GetByBookID_Call) Return(_a0 []reservationdomain.Reservation, _a1 error) *MockReservationRepository_GetByBookID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReservationRepository_GetByBookID_Call) RunAndReturn(run func(context.Context, string) ([]reservation.Reservation, error)) *MockReservationRepository_GetByBookID_Call {
+func (_c *MockReservationRepository_GetByBookID_Call) RunAndReturn(run func(context.Context, string) ([]reservationdomain.Reservation, error)) *MockReservationRepository_GetByBookID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function with given fields: ctx, id
-func (_m *MockReservationRepository) GetByID(ctx context.Context, id string) (reservation.Reservation, error) {
+func (_m *MockReservationRepository) GetByID(ctx context.Context, id string) (reservationdomain.Reservation, error) {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 reservation.Reservation
+	var r0 reservationdomain.Reservation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (reservation.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (reservationdomain.Reservation, error)); ok {
 		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) reservation.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) reservationdomain.Reservation); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Get(0).(reservation.Reservation)
+		r0 = ret.Get(0).(reservationdomain.Reservation)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -292,34 +292,34 @@ func (_c *MockReservationRepository_GetByID_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockReservationRepository_GetByID_Call) Return(_a0 reservation.Reservation, _a1 error) *MockReservationRepository_GetByID_Call {
+func (_c *MockReservationRepository_GetByID_Call) Return(_a0 reservationdomain.Reservation, _a1 error) *MockReservationRepository_GetByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReservationRepository_GetByID_Call) RunAndReturn(run func(context.Context, string) (reservation.Reservation, error)) *MockReservationRepository_GetByID_Call {
+func (_c *MockReservationRepository_GetByID_Call) RunAndReturn(run func(context.Context, string) (reservationdomain.Reservation, error)) *MockReservationRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByMemberID provides a mock function with given fields: ctx, memberID
-func (_m *MockReservationRepository) GetByMemberID(ctx context.Context, memberID string) ([]reservation.Reservation, error) {
+func (_m *MockReservationRepository) GetByMemberID(ctx context.Context, memberID string) ([]reservationdomain.Reservation, error) {
 	ret := _m.Called(ctx, memberID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByMemberID")
 	}
 
-	var r0 []reservation.Reservation
+	var r0 []reservationdomain.Reservation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]reservation.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]reservationdomain.Reservation, error)); ok {
 		return rf(ctx, memberID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []reservation.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []reservationdomain.Reservation); ok {
 		r0 = rf(ctx, memberID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]reservation.Reservation)
+			r0 = ret.Get(0).([]reservationdomain.Reservation)
 		}
 	}
 
@@ -351,34 +351,34 @@ func (_c *MockReservationRepository_GetByMemberID_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockReservationRepository_GetByMemberID_Call) Return(_a0 []reservation.Reservation, _a1 error) *MockReservationRepository_GetByMemberID_Call {
+func (_c *MockReservationRepository_GetByMemberID_Call) Return(_a0 []reservationdomain.Reservation, _a1 error) *MockReservationRepository_GetByMemberID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReservationRepository_GetByMemberID_Call) RunAndReturn(run func(context.Context, string) ([]reservation.Reservation, error)) *MockReservationRepository_GetByMemberID_Call {
+func (_c *MockReservationRepository_GetByMemberID_Call) RunAndReturn(run func(context.Context, string) ([]reservationdomain.Reservation, error)) *MockReservationRepository_GetByMemberID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListExpired provides a mock function with given fields: ctx
-func (_m *MockReservationRepository) ListExpired(ctx context.Context) ([]reservation.Reservation, error) {
+func (_m *MockReservationRepository) ListExpired(ctx context.Context) ([]reservationdomain.Reservation, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListExpired")
 	}
 
-	var r0 []reservation.Reservation
+	var r0 []reservationdomain.Reservation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]reservation.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]reservationdomain.Reservation, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []reservation.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []reservationdomain.Reservation); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]reservation.Reservation)
+			r0 = ret.Get(0).([]reservationdomain.Reservation)
 		}
 	}
 
@@ -409,34 +409,34 @@ func (_c *MockReservationRepository_ListExpired_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockReservationRepository_ListExpired_Call) Return(_a0 []reservation.Reservation, _a1 error) *MockReservationRepository_ListExpired_Call {
+func (_c *MockReservationRepository_ListExpired_Call) Return(_a0 []reservationdomain.Reservation, _a1 error) *MockReservationRepository_ListExpired_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReservationRepository_ListExpired_Call) RunAndReturn(run func(context.Context) ([]reservation.Reservation, error)) *MockReservationRepository_ListExpired_Call {
+func (_c *MockReservationRepository_ListExpired_Call) RunAndReturn(run func(context.Context) ([]reservationdomain.Reservation, error)) *MockReservationRepository_ListExpired_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListPending provides a mock function with given fields: ctx
-func (_m *MockReservationRepository) ListPending(ctx context.Context) ([]reservation.Reservation, error) {
+func (_m *MockReservationRepository) ListPending(ctx context.Context) ([]reservationdomain.Reservation, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPending")
 	}
 
-	var r0 []reservation.Reservation
+	var r0 []reservationdomain.Reservation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]reservation.Reservation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]reservationdomain.Reservation, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []reservation.Reservation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []reservationdomain.Reservation); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]reservation.Reservation)
+			r0 = ret.Get(0).([]reservationdomain.Reservation)
 		}
 	}
 
@@ -467,18 +467,18 @@ func (_c *MockReservationRepository_ListPending_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockReservationRepository_ListPending_Call) Return(_a0 []reservation.Reservation, _a1 error) *MockReservationRepository_ListPending_Call {
+func (_c *MockReservationRepository_ListPending_Call) Return(_a0 []reservationdomain.Reservation, _a1 error) *MockReservationRepository_ListPending_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReservationRepository_ListPending_Call) RunAndReturn(run func(context.Context) ([]reservation.Reservation, error)) *MockReservationRepository_ListPending_Call {
+func (_c *MockReservationRepository_ListPending_Call) RunAndReturn(run func(context.Context) ([]reservationdomain.Reservation, error)) *MockReservationRepository_ListPending_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function with given fields: ctx, _a1
-func (_m *MockReservationRepository) Update(ctx context.Context, _a1 reservation.Reservation) error {
+func (_m *MockReservationRepository) Update(ctx context.Context, _a1 reservationdomain.Reservation) error {
 	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
@@ -486,7 +486,7 @@ func (_m *MockReservationRepository) Update(ctx context.Context, _a1 reservation
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, reservation.Reservation) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, reservationdomain.Reservation) error); ok {
 		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -502,14 +502,14 @@ type MockReservationRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - _a1 reservation.Reservation
+//   - _a1 reservationdomain.Reservation
 func (_e *MockReservationRepository_Expecter) Update(ctx interface{}, _a1 interface{}) *MockReservationRepository_Update_Call {
 	return &MockReservationRepository_Update_Call{Call: _e.mock.On("Update", ctx, _a1)}
 }
 
-func (_c *MockReservationRepository_Update_Call) Run(run func(ctx context.Context, _a1 reservation.Reservation)) *MockReservationRepository_Update_Call {
+func (_c *MockReservationRepository_Update_Call) Run(run func(ctx context.Context, _a1 reservationdomain.Reservation)) *MockReservationRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reservation.Reservation))
+		run(args[0].(context.Context), args[1].(reservationdomain.Reservation))
 	})
 	return _c
 }
@@ -519,7 +519,7 @@ func (_c *MockReservationRepository_Update_Call) Return(_a0 error) *MockReservat
 	return _c
 }
 
-func (_c *MockReservationRepository_Update_Call) RunAndReturn(run func(context.Context, reservation.Reservation) error) *MockReservationRepository_Update_Call {
+func (_c *MockReservationRepository_Update_Call) RunAndReturn(run func(context.Context, reservationdomain.Reservation) error) *MockReservationRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

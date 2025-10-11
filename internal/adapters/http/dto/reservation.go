@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"library-service/internal/domain/reservation"
+	reservationdomain "library-service/internal/reservations/domain"
 )
 
 // CreateReservationRequest represents the request to create a new reservation
@@ -24,7 +24,7 @@ type ReservationResponse struct {
 }
 
 // FromReservationResponse converts domain reservation.Response to ReservationResponse
-func FromReservationResponse(resp reservation.Response) ReservationResponse {
+func FromReservationResponse(resp reservationdomain.Response) ReservationResponse {
 	return ReservationResponse{
 		ID:          resp.ID,
 		BookID:      resp.BookID,
@@ -38,7 +38,7 @@ func FromReservationResponse(resp reservation.Response) ReservationResponse {
 }
 
 // FromReservationResponses converts slice of domain reservation.Response to slice of ReservationResponse
-func FromReservationResponses(responses []reservation.Response) []ReservationResponse {
+func FromReservationResponses(responses []reservationdomain.Response) []ReservationResponse {
 	result := make([]ReservationResponse, len(responses))
 	for i, resp := range responses {
 		result[i] = FromReservationResponse(resp)

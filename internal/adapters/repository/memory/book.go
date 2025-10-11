@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"library-service/internal/domain/book"
+	"library-service/internal/books/domain/book"
 )
 
 // BookRepository handles CRUD operations for books in an in-memory store.

@@ -1,7 +1,7 @@
 package builders
 
 import (
-	"library-service/internal/domain/book"
+	"library-service/internal/books/domain/book"
 )
 
 // BookBuilder provides a fluent interface for building Book test fixtures.

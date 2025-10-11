@@ -11,13 +11,13 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/adapters/cache"
-	"library-service/internal/adapters/payment/epayment"
 	"library-service/internal/adapters/repository"
 	"library-service/internal/infrastructure/auth"
 	"library-service/internal/infrastructure/config"
 	"library-service/internal/infrastructure/log"
+	"library-service/internal/payments/gateway/epayment"
+	paymentops "library-service/internal/payments/operations/payment"
 	"library-service/internal/usecase"
-	"library-service/internal/usecase/paymentops"
 )
 
 // Worker handles background jobs and tasks

@@ -3,23 +3,23 @@ package builders
 import (
 	"time"
 
-	"library-service/internal/domain/member"
+	"library-service/internal/members/domain"
 )
 
 // MemberBuilder provides a fluent interface for building Member test fixtures.
 type MemberBuilder struct {
-	member member.Member
+	member domain.Member
 }
 
 // NewMember creates a MemberBuilder with sensible defaults.
 func NewMember() *MemberBuilder {
 	fullName := "Test User"
 	return &MemberBuilder{
-		member: member.Member{
+		member: domain.Member{
 			ID:        "test-member-id",
 			Email:     "test@example.com",
 			FullName:  &fullName,
-			Role:      member.RoleUser,
+			Role:      domain.RoleUser,
 			CreatedAt: time.Now(),
 		},
 	}
@@ -50,14 +50,14 @@ func (b *MemberBuilder) WithFullName(fullName string) *MemberBuilder {
 }
 
 // WithRole sets the role.
-func (b *MemberBuilder) WithRole(role member.Role) *MemberBuilder {
+func (b *MemberBuilder) WithRole(role domain.Role) *MemberBuilder {
 	b.member.Role = role
 	return b
 }
 
 // WithAdminRole sets the role to admin.
 func (b *MemberBuilder) WithAdminRole() *MemberBuilder {
-	b.member.Role = member.RoleAdmin
+	b.member.Role = domain.RoleAdmin
 	return b
 }
 
@@ -68,7 +68,7 @@ func (b *MemberBuilder) AsAdmin() *MemberBuilder {
 
 // AsUser sets the role to user.
 func (b *MemberBuilder) AsUser() *MemberBuilder {
-	b.member.Role = member.RoleUser
+	b.member.Role = domain.RoleUser
 	return b
 }
 
@@ -103,12 +103,12 @@ func (b *MemberBuilder) WithUpdatedAt(t time.Time) *MemberBuilder {
 }
 
 // Build returns the constructed Member.
-func (b *MemberBuilder) Build() member.Member {
+func (b *MemberBuilder) Build() domain.Member {
 	return b.member
 }
 
 // BuildPtr returns a pointer to the constructed Member.
-func (b *MemberBuilder) BuildPtr() *member.Member {
+func (b *MemberBuilder) BuildPtr() *domain.Member {
 	m := b.member
 	return &m
 }

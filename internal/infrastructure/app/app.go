@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"library-service/internal/adapters/http"
-	"library-service/internal/adapters/payment/epayment"
+	"library-service/internal/payments/gateway/epayment"
 	"os"
 	"os/signal"
 	"syscall"

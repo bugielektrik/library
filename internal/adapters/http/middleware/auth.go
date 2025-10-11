@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"library-service/internal/adapters/http/dto"
-	"library-service/internal/domain/member"
 	"library-service/internal/infrastructure/auth"
+	"library-service/internal/members/domain"
 	"library-service/pkg/errors"
 	"library-service/pkg/httputil"
 )
@@ -53,7 +53,7 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 }
 
 // RequireRole is a middleware that checks if the user has the required role
-func (m *AuthMiddleware) RequireRole(roles ...member.Role) func(http.Handler) http.Handler {
+func (m *AuthMiddleware) RequireRole(roles ...domain.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims := m.validateAndExtractClaims(w, r)
@@ -83,7 +83,7 @@ func (m *AuthMiddleware) RequireRole(roles ...member.Role) func(http.Handler) ht
 
 // RequireAdmin is a convenience middleware that requires admin role
 func (m *AuthMiddleware) RequireAdmin(next http.Handler) http.Handler {
-	return m.RequireRole(member.RoleAdmin)(next)
+	return m.RequireRole(domain.RoleAdmin)(next)
 }
 
 // validateAndExtractClaims validates the JWT token and returns claims.

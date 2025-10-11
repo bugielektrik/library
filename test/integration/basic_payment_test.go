@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"library-service/internal/adapters/repository/postgres"
-	"library-service/internal/domain/payment"
-	"library-service/internal/usecase/paymentops"
+	"library-service/internal/payments/domain"
+	"library-service/internal/payments/operations/payment"
 )
 
 // TestBasicPaymentOperations tests basic payment CRUD operations
@@ -28,15 +28,15 @@ func TestBasicPaymentOperations(t *testing.T) {
 	memberID := uuid.New().String()
 
 	// Create a payment directly
-	testPayment := payment.Payment{
+	testPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      memberID,
 		InvoiceID:     "test-invoice-" + uuid.New().String(),
 		Amount:        5000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusPending,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusPending,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 		ExpiresAt:     time.Now().Add(30 * time.Minute),
@@ -58,7 +58,7 @@ func TestBasicPaymentOperations(t *testing.T) {
 		assert.Equal(t, testPayment.MemberID, retrieved.MemberID)
 		assert.Equal(t, testPayment.Amount, retrieved.Amount)
 		assert.Equal(t, testPayment.Currency, retrieved.Currency)
-		assert.Equal(t, payment.StatusPending, retrieved.Status)
+		assert.Equal(t, domain.StatusPending, retrieved.Status)
 	})
 
 	t.Run("Get Payment By Invoice ID", func(t *testing.T) {
@@ -76,35 +76,35 @@ func TestBasicPaymentOperations(t *testing.T) {
 	})
 
 	t.Run("Update Payment Status", func(t *testing.T) {
-		err := paymentRepo.UpdateStatus(ctx, testPayment.ID, payment.StatusCompleted)
+		err := paymentRepo.UpdateStatus(ctx, testPayment.ID, domain.StatusCompleted)
 		require.NoError(t, err)
 
 		// Verify status updated
 		retrieved, err := paymentRepo.GetByID(ctx, testPayment.ID)
 		require.NoError(t, err)
-		assert.Equal(t, payment.StatusCompleted, retrieved.Status)
+		assert.Equal(t, domain.StatusCompleted, retrieved.Status)
 	})
 }
 
 // TestPaymentStatusTransitions tests payment status validation
 func TestPaymentStatusTransitions(t *testing.T) {
-	service := payment.NewService()
+	service := domain.NewService()
 
 	tests := []struct {
 		name          string
-		currentStatus payment.Status
-		newStatus     payment.Status
+		currentStatus domain.Status
+		newStatus     domain.Status
 		wantErr       bool
 	}{
-		{"pending to processing", payment.StatusPending, payment.StatusProcessing, false},
-		{"pending to completed", payment.StatusPending, payment.StatusCompleted, false},
-		{"pending to cancelled", payment.StatusPending, payment.StatusCancelled, false},
-		{"processing to completed", payment.StatusProcessing, payment.StatusCompleted, false},
-		{"processing to failed", payment.StatusProcessing, payment.StatusFailed, false},
-		{"completed to refunded", payment.StatusCompleted, payment.StatusRefunded, false},
-		{"completed to pending - invalid", payment.StatusCompleted, payment.StatusPending, true},
-		{"cancelled to completed - invalid", payment.StatusCancelled, payment.StatusCompleted, true},
-		{"refunded to completed - invalid", payment.StatusRefunded, payment.StatusCompleted, true},
+		{"pending to processing", domain.StatusPending, domain.StatusProcessing, false},
+		{"pending to completed", domain.StatusPending, domain.StatusCompleted, false},
+		{"pending to cancelled", domain.StatusPending, domain.StatusCancelled, false},
+		{"processing to completed", domain.StatusProcessing, domain.StatusCompleted, false},
+		{"processing to failed", domain.StatusProcessing, domain.StatusFailed, false},
+		{"completed to refunded", domain.StatusCompleted, domain.StatusRefunded, false},
+		{"completed to pending - invalid", domain.StatusCompleted, domain.StatusPending, true},
+		{"cancelled to completed - invalid", domain.StatusCancelled, domain.StatusCompleted, true},
+		{"refunded to completed - invalid", domain.StatusRefunded, domain.StatusCompleted, true},
 	}
 
 	for _, tt := range tests {
@@ -130,15 +130,15 @@ func TestCallbackRetryBasicOperations(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a payment first
-	testPayment := payment.Payment{
+	testPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      uuid.New().String(),
 		InvoiceID:     "callback-test-" + uuid.New().String(),
 		Amount:        3000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusPending,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusPending,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 		ExpiresAt:     time.Now().Add(30 * time.Minute),
@@ -150,14 +150,14 @@ func TestCallbackRetryBasicOperations(t *testing.T) {
 
 	// Create a callback retry
 	now := time.Now()
-	callbackRetry := &payment.CallbackRetry{
+	callbackRetry := &domain.CallbackRetry{
 		ID:           uuid.New().String(),
 		PaymentID:    testPayment.ID,
 		CallbackData: []byte(`{"invoice_id":"test","amount":3000}`),
 		RetryCount:   0,
 		MaxRetries:   5,
 		NextRetryAt:  &now,
-		Status:       payment.CallbackRetryStatusPending,
+		Status:       domain.CallbackRetryStatusPending,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -172,7 +172,7 @@ func TestCallbackRetryBasicOperations(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, callbackRetry.ID, retrieved.ID)
 		assert.Equal(t, callbackRetry.PaymentID, retrieved.PaymentID)
-		assert.Equal(t, payment.CallbackRetryStatusPending, retrieved.Status)
+		assert.Equal(t, domain.CallbackRetryStatusPending, retrieved.Status)
 	})
 
 	t.Run("Get Pending Retries", func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestCallbackRetryBasicOperations(t *testing.T) {
 
 	t.Run("Update Callback Retry", func(t *testing.T) {
 		callbackRetry.RetryCount = 1
-		callbackRetry.Status = payment.CallbackRetryStatusCompleted
+		callbackRetry.Status = domain.CallbackRetryStatusCompleted
 		callbackRetry.UpdatedAt = time.Now()
 
 		err := callbackRetryRepo.Update(callbackRetry)
@@ -194,7 +194,7 @@ func TestCallbackRetryBasicOperations(t *testing.T) {
 		retrieved, err := callbackRetryRepo.GetByID(callbackRetry.ID)
 		require.NoError(t, err)
 		assert.Equal(t, 1, retrieved.RetryCount)
-		assert.Equal(t, payment.CallbackRetryStatusCompleted, retrieved.Status)
+		assert.Equal(t, domain.CallbackRetryStatusCompleted, retrieved.Status)
 	})
 }
 
@@ -208,7 +208,7 @@ func TestSavedCardBasicOperations(t *testing.T) {
 	memberID := uuid.New().String()
 
 	// Create a saved card
-	savedCard := payment.SavedCard{
+	savedCard := domain.SavedCard{
 		ID:          uuid.New().String(),
 		MemberID:    memberID,
 		CardToken:   "card-token-" + uuid.New().String(),
@@ -263,21 +263,21 @@ func TestExpirePaymentsUseCase(t *testing.T) {
 	defer cleanup()
 
 	paymentRepo := postgres.NewPaymentRepository(db)
-	paymentService := payment.NewService()
+	paymentService := domain.NewService()
 	expireUC := paymentops.NewExpirePaymentsUseCase(paymentRepo, paymentService)
 
 	ctx := context.Background()
 
 	// Create an expired pending payment
-	expiredPayment := payment.Payment{
+	expiredPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      uuid.New().String(),
 		InvoiceID:     "expired-" + uuid.New().String(),
 		Amount:        2000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusPending,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusPending,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now().Add(-2 * time.Hour),
 		UpdatedAt:     time.Now().Add(-2 * time.Hour),
 		ExpiresAt:     time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
@@ -300,6 +300,6 @@ func TestExpirePaymentsUseCase(t *testing.T) {
 		// Verify payment status updated to failed
 		updatedPayment, err := paymentRepo.GetByID(ctx, expiredPayment.ID)
 		require.NoError(t, err)
-		assert.Equal(t, payment.StatusFailed, updatedPayment.Status)
+		assert.Equal(t, domain.StatusFailed, updatedPayment.Status)
 	})
 }

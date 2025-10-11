@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"library-service/internal/adapters/repository/postgres"
-	"library-service/internal/domain/reservation"
+	reservationdomain "library-service/internal/reservations/domain"
+	reservationrepo "library-service/internal/reservations/repository"
 	"library-service/test/fixtures"
 )
 
@@ -19,7 +19,7 @@ func TestReservationRepository_Integration(t *testing.T) {
 	// Clean up test data
 	db.TruncateAll()
 
-	repo := postgres.NewReservationRepository(db.DB)
+	repo := reservationrepo.NewReservationRepository(db.DB)
 	ctx := context.Background()
 
 	t.Run("Complete CRUD workflow", func(t *testing.T) {

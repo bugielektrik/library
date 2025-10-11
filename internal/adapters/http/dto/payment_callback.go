@@ -1,13 +1,13 @@
 package dto
 
 import (
-	"library-service/internal/domain/payment"
-	"library-service/internal/usecase/paymentops"
+	"library-service/internal/payments/domain"
+	paymentops "library-service/internal/payments/operations/payment"
 )
 
 // PaymentCallbackRequest represents the asynchronous callback request from the payment gateway.
 //
-// This DTO matches the exact format sent by epayment.kz gateway when a payment status changes.
+// This DTO matches the exact format sent by edomain.kz gateway when a payment status changes.
 // The gateway sends this webhook to the PostLink URL configured during payment initiation.
 //
 // The callback is used to update payment status asynchronously after the user completes
@@ -70,9 +70,9 @@ type PaymentCallbackRequest struct {
 // The gateway may retry callbacks if it doesn't receive a successful HTTP 200 response
 // with this payload within a reasonable timeout.
 type PaymentCallbackResponse struct {
-	PaymentID string         `json:"payment_id"`
-	Status    payment.Status `json:"status"`
-	Message   string         `json:"message"`
+	PaymentID string        `json:"payment_id"`
+	Status    domain.Status `json:"status"`
+	Message   string        `json:"message"`
 }
 
 // ToPaymentCallbackResponse converts a use case HandleCallbackResponse to DTO format.

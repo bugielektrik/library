@@ -1,11 +1,12 @@
 package dto
 
 import (
-	"library-service/internal/domain/payment"
-	"library-service/internal/usecase/paymentops"
+	"library-service/internal/payments/domain"
+	paymentops "library-service/internal/payments/operations/payment"
+	savedcardops "library-service/internal/payments/operations/savedcard"
 )
 
-// CancelPaymentRequest represents a request to cancel a pending or processing payment.
+// CancelPaymentRequest represents a request to cancel a pending or processing domain.
 //
 // Only payments in "pending" or "processing" status can be cancelled. Completed,
 // failed, or already-cancelled payments cannot be cancelled.
@@ -32,12 +33,12 @@ type CancelPaymentRequest struct {
 //   - Status: Updated payment status (should be "cancelled")
 //   - CancelledAt: Timestamp when cancellation occurred (ISO 8601)
 type CancelPaymentResponse struct {
-	PaymentID   string         `json:"payment_id"`
-	Status      payment.Status `json:"status"`
-	CancelledAt string         `json:"cancelled_at"`
+	PaymentID   string        `json:"payment_id"`
+	Status      domain.Status `json:"status"`
+	CancelledAt string        `json:"cancelled_at"`
 }
 
-// RefundPaymentRequest represents a request to refund a completed payment.
+// RefundPaymentRequest represents a request to refund a completed domain.
 //
 // Only successfully completed payments (status "completed") can be refunded.
 // The system supports both full and partial refunds.
@@ -86,11 +87,11 @@ type RefundPaymentRequest struct {
 // Note: The refund may take 3-30 business days to appear in the customer's
 // account depending on the payment gateway and bank processing times.
 type RefundPaymentResponse struct {
-	PaymentID  string         `json:"payment_id"`
-	Status     payment.Status `json:"status"`
-	RefundedAt string         `json:"refunded_at"`
-	Amount     int64          `json:"amount"`
-	Currency   string         `json:"currency"`
+	PaymentID  string        `json:"payment_id"`
+	Status     domain.Status `json:"status"`
+	RefundedAt string        `json:"refunded_at"`
+	Amount     int64         `json:"amount"`
+	Currency   string        `json:"currency"`
 }
 
 // PayWithSavedCardRequest represents a request to create a payment using a tokenized saved card.
@@ -121,14 +122,14 @@ type RefundPaymentResponse struct {
 //	  "related_entity_id": "res_456"
 //	}
 type PayWithSavedCardRequest struct {
-	SavedCardID     string              `json:"saved_card_id" validate:"required"`
-	Amount          int64               `json:"amount" validate:"required,gt=0"`
-	Currency        string              `json:"currency" validate:"required,len=3"`
-	PaymentType     payment.PaymentType `json:"payment_type" validate:"required"`
-	RelatedEntityID *string             `json:"related_entity_id,omitempty"`
+	SavedCardID     string             `json:"saved_card_id" validate:"required"`
+	Amount          int64              `json:"amount" validate:"required,gt=0"`
+	Currency        string             `json:"currency" validate:"required,len=3"`
+	PaymentType     domain.PaymentType `json:"payment_type" validate:"required"`
+	RelatedEntityID *string            `json:"related_entity_id,omitempty"`
 }
 
-// PayWithSavedCardResponse represents the result of a saved card payment.
+// PayWithSavedCardResponse represents the result of a saved card domain.
 //
 // When a payment is successfully initiated using a saved card, this response
 // provides the payment details and confirmation.
@@ -144,12 +145,12 @@ type PayWithSavedCardRequest struct {
 // Note: Saved card payments may be processed synchronously (immediate result)
 // or asynchronously (status updated via callback), depending on gateway configuration.
 type PayWithSavedCardResponse struct {
-	PaymentID string         `json:"payment_id"`
-	InvoiceID string         `json:"invoice_id"`
-	Status    payment.Status `json:"status"`
-	Amount    int64          `json:"amount"`
-	Currency  string         `json:"currency"`
-	CardMask  string         `json:"card_mask"`
+	PaymentID string        `json:"payment_id"`
+	InvoiceID string        `json:"invoice_id"`
+	Status    domain.Status `json:"status"`
+	Amount    int64         `json:"amount"`
+	Currency  string        `json:"currency"`
+	CardMask  string        `json:"card_mask"`
 }
 
 // ToCancelPaymentResponse converts a use case CancelPaymentResponse to DTO format.
@@ -192,7 +193,7 @@ func ToRefundPaymentResponse(resp paymentops.RefundPaymentResponse) RefundPaymen
 // the actual card details or token.
 //
 // Used by: POST /payments/pay-with-card handler
-func ToPayWithSavedCardResponse(resp paymentops.PayWithSavedCardResponse) PayWithSavedCardResponse {
+func ToPayWithSavedCardResponse(resp savedcardops.PayWithSavedCardResponse) PayWithSavedCardResponse {
 	return PayWithSavedCardResponse{
 		PaymentID: resp.PaymentID,
 		InvoiceID: resp.InvoiceID,

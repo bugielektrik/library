@@ -6,7 +6,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"library-service/internal/domain/book"
+	"library-service/internal/books/domain/book"
 )
 
 // BookCache handles caching operations for books using an in-memory cache.

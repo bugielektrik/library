@@ -1,20 +1,20 @@
 package usecase
 
 import (
-	"library-service/internal/domain/author"
-	"library-service/internal/domain/book"
-	"library-service/internal/usecase/authorops"
-	"library-service/internal/usecase/bookops"
+	"library-service/internal/books/domain/author"
+	"library-service/internal/books/domain/book"
+	"library-service/internal/books/operations"
+	authorops "library-service/internal/books/operations/author"
 )
 
 // BookUseCases contains all book-related use cases
 type BookUseCases struct {
-	CreateBook      *bookops.CreateBookUseCase
-	GetBook         *bookops.GetBookUseCase
-	ListBooks       *bookops.ListBooksUseCase
-	UpdateBook      *bookops.UpdateBookUseCase
-	DeleteBook      *bookops.DeleteBookUseCase
-	ListBookAuthors *bookops.ListBookAuthorsUseCase
+	CreateBook      *operations.CreateBookUseCase
+	GetBook         *operations.GetBookUseCase
+	ListBooks       *operations.ListBooksUseCase
+	UpdateBook      *operations.UpdateBookUseCase
+	DeleteBook      *operations.DeleteBookUseCase
+	ListBookAuthors *operations.ListBookAuthorsUseCase
 }
 
 // AuthorUseCases contains all author-related use cases
@@ -33,12 +33,12 @@ func newBookUseCases(
 	bookService := book.NewService()
 
 	return BookUseCases{
-		CreateBook:      bookops.NewCreateBookUseCase(bookRepo, bookCache, bookService),
-		GetBook:         bookops.NewGetBookUseCase(bookRepo, bookCache),
-		ListBooks:       bookops.NewListBooksUseCase(bookRepo),
-		UpdateBook:      bookops.NewUpdateBookUseCase(bookRepo, bookCache),
-		DeleteBook:      bookops.NewDeleteBookUseCase(bookRepo, bookCache),
-		ListBookAuthors: bookops.NewListBookAuthorsUseCase(bookRepo, authorRepo, authorCache),
+		CreateBook:      operations.NewCreateBookUseCase(bookRepo, bookCache, bookService),
+		GetBook:         operations.NewGetBookUseCase(bookRepo, bookCache),
+		ListBooks:       operations.NewListBooksUseCase(bookRepo),
+		UpdateBook:      operations.NewUpdateBookUseCase(bookRepo, bookCache),
+		DeleteBook:      operations.NewDeleteBookUseCase(bookRepo, bookCache),
+		ListBookAuthors: operations.NewListBookAuthorsUseCase(bookRepo, authorRepo, authorCache),
 	}
 }
 

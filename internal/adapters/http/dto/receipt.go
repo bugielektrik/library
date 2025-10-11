@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"library-service/internal/domain/payment"
+	"library-service/internal/payments/domain"
 )
 
 // GenerateReceiptRequest represents the request to generate a receipt
@@ -49,8 +49,8 @@ type ListReceiptsResponse struct {
 	Total    int               `json:"total"`
 }
 
-// FromReceiptEntity converts a payment.Receipt to ReceiptResponse
-func FromReceiptEntity(entity payment.Receipt) ReceiptResponse {
+// FromReceiptEntity converts a domain.Receipt to ReceiptResponse
+func FromReceiptEntity(entity domain.Receipt) ReceiptResponse {
 	items := make([]ReceiptItem, len(entity.Items))
 	for i, item := range entity.Items {
 		items[i] = ReceiptItem{
@@ -91,8 +91,8 @@ func FromReceiptEntity(entity payment.Receipt) ReceiptResponse {
 	}
 }
 
-// FromReceiptEntities converts a slice of payment.Receipt to slice of ReceiptResponse
-func FromReceiptEntities(entities []payment.Receipt) []ReceiptResponse {
+// FromReceiptEntities converts a slice of domain.Receipt to slice of ReceiptResponse
+func FromReceiptEntities(entities []domain.Receipt) []ReceiptResponse {
 	responses := make([]ReceiptResponse, len(entities))
 	for i, entity := range entities {
 		responses[i] = FromReceiptEntity(entity)

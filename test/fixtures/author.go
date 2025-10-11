@@ -1,7 +1,7 @@
 package fixtures
 
 import (
-	"library-service/internal/domain/author"
+	"library-service/internal/books/domain/author"
 	"library-service/pkg/strutil"
 )
 

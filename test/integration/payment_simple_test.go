@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"library-service/internal/adapters/repository/postgres"
-	"library-service/internal/domain/payment"
-	"library-service/internal/usecase/paymentops"
+	"library-service/internal/payments/domain"
+	"library-service/internal/payments/operations/payment"
 )
 
 // TestPaymentSimpleFlow tests a simple payment flow
@@ -23,12 +23,12 @@ func TestPaymentSimpleFlow(t *testing.T) {
 	defer cleanup()
 
 	paymentRepo := postgres.NewPaymentRepository(db)
-	paymentService := payment.NewService()
+	paymentService := domain.NewService()
 	mockGateway := &MockPaymentGateway{
 		terminal:  "test-terminal",
 		backLink:  "http://localhost:8080/payment",
 		postLink:  "http://localhost:8080/api/v1/payments/callback",
-		widgetURL: "https://test.epayment.kz/widget",
+		widgetURL: "https://test.edomain.kz/widget",
 	}
 
 	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
@@ -43,7 +43,7 @@ func TestPaymentSimpleFlow(t *testing.T) {
 			MemberID:    memberID,
 			Amount:      5000,
 			Currency:    "KZT",
-			PaymentType: payment.PaymentTypeFine,
+			PaymentType: domain.PaymentTypeFine,
 		}
 
 		resp, err := initiateUC.Execute(ctx, req)
@@ -55,7 +55,7 @@ func TestPaymentSimpleFlow(t *testing.T) {
 		// Step 2: Get payment from DB
 		paymentEntity, err := paymentRepo.GetByID(ctx, resp.PaymentID)
 		require.NoError(t, err)
-		assert.Equal(t, payment.StatusPending, paymentEntity.Status)
+		assert.Equal(t, domain.StatusPending, paymentEntity.Status)
 
 		// Step 3: Simulate successful callback
 		callbackReq := paymentops.PaymentCallbackRequest{
@@ -69,12 +69,12 @@ func TestPaymentSimpleFlow(t *testing.T) {
 		callbackResp, err := handleCallbackUC.Execute(ctx, callbackReq)
 		require.NoError(t, err)
 		assert.Equal(t, resp.PaymentID, callbackResp.PaymentID)
-		assert.Equal(t, payment.StatusCompleted, callbackResp.Status)
+		assert.Equal(t, domain.StatusCompleted, callbackResp.Status)
 
 		// Step 4: Verify payment status updated
 		updatedPayment, err := paymentRepo.GetByID(ctx, resp.PaymentID)
 		require.NoError(t, err)
-		assert.Equal(t, payment.StatusCompleted, updatedPayment.Status)
+		assert.Equal(t, domain.StatusCompleted, updatedPayment.Status)
 		assert.NotNil(t, updatedPayment.CompletedAt)
 	})
 }
@@ -85,21 +85,21 @@ func TestPaymentIdempotency(t *testing.T) {
 	defer cleanup()
 
 	paymentRepo := postgres.NewPaymentRepository(db)
-	paymentService := payment.NewService()
+	paymentService := domain.NewService()
 	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
 
 	ctx := context.Background()
 
 	// Create a completed payment
-	testPayment := payment.Payment{
+	testPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      uuid.New().String(),
 		InvoiceID:     "idempotency-test-" + uuid.New().String(),
 		Amount:        3000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusCompleted,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusCompleted,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 		ExpiresAt:     time.Now().Add(30 * time.Minute),
@@ -122,7 +122,7 @@ func TestPaymentIdempotency(t *testing.T) {
 		resp, err := handleCallbackUC.Execute(ctx, callbackReq)
 		require.NoError(t, err)
 		assert.Equal(t, testPayment.ID, resp.PaymentID)
-		assert.Equal(t, payment.StatusCompleted, resp.Status)
+		assert.Equal(t, domain.StatusCompleted, resp.Status)
 		assert.False(t, resp.Processed) // Should indicate no processing was needed
 	})
 }
@@ -133,21 +133,21 @@ func TestPaymentExpiry(t *testing.T) {
 	defer cleanup()
 
 	paymentRepo := postgres.NewPaymentRepository(db)
-	paymentService := payment.NewService()
+	paymentService := domain.NewService()
 	expireUC := paymentops.NewExpirePaymentsUseCase(paymentRepo, paymentService)
 
 	ctx := context.Background()
 
 	// Create expired payment
-	expiredPayment := payment.Payment{
+	expiredPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      uuid.New().String(),
 		InvoiceID:     "expired-" + uuid.New().String(),
 		Amount:        2000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusPending,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusPending,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now().Add(-2 * time.Hour),
 		UpdatedAt:     time.Now().Add(-2 * time.Hour),
 		ExpiresAt:     time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
@@ -170,7 +170,7 @@ func TestPaymentExpiry(t *testing.T) {
 		// Verify payment is now failed
 		updatedPayment, err := paymentRepo.GetByID(ctx, expiredPayment.ID)
 		require.NoError(t, err)
-		assert.Equal(t, payment.StatusFailed, updatedPayment.Status)
+		assert.Equal(t, domain.StatusFailed, updatedPayment.Status)
 	})
 }
 
@@ -180,12 +180,12 @@ func TestRefundFlow(t *testing.T) {
 	defer cleanup()
 
 	paymentRepo := postgres.NewPaymentRepository(db)
-	paymentService := payment.NewService()
+	paymentService := domain.NewService()
 	mockGateway := &MockPaymentGateway{
 		terminal:  "test-terminal",
 		backLink:  "http://localhost:8080/payment",
 		postLink:  "http://localhost:8080/api/v1/payments/callback",
-		widgetURL: "https://test.epayment.kz/widget",
+		widgetURL: "https://test.edomain.kz/widget",
 	}
 	refundUC := paymentops.NewRefundPaymentUseCase(paymentRepo, paymentService, mockGateway)
 
@@ -193,15 +193,15 @@ func TestRefundFlow(t *testing.T) {
 	memberID := uuid.New().String()
 
 	// Create a completed payment
-	testPayment := payment.Payment{
+	testPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      memberID,
 		InvoiceID:     "refund-test-" + uuid.New().String(),
 		Amount:        10000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusCompleted,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusCompleted,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now().Add(-1 * time.Hour),
 		UpdatedAt:     time.Now().Add(-1 * time.Hour),
 		ExpiresAt:     time.Now().Add(30 * time.Minute),
@@ -229,7 +229,7 @@ func TestRefundFlow(t *testing.T) {
 		// Verify payment status updated
 		updatedPayment, err := paymentRepo.GetByID(ctx, testPayment.ID)
 		require.NoError(t, err)
-		assert.Equal(t, payment.StatusRefunded, updatedPayment.Status)
+		assert.Equal(t, domain.StatusRefunded, updatedPayment.Status)
 	})
 }
 
@@ -246,15 +246,15 @@ func TestReceiptGeneration(t *testing.T) {
 	memberID := uuid.New().String()
 
 	// Create a completed payment
-	testPayment := payment.Payment{
+	testPayment := domain.Payment{
 		ID:            uuid.New().String(),
 		MemberID:      memberID,
 		InvoiceID:     "receipt-test-" + uuid.New().String(),
 		Amount:        5000,
 		Currency:      "KZT",
-		PaymentType:   payment.PaymentTypeFine,
-		Status:        payment.StatusCompleted,
-		PaymentMethod: payment.PaymentMethodCard,
+		PaymentType:   domain.PaymentTypeFine,
+		Status:        domain.StatusCompleted,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 		ExpiresAt:     time.Now().Add(30 * time.Minute),

@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"library-service/internal/domain/book"
-	"library-service/internal/usecase/bookops"
+	"library-service/internal/books/domain/book"
+	"library-service/internal/books/operations"
 	"library-service/pkg/strutil"
 )
 
@@ -93,7 +93,7 @@ func FromBookResponses(responses []book.Response) []BookResponse {
 }
 
 // ToBookResponseFromGet converts use case GetBookResponse to DTO BookResponse
-func ToBookResponseFromGet(resp bookops.GetBookResponse) BookResponse {
+func ToBookResponseFromGet(resp operations.GetBookResponse) BookResponse {
 	return BookResponse{
 		ID:      resp.ID,
 		Name:    resp.Name,
@@ -104,7 +104,7 @@ func ToBookResponseFromGet(resp bookops.GetBookResponse) BookResponse {
 }
 
 // ToBookResponseFromCreate converts use case CreateBookResponse to DTO BookResponse
-func ToBookResponseFromCreate(resp bookops.CreateBookResponse) BookResponse {
+func ToBookResponseFromCreate(resp operations.CreateBookResponse) BookResponse {
 	return BookResponse{
 		ID:      resp.ID,
 		Name:    resp.Name,
@@ -115,7 +115,7 @@ func ToBookResponseFromCreate(resp bookops.CreateBookResponse) BookResponse {
 }
 
 // ToBookResponses converts slice of use case GetBookResponse to slice of DTO BookResponse
-func ToBookResponses(books []bookops.GetBookResponse) []BookResponse {
+func ToBookResponses(books []operations.GetBookResponse) []BookResponse {
 	responses := make([]BookResponse, len(books))
 	for i, b := range books {
 		responses[i] = ToBookResponseFromGet(b)

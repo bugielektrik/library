@@ -1,6 +1,6 @@
 package dto
 
-import "library-service/internal/domain/payment"
+import "library-service/internal/payments/domain"
 
 // SaveCardRequest represents the request for saving a payment card.
 type SaveCardRequest struct {
@@ -13,7 +13,7 @@ type SaveCardRequest struct {
 
 // ListSavedCardsResponse represents the response for listing saved cards.
 type ListSavedCardsResponse struct {
-	Cards []payment.SavedCardResponse `json:"cards"`
+	Cards []domain.SavedCardResponse `json:"cards"`
 }
 
 // DeleteSavedCardResponse represents the response for deleting a saved card.

@@ -3,7 +3,7 @@ package helpers
 import (
 	"time"
 
-	"library-service/internal/domain/payment"
+	"library-service/internal/payments/domain"
 )
 
 // Common test IDs
@@ -54,24 +54,24 @@ func PastTime(days int) time.Time {
 }
 
 // ValidPaymentStatuses returns all valid payment statuses
-func ValidPaymentStatuses() []payment.Status {
-	return []payment.Status{
-		payment.StatusPending,
-		payment.StatusProcessing,
-		payment.StatusCompleted,
-		payment.StatusFailed,
-		payment.StatusCancelled,
-		payment.StatusRefunded,
+func ValidPaymentStatuses() []domain.Status {
+	return []domain.Status{
+		domain.StatusPending,
+		domain.StatusProcessing,
+		domain.StatusCompleted,
+		domain.StatusFailed,
+		domain.StatusCancelled,
+		domain.StatusRefunded,
 	}
 }
 
 // ValidCurrencies returns all valid currencies
 func ValidCurrencies() []string {
 	return []string{
-		payment.CurrencyKZT,
-		payment.CurrencyUSD,
-		payment.CurrencyEUR,
-		payment.CurrencyRUB,
+		domain.CurrencyKZT,
+		domain.CurrencyUSD,
+		domain.CurrencyEUR,
+		domain.CurrencyRUB,
 	}
 }
 

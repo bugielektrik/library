@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"library-service/internal/domain/author"
+	"library-service/internal/books/domain/author"
 )
 
 // AuthorRepository handles CRUD operations for authors in an in-memory store.

@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"library-service/internal/adapters/repository/postgres"
-	"library-service/internal/domain/book"
+	"library-service/internal/books/domain/book"
+	"library-service/internal/books/repository"
 	"library-service/test/fixtures"
 )
 
@@ -18,7 +18,7 @@ func TestBookRepository_Integration(t *testing.T) {
 	// Clean up test data before running tests
 	db.TruncateAll()
 
-	repo := postgres.NewBookRepository(db.DB)
+	repo := repository.NewBookRepository(db.DB)
 	ctx := context.Background()
 
 	t.Run("Add and Get book", func(t *testing.T) {

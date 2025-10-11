@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"library-service/internal/domain/author"
+	"library-service/internal/books/domain/author"
 	"library-service/internal/infrastructure/store"
 )
 

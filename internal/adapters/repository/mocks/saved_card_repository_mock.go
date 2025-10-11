@@ -4,7 +4,7 @@ package mocks
 
 import (
 	context "context"
-	payment "library-service/internal/domain/payment"
+	payment "library-service/internal/payments/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )

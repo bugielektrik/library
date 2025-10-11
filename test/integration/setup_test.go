@@ -82,7 +82,7 @@ func setupTestEnv(t *testing.T) {
 	os.Setenv("JWT_EXPIRY", "1h")
 
 	// Payment gateway test config
-	os.Setenv("EPAYMENT_BASE_URL", "https://test-api.epayment.kz")
+	os.Setenv("EPAYMENT_BASE_URL", "https://test-api.edomain.kz")
 	os.Setenv("EPAYMENT_CLIENT_ID", "test-client-id")
 	os.Setenv("EPAYMENT_CLIENT_SECRET", "test-client-secret")
 	os.Setenv("EPAYMENT_TERMINAL", "test-terminal")

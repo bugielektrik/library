@@ -4,7 +4,7 @@ package mocks
 
 import (
 	context "context"
-	member "library-service/internal/domain/member"
+	member "library-service/internal/members/domain"
 
 	mock "github.com/stretchr/testify/mock"
 

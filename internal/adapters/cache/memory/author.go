@@ -6,7 +6,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"library-service/internal/domain/author"
+	"library-service/internal/books/domain/author"
 )
 
 // AuthorCache handles caching of author entities in memory.

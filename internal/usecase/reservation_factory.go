@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"library-service/internal/domain/member"
-	"library-service/internal/domain/reservation"
-	"library-service/internal/usecase/reservationops"
+	memberdomain "library-service/internal/members/domain"
+	reservationdomain "library-service/internal/reservations/domain"
+	reservationops "library-service/internal/reservations/operations"
 )
 
 // ReservationUseCases contains all reservation-related use cases
@@ -16,11 +16,11 @@ type ReservationUseCases struct {
 
 // newReservationUseCases creates all reservation-related use cases
 func newReservationUseCases(
-	reservationRepo reservation.Repository,
-	memberRepo member.Repository,
+	reservationRepo reservationdomain.Repository,
+	memberRepo memberdomain.Repository,
 ) ReservationUseCases {
 	// Create domain service
-	reservationService := reservation.NewService()
+	reservationService := reservationdomain.NewService()
 
 	return ReservationUseCases{
 		CreateReservation:      reservationops.NewCreateReservationUseCase(reservationRepo, memberRepo, reservationService),

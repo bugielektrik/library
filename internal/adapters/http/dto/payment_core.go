@@ -1,11 +1,11 @@
 package dto
 
 import (
-	"library-service/internal/domain/payment"
-	"library-service/internal/usecase/paymentops"
+	"library-service/internal/payments/domain"
+	paymentops "library-service/internal/payments/operations/payment"
 )
 
-// InitiatePaymentRequest represents the request to initiate a payment.
+// InitiatePaymentRequest represents the request to initiate a domain.
 //
 // This DTO is used when a member initiates a payment transaction. It contains
 // the payment amount, currency, type, and optional related entity reference.
@@ -25,13 +25,13 @@ import (
 //	  "related_entity_id": "res_123456"
 //	}
 type InitiatePaymentRequest struct {
-	Amount          int64               `json:"amount" validate:"required,gt=0"`
-	Currency        string              `json:"currency" validate:"required,len=3"`
-	PaymentType     payment.PaymentType `json:"payment_type" validate:"required"`
-	RelatedEntityID *string             `json:"related_entity_id,omitempty"`
+	Amount          int64              `json:"amount" validate:"required,gt=0"`
+	Currency        string             `json:"currency" validate:"required,len=3"`
+	PaymentType     domain.PaymentType `json:"payment_type" validate:"required"`
+	RelatedEntityID *string            `json:"related_entity_id,omitempty"`
 }
 
-// InitiatePaymentResponse represents the response for initiating a payment.
+// InitiatePaymentResponse represents the response for initiating a domain.
 //
 // After a payment is initiated, this response provides all necessary information
 // for the client to complete the payment transaction through the payment gateway's
@@ -88,24 +88,24 @@ type InitiatePaymentResponse struct {
 //   - CompletedAt: Payment completion timestamp (ISO 8601), null if not completed
 //   - ExpiresAt: Payment expiration timestamp (ISO 8601)
 type PaymentResponse struct {
-	ID                   string                `json:"id"`
-	InvoiceID            string                `json:"invoice_id"`
-	MemberID             string                `json:"member_id"`
-	Amount               int64                 `json:"amount"`
-	Currency             string                `json:"currency"`
-	Status               payment.Status        `json:"status"`
-	PaymentMethod        payment.PaymentMethod `json:"payment_method"`
-	PaymentType          payment.PaymentType   `json:"payment_type"`
-	RelatedEntityID      *string               `json:"related_entity_id,omitempty"`
-	GatewayTransactionID *string               `json:"gateway_transaction_id,omitempty"`
-	CardMask             *string               `json:"card_mask,omitempty"`
-	ApprovalCode         *string               `json:"approval_code,omitempty"`
-	ErrorCode            *string               `json:"error_code,omitempty"`
-	ErrorMessage         *string               `json:"error_message,omitempty"`
-	CreatedAt            string                `json:"created_at"`
-	UpdatedAt            string                `json:"updated_at"`
-	CompletedAt          *string               `json:"completed_at,omitempty"`
-	ExpiresAt            string                `json:"expires_at"`
+	ID                   string               `json:"id"`
+	InvoiceID            string               `json:"invoice_id"`
+	MemberID             string               `json:"member_id"`
+	Amount               int64                `json:"amount"`
+	Currency             string               `json:"currency"`
+	Status               domain.Status        `json:"status"`
+	PaymentMethod        domain.PaymentMethod `json:"payment_method"`
+	PaymentType          domain.PaymentType   `json:"payment_type"`
+	RelatedEntityID      *string              `json:"related_entity_id,omitempty"`
+	GatewayTransactionID *string              `json:"gateway_transaction_id,omitempty"`
+	CardMask             *string              `json:"card_mask,omitempty"`
+	ApprovalCode         *string              `json:"approval_code,omitempty"`
+	ErrorCode            *string              `json:"error_code,omitempty"`
+	ErrorMessage         *string              `json:"error_message,omitempty"`
+	CreatedAt            string               `json:"created_at"`
+	UpdatedAt            string               `json:"updated_at"`
+	CompletedAt          *string              `json:"completed_at,omitempty"`
+	ExpiresAt            string               `json:"expires_at"`
 }
 
 // PaymentSummaryResponse represents a condensed payment record for list views.
@@ -127,14 +127,14 @@ type PaymentResponse struct {
 // To get full payment details including card info and error messages, use the
 // GET /payments/{id} endpoint which returns PaymentResponse.
 type PaymentSummaryResponse struct {
-	ID          string              `json:"id"`
-	InvoiceID   string              `json:"invoice_id"`
-	Amount      int64               `json:"amount"`
-	Currency    string              `json:"currency"`
-	Status      payment.Status      `json:"status"`
-	PaymentType payment.PaymentType `json:"payment_type"`
-	CreatedAt   string              `json:"created_at"`
-	CompletedAt *string             `json:"completed_at,omitempty"`
+	ID          string             `json:"id"`
+	InvoiceID   string             `json:"invoice_id"`
+	Amount      int64              `json:"amount"`
+	Currency    string             `json:"currency"`
+	Status      domain.Status      `json:"status"`
+	PaymentType domain.PaymentType `json:"payment_type"`
+	CreatedAt   string             `json:"created_at"`
+	CompletedAt *string            `json:"completed_at,omitempty"`
 }
 
 // ListPaymentsResponse represents the response for listing member payments.

@@ -1,63 +1,63 @@
 package usecase
 
 import (
-	"library-service/internal/domain/member"
-	"library-service/internal/infrastructure/auth"
-	"library-service/internal/usecase/authops"
-	"library-service/internal/usecase/memberops"
-	"library-service/internal/usecase/subops"
+	infraauth "library-service/internal/infrastructure/auth"
+	"library-service/internal/members/domain"
+	memberauth "library-service/internal/members/operations/auth"
+	"library-service/internal/members/operations/profile"
+	"library-service/internal/members/operations/subscription"
 )
 
 // AuthUseCases contains all authentication-related use cases
 type AuthUseCases struct {
-	RegisterMember *authops.RegisterUseCase
-	LoginMember    *authops.LoginUseCase
-	RefreshToken   *authops.RefreshTokenUseCase
-	ValidateToken  *authops.ValidateTokenUseCase
+	RegisterMember *memberauth.RegisterUseCase
+	LoginMember    *memberauth.LoginUseCase
+	RefreshToken   *memberauth.RefreshTokenUseCase
+	ValidateToken  *memberauth.ValidateTokenUseCase
 }
 
 // MemberUseCases contains all member-related use cases
 type MemberUseCases struct {
-	ListMembers      *memberops.ListMembersUseCase
-	GetMemberProfile *memberops.GetMemberProfileUseCase
+	ListMembers      *profile.ListMembersUseCase
+	GetMemberProfile *profile.GetMemberProfileUseCase
 }
 
 // SubscriptionUseCases contains subscription-related use cases
 type SubscriptionUseCases struct {
-	SubscribeMember *subops.SubscribeMemberUseCase
+	SubscribeMember *subscription.SubscribeMemberUseCase
 }
 
 // newAuthUseCases creates all authentication-related use cases
 func newAuthUseCases(
-	memberRepo member.Repository,
-	jwtService *auth.JWTService,
-	passwordService *auth.PasswordService,
+	memberRepo domain.Repository,
+	jwtService *infraauth.JWTService,
+	passwordService *infraauth.PasswordService,
 ) AuthUseCases {
 	// Create domain service
-	memberService := member.NewService()
+	memberService := domain.NewService()
 
 	return AuthUseCases{
-		RegisterMember: authops.NewRegisterUseCase(memberRepo, passwordService, jwtService, memberService),
-		LoginMember:    authops.NewLoginUseCase(memberRepo, passwordService, jwtService),
-		RefreshToken:   authops.NewRefreshTokenUseCase(memberRepo, jwtService),
-		ValidateToken:  authops.NewValidateTokenUseCase(memberRepo, jwtService),
+		RegisterMember: memberauth.NewRegisterUseCase(memberRepo, passwordService, jwtService, memberService),
+		LoginMember:    memberauth.NewLoginUseCase(memberRepo, passwordService, jwtService),
+		RefreshToken:   memberauth.NewRefreshTokenUseCase(memberRepo, jwtService),
+		ValidateToken:  memberauth.NewValidateTokenUseCase(memberRepo, jwtService),
 	}
 }
 
 // newMemberUseCases creates all member-related use cases
-func newMemberUseCases(memberRepo member.Repository) MemberUseCases {
+func newMemberUseCases(memberRepo domain.Repository) MemberUseCases {
 	return MemberUseCases{
-		ListMembers:      memberops.NewListMembersUseCase(memberRepo),
-		GetMemberProfile: memberops.NewGetMemberProfileUseCase(memberRepo),
+		ListMembers:      profile.NewListMembersUseCase(memberRepo),
+		GetMemberProfile: profile.NewGetMemberProfileUseCase(memberRepo),
 	}
 }
 
 // newSubscriptionUseCases creates subscription-related use cases
-func newSubscriptionUseCases(memberRepo member.Repository) SubscriptionUseCases {
+func newSubscriptionUseCases(memberRepo domain.Repository) SubscriptionUseCases {
 	// Create domain service
-	memberService := member.NewService()
+	memberService := domain.NewService()
 
 	return SubscriptionUseCases{
-		SubscribeMember: subops.NewSubscribeMemberUseCase(memberRepo, memberService),
+		SubscribeMember: subscription.NewSubscribeMemberUseCase(memberRepo, memberService),
 	}
 }

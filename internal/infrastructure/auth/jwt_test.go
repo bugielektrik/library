@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"library-service/internal/domain/member"
+	"library-service/internal/members/domain"
 )
 
 // Test constants
@@ -31,7 +31,7 @@ func newTestJWTService() *JWTService {
 func TestGenerateAccessToken(t *testing.T) {
 	service := newTestJWTService()
 
-	token, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	token, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestGenerateAccessToken(t *testing.T) {
 func TestGenerateAccessToken_ValidClaims(t *testing.T) {
 	service := newTestJWTService()
 
-	token, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleAdmin)
+	token, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleAdmin)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -69,8 +69,8 @@ func TestGenerateAccessToken_ValidClaims(t *testing.T) {
 	if claims.Email != testEmail {
 		t.Errorf("Expected Email %s, got %s", testEmail, claims.Email)
 	}
-	if claims.Role != string(member.RoleAdmin) {
-		t.Errorf("Expected Role %s, got %s", member.RoleAdmin, claims.Role)
+	if claims.Role != string(domain.RoleAdmin) {
+		t.Errorf("Expected Role %s, got %s", domain.RoleAdmin, claims.Role)
 	}
 	if claims.Issuer != testIssuer {
 		t.Errorf("Expected Issuer %s, got %s", testIssuer, claims.Issuer)
@@ -96,7 +96,7 @@ func TestGenerateAccessToken_ExpiryConfiguration(t *testing.T) {
 			service := NewJWTService(testSecretKey, tt.accessTTL, 7*24*time.Hour, testIssuer)
 
 			beforeGen := time.Now()
-			token, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+			token, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 
 			if err != nil {
 				t.Fatalf("GenerateAccessToken failed: %v", err)
@@ -166,7 +166,7 @@ func TestGenerateRefreshToken_ValidClaims(t *testing.T) {
 func TestGenerateTokenPair(t *testing.T) {
 	service := newTestJWTService()
 
-	pair, err := service.GenerateTokenPair(testMemberID, testEmail, member.RoleUser)
+	pair, err := service.GenerateTokenPair(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateTokenPair failed: %v", err)
 	}
@@ -197,7 +197,7 @@ func TestGenerateTokenPair(t *testing.T) {
 func TestValidateToken_ValidToken(t *testing.T) {
 	service := newTestJWTService()
 
-	token, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	token, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -217,7 +217,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	// Create service with very short TTL
 	service := NewJWTService(testSecretKey, 1*time.Millisecond, 7*24*time.Hour, testIssuer)
 
-	token, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	token, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 func TestValidateToken_InvalidSignature(t *testing.T) {
 	service := newTestJWTService()
 
-	token, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	token, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -286,7 +286,7 @@ func TestValidateToken_WrongSigningMethod(t *testing.T) {
 	claims := &Claims{
 		MemberID: testMemberID,
 		Email:    testEmail,
-		Role:     string(member.RoleUser),
+		Role:     string(domain.RoleUser),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -353,7 +353,7 @@ func TestValidateRefreshToken_AccessTokenAsRefreshToken(t *testing.T) {
 	service := newTestJWTService()
 
 	// Generate access token
-	accessToken, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	accessToken, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -382,7 +382,7 @@ func TestRefreshAccessToken(t *testing.T) {
 	}
 
 	// Use refresh token to get new access token
-	newAccessToken, err := service.RefreshAccessToken(refreshToken, testEmail, member.RoleAdmin)
+	newAccessToken, err := service.RefreshAccessToken(refreshToken, testEmail, domain.RoleAdmin)
 	if err != nil {
 		t.Fatalf("RefreshAccessToken failed: %v", err)
 	}
@@ -404,8 +404,8 @@ func TestRefreshAccessToken(t *testing.T) {
 	if claims.Email != testEmail {
 		t.Errorf("Expected Email %s, got %s", testEmail, claims.Email)
 	}
-	if claims.Role != string(member.RoleAdmin) {
-		t.Errorf("Expected Role %s, got %s", member.RoleAdmin, claims.Role)
+	if claims.Role != string(domain.RoleAdmin) {
+		t.Errorf("Expected Role %s, got %s", domain.RoleAdmin, claims.Role)
 	}
 }
 
@@ -421,7 +421,7 @@ func TestRefreshAccessToken_ExpiredRefreshToken(t *testing.T) {
 	// Wait for refresh token to expire
 	time.Sleep(10 * time.Millisecond)
 
-	_, err = service.RefreshAccessToken(refreshToken, testEmail, member.RoleUser)
+	_, err = service.RefreshAccessToken(refreshToken, testEmail, domain.RoleUser)
 	if err == nil {
 		t.Error("Expected error when refreshing with expired token, got nil")
 	}
@@ -434,7 +434,7 @@ func TestRefreshAccessToken_ExpiredRefreshToken(t *testing.T) {
 func TestRefreshAccessToken_InvalidRefreshToken(t *testing.T) {
 	service := newTestJWTService()
 
-	_, err := service.RefreshAccessToken("invalid-token", testEmail, member.RoleUser)
+	_, err := service.RefreshAccessToken("invalid-token", testEmail, domain.RoleUser)
 	if err == nil {
 		t.Error("Expected error when refreshing with invalid token, got nil")
 	}
@@ -444,7 +444,7 @@ func TestRefreshAccessToken_InvalidRefreshToken(t *testing.T) {
 func TestTokensAreUnique(t *testing.T) {
 	service := newTestJWTService()
 
-	token1, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	token1, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -452,7 +452,7 @@ func TestTokensAreUnique(t *testing.T) {
 	// JWT timestamps are in seconds, so sleep for 1 second to ensure different IssuedAt
 	time.Sleep(1100 * time.Millisecond)
 
-	token2, err := service.GenerateAccessToken(testMemberID, testEmail, member.RoleUser)
+	token2, err := service.GenerateAccessToken(testMemberID, testEmail, domain.RoleUser)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken failed: %v", err)
 	}
@@ -466,7 +466,7 @@ func TestTokensAreUnique(t *testing.T) {
 func TestDifferentRoles(t *testing.T) {
 	service := newTestJWTService()
 
-	roles := []member.Role{member.RoleUser, member.RoleAdmin}
+	roles := []domain.Role{domain.RoleUser, domain.RoleAdmin}
 
 	for _, role := range roles {
 		t.Run(string(role), func(t *testing.T) {

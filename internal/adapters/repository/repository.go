@@ -3,13 +3,16 @@ package repository
 import (
 	"library-service/internal/adapters/repository/memory"
 	"library-service/internal/adapters/repository/mongo"
-	"library-service/internal/adapters/repository/postgres"
-	"library-service/internal/domain/author"
-	"library-service/internal/domain/book"
-	"library-service/internal/domain/member"
-	"library-service/internal/domain/payment"
-	"library-service/internal/domain/reservation"
+	"library-service/internal/books/domain/author"
+	"library-service/internal/books/domain/book"
+	bookrepo "library-service/internal/books/repository"
 	store "library-service/internal/infrastructure/store"
+	memberdomain "library-service/internal/members/domain"
+	memberrepo "library-service/internal/members/repository"
+	paymentdomain "library-service/internal/payments/domain"
+	paymentrepo "library-service/internal/payments/repository"
+	reservationdomain "library-service/internal/reservations/domain"
+	reservationrepo "library-service/internal/reservations/repository"
 )
 
 // Configuration function type for repository setup
@@ -20,12 +23,14 @@ type Repositories struct {
 	mongo    *store.Mongo
 	postgres *store.SQL
 
-	Author      author.Repository
-	Book        book.Repository
-	Member      member.Repository
-	Reservation reservation.Repository
-	Payment     payment.Repository
-	SavedCard   payment.SavedCardRepository
+	Author        author.Repository
+	Book          book.Repository
+	Member        memberdomain.Repository
+	Reservation   reservationdomain.Repository
+	Payment       paymentdomain.Repository
+	SavedCard     paymentdomain.SavedCardRepository
+	CallbackRetry paymentdomain.CallbackRetryRepository
+	Receipt       paymentdomain.ReceiptRepository
 }
 
 // NewRepositories creates a new repository container
@@ -77,12 +82,14 @@ func WithPostgresStore(dsn string) Configuration {
 			return err
 		}
 
-		r.Author = postgres.NewAuthorRepository(db.Connection)
-		r.Book = postgres.NewBookRepository(db.Connection)
-		r.Member = postgres.NewMemberRepository(db.Connection)
-		r.Reservation = postgres.NewReservationRepository(db.Connection)
-		r.Payment = postgres.NewPaymentRepository(db.Connection)
-		r.SavedCard = postgres.NewSavedCardRepository(db.Connection)
+		r.Author = bookrepo.NewAuthorRepository(db.Connection)
+		r.Book = bookrepo.NewBookRepository(db.Connection)
+		r.Member = memberrepo.NewMemberRepository(db.Connection)
+		r.Reservation = reservationrepo.NewReservationRepository(db.Connection)
+		r.Payment = paymentrepo.NewPaymentRepository(db.Connection)
+		r.SavedCard = paymentrepo.NewSavedCardRepository(db.Connection)
+		r.CallbackRetry = paymentrepo.NewCallbackRetryRepository(db.Connection)
+		r.Receipt = paymentrepo.NewReceiptRepository(db.Connection)
 
 		return nil
 	}

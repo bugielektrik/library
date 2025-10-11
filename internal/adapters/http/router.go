@@ -9,16 +9,16 @@ import (
 	"go.uber.org/zap"
 
 	_ "library-service/api/openapi" // swagger docs
-	"library-service/internal/adapters/http/handlers/auth"
-	"library-service/internal/adapters/http/handlers/author"
-	"library-service/internal/adapters/http/handlers/book"
-	"library-service/internal/adapters/http/handlers/member"
-	"library-service/internal/adapters/http/handlers/payment"
-	"library-service/internal/adapters/http/handlers/receipt"
-	"library-service/internal/adapters/http/handlers/reservation"
-	"library-service/internal/adapters/http/handlers/savedcard"
 	httpmiddleware "library-service/internal/adapters/http/middleware"
+	bookhttp "library-service/internal/books/http"
+	authorhttp "library-service/internal/books/http/author"
 	"library-service/internal/infrastructure/config"
+	memberauth "library-service/internal/members/http/auth"
+	memberprofile "library-service/internal/members/http/profile"
+	"library-service/internal/payments/http/payment"
+	"library-service/internal/payments/http/receipt"
+	"library-service/internal/payments/http/savedcard"
+	reservationhttp "library-service/internal/reservations/http"
 	"library-service/internal/usecase"
 )
 
@@ -55,17 +55,17 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 	validator := httpmiddleware.NewValidator()
 
 	// Create handlers
-	authHandler := auth.NewAuthHandler(
+	authHandler := memberauth.NewAuthHandler(
 		cfg.Usecases,
 		validator,
 	)
 
-	bookHandler := book.NewBookHandler(
+	bookHandler := bookhttp.NewBookHandler(
 		cfg.Usecases,
 		validator,
 	)
 
-	reservationHandler := reservation.NewReservationHandler(
+	reservationHandler := reservationhttp.NewReservationHandler(
 		cfg.Usecases,
 		validator,
 	)
@@ -80,11 +80,11 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 		validator,
 	)
 
-	authorHandler := author.NewAuthorHandler(
+	authorHandler := authorhttp.NewAuthorHandler(
 		cfg.Usecases,
 	)
 
-	memberHandler := member.NewMemberHandler(
+	memberHandler := memberprofile.NewMemberHandler(
 		cfg.Usecases,
 	)
 

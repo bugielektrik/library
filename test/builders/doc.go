@@ -23,7 +23,7 @@ Override specific fields:
 	payment := builders.NewPayment().
 		WithID("payment-123").
 		WithAmount(50000).
-		WithStatus(payment.StatusCompleted).
+		WithStatus(domain.StatusCompleted).
 		Build()
 
 Use convenience methods for common scenarios:
@@ -35,7 +35,7 @@ Use convenience methods for common scenarios:
 
 	member := builders.NewMember().
 		WithAdminRole().
-		WithSubscription(member.SubscriptionPlanMonthly).
+		WithSubscription(domain.SubscriptionPlanMonthly).
 		Build()
 
 # Available Builders
@@ -50,15 +50,15 @@ Use convenience methods for common scenarios:
 
 Before (manual construction):
 
-	payment := payment.Payment{
+	payment := domain.Payment{
 		ID:            "payment-1",
 		InvoiceID:     "inv-1",
 		MemberID:      "member-1",
 		Amount:        10000,
 		Currency:      "KZT",
-		Status:        payment.StatusCompleted,
-		PaymentType:   payment.PaymentTypeFine,
-		PaymentMethod: payment.PaymentMethodCard,
+		Status:        domain.StatusCompleted,
+		PaymentType:   domain.PaymentTypeFine,
+		PaymentMethod: domain.PaymentMethodCard,
 		CreatedAt:     time.Now(),
 		CompletedAt:   &now,
 	}

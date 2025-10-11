@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"library-service/internal/domain/author"
-	"library-service/internal/usecase/bookops"
+	"library-service/internal/books/domain/author"
+	"library-service/internal/books/operations"
 	"library-service/pkg/strutil"
 )
 
@@ -83,8 +83,8 @@ func FromAuthorResponses(responses []author.Response) []AuthorResponse {
 	return result
 }
 
-// ToAuthorResponse converts use case bookops.AuthorResponse to DTO AuthorResponse
-func ToAuthorResponse(resp bookops.AuthorResponse) AuthorResponse {
+// ToAuthorResponse converts use case operations.AuthorResponse to DTO AuthorResponse
+func ToAuthorResponse(resp operations.AuthorResponse) AuthorResponse {
 	return AuthorResponse{
 		ID:        resp.ID,
 		FullName:  resp.FullName,
@@ -93,8 +93,8 @@ func ToAuthorResponse(resp bookops.AuthorResponse) AuthorResponse {
 	}
 }
 
-// ToAuthorResponses converts slice of use case bookops.AuthorResponse to slice of DTO AuthorResponse
-func ToAuthorResponses(authors []bookops.AuthorResponse) []AuthorResponse {
+// ToAuthorResponses converts slice of use case operations.AuthorResponse to slice of DTO AuthorResponse
+func ToAuthorResponses(authors []operations.AuthorResponse) []AuthorResponse {
 	responses := make([]AuthorResponse, len(authors))
 	for i, a := range authors {
 		responses[i] = ToAuthorResponse(a)

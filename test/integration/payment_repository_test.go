@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"library-service/internal/adapters/repository/postgres"
-	"library-service/internal/domain/payment"
+	"library-service/internal/payments/domain"
 	"library-service/test/fixtures"
 )
 
@@ -171,7 +171,7 @@ func TestPaymentRepository_Integration(t *testing.T) {
 		}
 
 		// List by status
-		completedPayments, err := repo.ListByStatus(ctx, payment.StatusCompleted)
+		completedPayments, err := repo.ListByStatus(ctx, domain.StatusCompleted)
 		if err != nil {
 			t.Fatalf("ListByStatus(completed) failed: %v", err)
 		}
@@ -180,7 +180,7 @@ func TestPaymentRepository_Integration(t *testing.T) {
 			t.Errorf("expected 1 completed payment, got %d", len(completedPayments))
 		}
 
-		pendingPayments, err := repo.ListByStatus(ctx, payment.StatusPending)
+		pendingPayments, err := repo.ListByStatus(ctx, domain.StatusPending)
 		if err != nil {
 			t.Fatalf("ListByStatus(pending) failed: %v", err)
 		}
@@ -201,7 +201,7 @@ func TestPaymentRepository_Integration(t *testing.T) {
 		}
 
 		// Update status
-		err = repo.UpdateStatus(ctx, id, payment.StatusCompleted)
+		err = repo.UpdateStatus(ctx, id, domain.StatusCompleted)
 		if err != nil {
 			t.Fatalf("UpdateStatus failed: %v", err)
 		}
@@ -212,8 +212,8 @@ func TestPaymentRepository_Integration(t *testing.T) {
 			t.Fatalf("GetByID failed: %v", err)
 		}
 
-		if retrieved.Status != payment.StatusCompleted {
-			t.Errorf("Status not updated: expected %s, got %s", payment.StatusCompleted, retrieved.Status)
+		if retrieved.Status != domain.StatusCompleted {
+			t.Errorf("Status not updated: expected %s, got %s", domain.StatusCompleted, retrieved.Status)
 		}
 	})
 

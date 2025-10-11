@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"library-service/internal/domain/member"
+	"library-service/internal/members/domain"
 	"library-service/pkg/strutil"
 )
 
@@ -26,17 +26,17 @@ type MemberResponse struct {
 	Books    []string `json:"books"`
 }
 
-// ToMemberRequest converts CreateMemberRequest to domain member.Request
-func (r CreateMemberRequest) ToMemberRequest() member.Request {
-	return member.Request{
+// ToMemberRequest converts CreateMemberRequest to domain domain.Request
+func (r CreateMemberRequest) ToMemberRequest() domain.Request {
+	return domain.Request{
 		FullName: r.FullName,
 		Books:    r.Books,
 	}
 }
 
-// ToMemberRequest converts UpdateMemberRequest to domain member.Request
-func (r UpdateMemberRequest) ToMemberRequest() member.Request {
-	req := member.Request{}
+// ToMemberRequest converts UpdateMemberRequest to domain domain.Request
+func (r UpdateMemberRequest) ToMemberRequest() domain.Request {
+	req := domain.Request{}
 
 	if r.FullName != nil {
 		req.FullName = *r.FullName
@@ -48,8 +48,8 @@ func (r UpdateMemberRequest) ToMemberRequest() member.Request {
 	return req
 }
 
-// FromMemberEntity converts domain member.Member to MemberResponse
-func FromMemberEntity(entity member.Member) MemberResponse {
+// FromMemberEntity converts domain domain.Member to MemberResponse
+func FromMemberEntity(entity domain.Member) MemberResponse {
 	return MemberResponse{
 		ID:       entity.ID,
 		Email:    entity.Email,
@@ -59,8 +59,8 @@ func FromMemberEntity(entity member.Member) MemberResponse {
 	}
 }
 
-// FromMemberResponse converts domain member.Response to MemberResponse
-func FromMemberResponse(resp member.Response) MemberResponse {
+// FromMemberResponse converts domain domain.Response to MemberResponse
+func FromMemberResponse(resp domain.Response) MemberResponse {
 	return MemberResponse{
 		ID:       resp.ID,
 		Email:    resp.Email,
@@ -70,8 +70,8 @@ func FromMemberResponse(resp member.Response) MemberResponse {
 	}
 }
 
-// FromMemberResponses converts slice of domain member.Response to slice of MemberResponse
-func FromMemberResponses(responses []member.Response) []MemberResponse {
+// FromMemberResponses converts slice of domain domain.Response to slice of MemberResponse
+func FromMemberResponses(responses []domain.Response) []MemberResponse {
 	result := make([]MemberResponse, len(responses))
 	for i, resp := range responses {
 		result[i] = FromMemberResponse(resp)
@@ -79,8 +79,8 @@ func FromMemberResponses(responses []member.Response) []MemberResponse {
 	return result
 }
 
-// FromMemberEntities converts slice of domain member.Member to slice of MemberResponse
-func FromMemberEntities(entities []member.Member) []MemberResponse {
+// FromMemberEntities converts slice of domain domain.Member to slice of MemberResponse
+func FromMemberEntities(entities []domain.Member) []MemberResponse {
 	result := make([]MemberResponse, len(entities))
 	for i, entity := range entities {
 		result[i] = FromMemberEntity(entity)

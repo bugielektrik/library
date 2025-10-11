@@ -1,8 +1,8 @@
 package fixtures
 
 import (
-	"library-service/internal/domain/book"
-	"library-service/internal/usecase/bookops"
+	"library-service/internal/books/domain/book"
+	"library-service/internal/books/operations"
 	"library-service/pkg/strutil"
 )
 
@@ -55,8 +55,8 @@ func BookWithInvalidISBN() book.Book {
 }
 
 // CreateBookRequest returns a valid create book request
-func CreateBookRequest() bookops.CreateBookRequest {
-	return bookops.CreateBookRequest{
+func CreateBookRequest() operations.CreateBookRequest {
+	return operations.CreateBookRequest{
 		Name:    "The Pragmatic Programmer",
 		Genre:   "Software Engineering",
 		ISBN:    "978-0135957059",
@@ -65,8 +65,8 @@ func CreateBookRequest() bookops.CreateBookRequest {
 }
 
 // UpdateBookRequest returns a valid update book request
-func UpdateBookRequest() bookops.UpdateBookRequest {
-	return bookops.UpdateBookRequest{
+func UpdateBookRequest() operations.UpdateBookRequest {
+	return operations.UpdateBookRequest{
 		ID:      "550e8400-e29b-41d4-a716-446655440000",
 		Name:    strutil.SafeStringPtr("Clean Code: Updated Edition"),
 		Genre:   strutil.SafeStringPtr("Software Engineering"),

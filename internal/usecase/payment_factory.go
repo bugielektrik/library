@@ -1,9 +1,11 @@
 package usecase
 
 import (
-	"library-service/internal/domain/member"
-	"library-service/internal/domain/payment"
-	"library-service/internal/usecase/paymentops"
+	memberdomain "library-service/internal/members/domain"
+	paymentdomain "library-service/internal/payments/domain"
+	paymentops "library-service/internal/payments/operations/payment"
+	receiptops "library-service/internal/payments/operations/receipt"
+	savedcardops "library-service/internal/payments/operations/savedcard"
 )
 
 // PaymentUseCases contains all payment-related use cases
@@ -14,7 +16,7 @@ type PaymentUseCases struct {
 	ListMemberPayments     *paymentops.ListMemberPaymentsUseCase
 	CancelPayment          *paymentops.CancelPaymentUseCase
 	RefundPayment          *paymentops.RefundPaymentUseCase
-	PayWithSavedCard       *paymentops.PayWithSavedCardUseCase
+	PayWithSavedCard       *savedcardops.PayWithSavedCardUseCase
 	ExpirePayments         *paymentops.ExpirePaymentsUseCase
 	ProcessCallbackRetries *paymentops.ProcessCallbackRetriesUseCase
 }
@@ -22,37 +24,37 @@ type PaymentUseCases struct {
 // SavedCardUseCases contains all saved card-related use cases
 type SavedCardUseCases struct {
 	SaveCard        *paymentops.SaveCardUseCase
-	ListSavedCards  *paymentops.ListSavedCardsUseCase
-	DeleteSavedCard *paymentops.DeleteSavedCardUseCase
+	ListSavedCards  *savedcardops.ListSavedCardsUseCase
+	DeleteSavedCard *savedcardops.DeleteSavedCardUseCase
 	SetDefaultCard  *paymentops.SetDefaultCardUseCase
 }
 
 // ReceiptUseCases contains all receipt-related use cases
 type ReceiptUseCases struct {
-	GenerateReceipt *paymentops.GenerateReceiptUseCase
-	GetReceipt      *paymentops.GetReceiptUseCase
-	ListReceipts    *paymentops.ListReceiptsUseCase
+	GenerateReceipt *receiptops.GenerateReceiptUseCase
+	GetReceipt      *receiptops.GetReceiptUseCase
+	ListReceipts    *receiptops.ListReceiptsUseCase
 }
 
 // PaymentRepositories contains payment-related repositories
 type PaymentRepositories struct {
-	Payment       payment.Repository
-	SavedCard     payment.SavedCardRepository
-	CallbackRetry payment.CallbackRetryRepository
-	Receipt       payment.ReceiptRepository
+	Payment       paymentdomain.Repository
+	SavedCard     paymentdomain.SavedCardRepository
+	CallbackRetry paymentdomain.CallbackRetryRepository
+	Receipt       paymentdomain.ReceiptRepository
 }
 
 // newPaymentUseCases creates all payment-related use cases
 func newPaymentUseCases(
 	repos PaymentRepositories,
-	memberRepo member.Repository,
+	memberRepo memberdomain.Repository,
 	paymentGateway interface {
-		payment.Gateway
-		payment.GatewayConfig
+		paymentdomain.Gateway
+		paymentdomain.GatewayConfig
 	},
 ) (PaymentUseCases, SavedCardUseCases, ReceiptUseCases) {
 	// Create domain service
-	paymentService := payment.NewService()
+	paymentService := paymentdomain.NewService()
 
 	// Special case: Create HandleCallback first since it's needed by ProcessCallbackRetries
 	handleCallbackUC := paymentops.NewHandleCallbackUseCase(repos.Payment, paymentService)
@@ -64,22 +66,22 @@ func newPaymentUseCases(
 		ListMemberPayments:     paymentops.NewListMemberPaymentsUseCase(repos.Payment),
 		CancelPayment:          paymentops.NewCancelPaymentUseCase(repos.Payment, paymentService),
 		RefundPayment:          paymentops.NewRefundPaymentUseCase(repos.Payment, paymentService, paymentGateway),
-		PayWithSavedCard:       paymentops.NewPayWithSavedCardUseCase(repos.Payment, repos.SavedCard, paymentService, paymentGateway),
+		PayWithSavedCard:       savedcardops.NewPayWithSavedCardUseCase(repos.Payment, repos.SavedCard, paymentService, paymentGateway),
 		ExpirePayments:         paymentops.NewExpirePaymentsUseCase(repos.Payment, paymentService),
 		ProcessCallbackRetries: paymentops.NewProcessCallbackRetriesUseCase(repos.CallbackRetry, handleCallbackUC),
 	}
 
 	savedCardUseCases := SavedCardUseCases{
 		SaveCard:        paymentops.NewSaveCardUseCase(repos.SavedCard),
-		ListSavedCards:  paymentops.NewListSavedCardsUseCase(repos.SavedCard),
-		DeleteSavedCard: paymentops.NewDeleteSavedCardUseCase(repos.SavedCard),
+		ListSavedCards:  savedcardops.NewListSavedCardsUseCase(repos.SavedCard),
+		DeleteSavedCard: savedcardops.NewDeleteSavedCardUseCase(repos.SavedCard),
 		SetDefaultCard:  paymentops.NewSetDefaultCardUseCase(repos.SavedCard),
 	}
 
 	receiptUseCases := ReceiptUseCases{
-		GenerateReceipt: paymentops.NewGenerateReceiptUseCase(repos.Payment, repos.Receipt, memberRepo),
-		GetReceipt:      paymentops.NewGetReceiptUseCase(repos.Receipt),
-		ListReceipts:    paymentops.NewListReceiptsUseCase(repos.Receipt),
+		GenerateReceipt: receiptops.NewGenerateReceiptUseCase(repos.Payment, repos.Receipt, memberRepo),
+		GetReceipt:      receiptops.NewGetReceiptUseCase(repos.Receipt),
+		ListReceipts:    receiptops.NewListReceiptsUseCase(repos.Receipt),
 	}
 
 	return paymentUseCases, savedCardUseCases, receiptUseCases

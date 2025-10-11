@@ -19,12 +19,12 @@ For detailed workflow, see:
 package usecase
 
 import (
-	"library-service/internal/domain/author"
-	"library-service/internal/domain/book"
-	"library-service/internal/domain/member"
-	"library-service/internal/domain/payment"
-	"library-service/internal/domain/reservation"
+	"library-service/internal/books/domain/author"
+	"library-service/internal/books/domain/book"
 	"library-service/internal/infrastructure/auth"
+	memberdomain "library-service/internal/members/domain"
+	paymentdomain "library-service/internal/payments/domain"
+	reservationdomain "library-service/internal/reservations/domain"
 )
 
 // Container holds all application use cases organized by domain
@@ -51,12 +51,12 @@ type Container struct {
 type Repositories struct {
 	Book          book.Repository
 	Author        author.Repository
-	Member        member.Repository
-	Reservation   reservation.Repository
-	Payment       payment.Repository
-	SavedCard     payment.SavedCardRepository
-	CallbackRetry payment.CallbackRetryRepository
-	Receipt       payment.ReceiptRepository
+	Member        memberdomain.Repository
+	Reservation   reservationdomain.Repository
+	Payment       paymentdomain.Repository
+	SavedCard     paymentdomain.SavedCardRepository
+	CallbackRetry paymentdomain.CallbackRetryRepository
+	Receipt       paymentdomain.ReceiptRepository
 }
 
 // Caches holds all cache interfaces
@@ -74,8 +74,8 @@ type AuthServices struct {
 // GatewayServices holds all gateway services
 type GatewayServices struct {
 	PaymentGateway interface {
-		payment.Gateway
-		payment.GatewayConfig
+		paymentdomain.Gateway
+		paymentdomain.GatewayConfig
 	}
 }
 
