@@ -1,0 +1,337 @@
+package paymentops
+
+import (
+	"library-service/test/helpers"
+	"library-service/test/builders"
+	"library-service/internal/adapters/repository/mocks"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/member"
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+// Mock for MemberRepository
+type mockMemberRepository struct {
+	mock.Mock
+}
+
+func (m *mocks.MockMemberRepository) Add(ctx context.Context, data member.Member) (string, error) {
+	args := m.Called(ctx, data)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) Get(ctx context.Context, id string) (member.Member, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(member.Member), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) GetByEmail(ctx context.Context, email string) (member.Member, error) {
+	args := m.Called(ctx, email)
+	return args.Get(0).(member.Member), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) Update(ctx context.Context, id string, data member.Member) error {
+	args := m.Called(ctx, id, data)
+	return args.Error(0)
+}
+
+func (m *mocks.MockMemberRepository) UpdateLastLogin(ctx context.Context, id string, loginTime time.Time) error {
+	args := m.Called(ctx, id, loginTime)
+	return args.Error(0)
+}
+
+func (m *mocks.MockMemberRepository) List(ctx context.Context) ([]member.Member, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]member.Member), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *mocks.MockMemberRepository) EmailExists(ctx context.Context, email string) (bool, error) {
+	args := m.Called(ctx, email)
+	return args.Bool(0), args.Error(1)
+}
+
+func TestGenerateReceiptUseCase_Execute(t *testing.T) {
+	now := time.Now()
+	completedAt := now.Add(-1 * time.Hour)
+
+	tests := []struct {
+		name         string
+		request      GenerateReceiptRequest
+		setupMocks   func(*mocks.MockPaymentRepository, *mocks.MockReceiptRepository, *mocks.MockMemberRepository)
+		wantErr      bool
+		wantErrType  error
+		validateResp func(*testing.T, GenerateReceiptResponse)
+	}{
+		{
+			name: "successfully generate new receipt",
+			request: GenerateReceiptRequest{
+				PaymentID: "payment-1",
+				MemberID:  "member-1",
+				Notes:     "Thank you for your payment",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				paymentEntity := payment.Payment{
+					ID:          "payment-1",
+					InvoiceID:   "inv-1",
+					MemberID:    "member-1",
+					Amount:      10000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: &completedAt,
+				}
+
+				payRepo.On("GetByID", mock.Anything, "payment-1").
+					Return(paymentEntity, nil)
+
+				// No existing receipt
+				recRepo.On("GetByPaymentID", "payment-1").
+					Return(payment.Receipt{}, errors.ErrNotFound)
+
+				fullName := "John Doe"
+				memberEntity := member.Member{
+					ID:       "member-1",
+					Email:    "john@example.com",
+					FullName: &fullName,
+				}
+
+				memRepo.On("Get", mock.Anything, "member-1").
+					Return(memberEntity, nil)
+
+				recRepo.On("Create", mock.MatchedBy(func(r payment.Receipt) bool {
+					return r.PaymentID == "payment-1" && r.Amount == 10000
+				})).Return("receipt-1", nil)
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp GenerateReceiptResponse) {
+				assert.Equal(t, "receipt-1", resp.ReceiptID)
+				assert.NotEmpty(t, resp.ReceiptNumber)
+				assert.Equal(t, "payment-1", resp.PaymentID)
+				assert.Equal(t, int64(10000), resp.Amount)
+				assert.Equal(t, "KZT", resp.Currency)
+				assert.NotEmpty(t, resp.ReceiptDate)
+			},
+		},
+		{
+			name: "receipt already exists - return existing",
+			request: GenerateReceiptRequest{
+				PaymentID: "payment-2",
+				MemberID:  "member-1",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				paymentEntity := payment.Payment{
+					ID:          "payment-2",
+					InvoiceID:   "inv-2",
+					MemberID:    "member-1",
+					Amount:      15000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeSubscription,
+					CreatedAt:   now,
+					CompletedAt: &completedAt,
+				}
+
+				payRepo.On("GetByID", mock.Anything, "payment-2").
+					Return(paymentEntity, nil)
+
+				// Existing receipt
+				existingReceipt := payment.Receipt{
+					ID:            "receipt-existing",
+					ReceiptNumber: "RCP-2025-001",
+					PaymentID:     "payment-2",
+					Amount:        15000,
+					Currency:      "KZT",
+					ReceiptDate:   now,
+				}
+
+				recRepo.On("GetByPaymentID", "payment-2").
+					Return(existingReceipt, nil)
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp GenerateReceiptResponse) {
+				assert.Equal(t, "receipt-existing", resp.ReceiptID)
+				assert.Equal(t, "RCP-2025-001", resp.ReceiptNumber)
+				assert.Equal(t, "payment-2", resp.PaymentID)
+				assert.Equal(t, int64(15000), resp.Amount)
+			},
+		},
+		{
+			name: "error - payment not found",
+			request: GenerateReceiptRequest{
+				PaymentID: "nonexistent",
+				MemberID:  "member-1",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				payRepo.On("GetByID", mock.Anything, "nonexistent").
+					Return(payment.Payment{}, errors.ErrNotFound)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "error - unauthorized member",
+			request: GenerateReceiptRequest{
+				PaymentID: "payment-3",
+				MemberID:  "wrong-member",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				paymentEntity := payment.Payment{
+					ID:        "payment-3",
+					InvoiceID: "inv-3",
+					MemberID:  "actual-member",
+					Amount:    10000,
+					Currency:  "KZT",
+					Status:    payment.StatusCompleted,
+				}
+
+				payRepo.On("GetByID", mock.Anything, "payment-3").
+					Return(paymentEntity, nil)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrUnauthorized,
+		},
+		{
+			name: "error - payment not completed",
+			request: GenerateReceiptRequest{
+				PaymentID: "payment-pending",
+				MemberID:  "member-1",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				paymentEntity := payment.Payment{
+					ID:        "payment-pending",
+					InvoiceID: "inv-pending",
+					MemberID:  "member-1",
+					Amount:    10000,
+					Currency:  "KZT",
+					Status:    payment.StatusPending,
+				}
+
+				payRepo.On("GetByID", mock.Anything, "payment-pending").
+					Return(paymentEntity, nil)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrValidation,
+		},
+		{
+			name: "error - member not found",
+			request: GenerateReceiptRequest{
+				PaymentID: "payment-4",
+				MemberID:  "member-notfound",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				paymentEntity := payment.Payment{
+					ID:          "payment-4",
+					InvoiceID:   "inv-4",
+					MemberID:    "member-notfound",
+					Amount:      10000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: &completedAt,
+				}
+
+				payRepo.On("GetByID", mock.Anything, "payment-4").
+					Return(paymentEntity, nil)
+
+				// No existing receipt
+				recRepo.On("GetByPaymentID", "payment-4").
+					Return(payment.Receipt{}, errors.ErrNotFound)
+
+				memRepo.On("Get", mock.Anything, "member-notfound").
+					Return(member.Member{}, errors.ErrNotFound)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "error - failed to create receipt in repository",
+			request: GenerateReceiptRequest{
+				PaymentID: "payment-5",
+				MemberID:  "member-1",
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, recRepo *mocks.MockReceiptRepository, memRepo *mocks.MockMemberRepository) {
+				paymentEntity := payment.Payment{
+					ID:          "payment-5",
+					InvoiceID:   "inv-5",
+					MemberID:    "member-1",
+					Amount:      10000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: &completedAt,
+				}
+
+				payRepo.On("GetByID", mock.Anything, "payment-5").
+					Return(paymentEntity, nil)
+
+				// No existing receipt
+				recRepo.On("GetByPaymentID", "payment-5").
+					Return(payment.Receipt{}, errors.ErrNotFound)
+
+				fullName := "John Doe"
+				memberEntity := member.Member{
+					ID:       "member-1",
+					Email:    "john@example.com",
+					FullName: &fullName,
+				}
+
+				memRepo.On("Get", mock.Anything, "member-1").
+					Return(memberEntity, nil)
+
+				recRepo.On("Create", mock.Anything).
+					Return("", errors.ErrDatabase)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockPayRepo := new(mocks.MockPaymentRepository)
+			mockRecRepo := new(mocks.MockReceiptRepository)
+			mockMemRepo := new(mocks.MockMemberRepository)
+			tt.setupMocks(mockPayRepo, mockRecRepo, mockMemRepo)
+
+			uc := NewGenerateReceiptUseCase(mockPayRepo, mockRecRepo, mockMemRepo)
+			ctx := helpers.TestContext(t)
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrType != nil {
+					assert.ErrorIs(t, err, tt.wantErrType)
+				}
+			} else {
+				assert.NoError(t, err)
+
+				// Run custom validation if provided
+				if tt.validateResp != nil {
+					tt.validateResp(t, result)
+				}
+			}
+
+			// Verify mock expectations
+			mockPayRepo.AssertExpectations(t)
+			mockRecRepo.AssertExpectations(t)
+			mockMemRepo.AssertExpectations(t)
+		})
+	}
+}

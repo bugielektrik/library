@@ -1,0 +1,296 @@
+package paymentops
+
+import (
+	"library-service/test/helpers"
+	"library-service/test/builders"
+	"library-service/internal/adapters/repository/mocks"
+	"context"
+	"encoding/json"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+// Mock for CallbackRetryRepository
+type mockCallbackRetryRepository struct {
+	mock.Mock
+}
+
+func (m *mocks.MockCallbackRetryRepository) Create(retry *payment.CallbackRetry) error {
+	args := m.Called(retry)
+	return args.Error(0)
+}
+
+func (m *mocks.MockCallbackRetryRepository) GetByID(id string) (*payment.CallbackRetry, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*payment.CallbackRetry), args.Error(1)
+}
+
+func (m *mocks.MockCallbackRetryRepository) GetPendingRetries(limit int) ([]*payment.CallbackRetry, error) {
+	args := m.Called(limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*payment.CallbackRetry), args.Error(1)
+}
+
+func (m *mocks.MockCallbackRetryRepository) Update(retry *payment.CallbackRetry) error {
+	args := m.Called(retry)
+	return args.Error(0)
+}
+
+func (m *mocks.MockCallbackRetryRepository) Delete(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func TestProcessCallbackRetriesUseCase_Execute(t *testing.T) {
+	// Helper to create valid callback data
+	createCallbackData := func(invoiceID string, status string) []byte {
+		req := PaymentCallbackRequest{
+			InvoiceID: invoiceID,
+			Status:    status,
+		}
+		data, _ := json.Marshal(req)
+		return data
+	}
+
+	tests := []struct {
+		name         string
+		request      ProcessCallbackRetriesRequest
+		setupMocks   func(*mocks.MockCallbackRetryRepository, *mocks.MockPaymentRepository, *payment.Service)
+		wantErr      bool
+		validateResp func(*testing.T, ProcessCallbackRetriesResponse)
+	}{
+		{
+			name: "successfully process pending retries",
+			request: ProcessCallbackRetriesRequest{
+				BatchSize: 10,
+			},
+			setupMocks: func(retryRepo *mocks.MockCallbackRetryRepository, payRepo *mocks.MockPaymentRepository, svc *payment.Service) {
+				// Create pending retries
+				retry1 := &payment.CallbackRetry{
+					ID:           "retry-1",
+					PaymentID:    "payment-1",
+					CallbackData: createCallbackData("inv-1", "Success"),
+					Status:       payment.CallbackRetryStatusPending,
+					RetryCount:   0,
+				}
+
+				retry2 := &payment.CallbackRetry{
+					ID:           "retry-2",
+					PaymentID:    "payment-2",
+					CallbackData: createCallbackData("inv-2", "Success"),
+					Status:       payment.CallbackRetryStatusPending,
+					RetryCount:   1,
+				}
+
+				retryRepo.On("GetPendingRetries", 10).
+					Return([]*payment.CallbackRetry{retry1, retry2}, nil)
+
+				// Mark as processing
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-1" && r.Status == payment.CallbackRetryStatusProcessing
+				})).Return(nil).Once()
+
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-2" && r.Status == payment.CallbackRetryStatusProcessing
+				})).Return(nil).Once()
+
+				// Mock payment lookups for both retries
+				payRepo.On("GetByInvoiceID", mock.Anything, "inv-1").
+					Return(payment.Payment{
+						ID:        "payment-1",
+						InvoiceID: "inv-1",
+						Status:    payment.StatusProcessing,
+					}, nil)
+
+				payRepo.On("GetByInvoiceID", mock.Anything, "inv-2").
+					Return(payment.Payment{
+						ID:        "payment-2",
+						InvoiceID: "inv-2",
+						Status:    payment.StatusProcessing,
+					}, nil)
+
+				// Mock successful updates
+				payRepo.On("Update", mock.Anything, "payment-1", mock.Anything).Return(nil)
+				payRepo.On("Update", mock.Anything, "payment-2", mock.Anything).Return(nil)
+
+				// Mark as completed
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-1" && r.Status == payment.CallbackRetryStatusCompleted
+				})).Return(nil).Once()
+
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-2" && r.Status == payment.CallbackRetryStatusCompleted
+				})).Return(nil).Once()
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp ProcessCallbackRetriesResponse) {
+				assert.Equal(t, 2, resp.ProcessedCount)
+				assert.Equal(t, 2, resp.SuccessCount)
+				assert.Equal(t, 0, resp.FailedCount)
+				assert.Empty(t, resp.Errors)
+			},
+		},
+		{
+			name: "no pending retries to process",
+			request: ProcessCallbackRetriesRequest{
+				BatchSize: 10,
+			},
+			setupMocks: func(retryRepo *mocks.MockCallbackRetryRepository, payRepo *mocks.MockPaymentRepository, svc *payment.Service) {
+				retryRepo.On("GetPendingRetries", 10).
+					Return([]*payment.CallbackRetry{}, nil)
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp ProcessCallbackRetriesResponse) {
+				assert.Equal(t, 0, resp.ProcessedCount)
+				assert.Equal(t, 0, resp.SuccessCount)
+				assert.Equal(t, 0, resp.FailedCount)
+			},
+		},
+		{
+			name: "error getting pending retries",
+			request: ProcessCallbackRetriesRequest{
+				BatchSize: 10,
+			},
+			setupMocks: func(retryRepo *mocks.MockCallbackRetryRepository, payRepo *mocks.MockPaymentRepository, svc *payment.Service) {
+				retryRepo.On("GetPendingRetries", 10).
+					Return([]*payment.CallbackRetry(nil), errors.ErrDatabase)
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid callback data - cannot parse JSON",
+			request: ProcessCallbackRetriesRequest{
+				BatchSize: 5,
+			},
+			setupMocks: func(retryRepo *mocks.MockCallbackRetryRepository, payRepo *mocks.MockPaymentRepository, svc *payment.Service) {
+				retry := &payment.CallbackRetry{
+					ID:           "retry-invalid",
+					PaymentID:    "payment-1",
+					CallbackData: []byte("invalid json"),
+					Status:       payment.CallbackRetryStatusPending,
+					RetryCount:   0,
+				}
+
+				retryRepo.On("GetPendingRetries", 5).
+					Return([]*payment.CallbackRetry{retry}, nil)
+
+				// Mark as processing
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-invalid" && r.Status == payment.CallbackRetryStatusProcessing
+				})).Return(nil).Once()
+
+				// Mark as failed due to invalid JSON
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-invalid" && r.Status == payment.CallbackRetryStatusFailed
+				})).Return(nil).Once()
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp ProcessCallbackRetriesResponse) {
+				assert.Equal(t, 1, resp.ProcessedCount)
+				assert.Equal(t, 0, resp.SuccessCount)
+				assert.Equal(t, 1, resp.FailedCount)
+				assert.Len(t, resp.Errors, 1)
+			},
+		},
+		{
+			name: "callback execution fails - payment not found",
+			request: ProcessCallbackRetriesRequest{
+				BatchSize: 5,
+			},
+			setupMocks: func(retryRepo *mocks.MockCallbackRetryRepository, payRepo *mocks.MockPaymentRepository, svc *payment.Service) {
+				retry := &payment.CallbackRetry{
+					ID:           "retry-fail",
+					PaymentID:    "payment-notfound",
+					CallbackData: createCallbackData("inv-notfound", "Success"),
+					Status:       payment.CallbackRetryStatusPending,
+					RetryCount:   0,
+				}
+
+				retryRepo.On("GetPendingRetries", 5).
+					Return([]*payment.CallbackRetry{retry}, nil)
+
+				// Mark as processing
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-fail" && r.Status == payment.CallbackRetryStatusProcessing
+				})).Return(nil).Once()
+
+				// Payment not found
+				payRepo.On("GetByInvoiceID", mock.Anything, "inv-notfound").
+					Return(payment.Payment{}, errors.ErrNotFound)
+
+				// Update with incremented retry count
+				retryRepo.On("Update", mock.MatchedBy(func(r *payment.CallbackRetry) bool {
+					return r.ID == "retry-fail" && r.RetryCount == 1
+				})).Return(nil).Once()
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp ProcessCallbackRetriesResponse) {
+				assert.Equal(t, 1, resp.ProcessedCount)
+				assert.Equal(t, 0, resp.SuccessCount)
+				assert.Equal(t, 1, resp.FailedCount)
+				assert.Len(t, resp.Errors, 1)
+			},
+		},
+		{
+			name: "default batch size when not specified",
+			request: ProcessCallbackRetriesRequest{
+				BatchSize: 0, // Should default to 50
+			},
+			setupMocks: func(retryRepo *mocks.MockCallbackRetryRepository, payRepo *mocks.MockPaymentRepository, svc *payment.Service) {
+				retryRepo.On("GetPendingRetries", 50).
+					Return([]*payment.CallbackRetry{}, nil)
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp ProcessCallbackRetriesResponse) {
+				assert.Equal(t, 0, resp.ProcessedCount)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockRetryRepo := new(mocks.MockCallbackRetryRepository)
+			mockPayRepo := new(mocks.MockPaymentRepository)
+			paymentService := payment.NewService()
+
+			tt.setupMocks(mockRetryRepo, mockPayRepo, paymentService)
+
+			// Create handle callback use case
+			handleCallbackUC := NewHandleCallbackUseCase(mockPayRepo, paymentService)
+
+			// Create use case under test
+			uc := NewProcessCallbackRetriesUseCase(mockRetryRepo, handleCallbackUC)
+			ctx := helpers.TestContext(t)
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+
+				// Run custom validation if provided
+				if tt.validateResp != nil {
+					tt.validateResp(t, result)
+				}
+			}
+
+			// Verify mock expectations
+			mockRetryRepo.AssertExpectations(t)
+			mockPayRepo.AssertExpectations(t)
+		})
+	}
+}

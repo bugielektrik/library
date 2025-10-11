@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//go:build darwin && amd64 && cgo
 // +build darwin,amd64,cgo
 
 package darwin

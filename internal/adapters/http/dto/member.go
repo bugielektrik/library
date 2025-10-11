@@ -2,6 +2,7 @@ package dto
 
 import (
 	"library-service/internal/domain/member"
+	"library-service/pkg/strutil"
 )
 
 // CreateMemberRequest represents the request to create a new member
@@ -52,7 +53,7 @@ func FromMemberEntity(entity member.Member) MemberResponse {
 	return MemberResponse{
 		ID:       entity.ID,
 		Email:    entity.Email,
-		FullName: safeString(entity.FullName),
+		FullName: strutil.SafeString(entity.FullName),
 		Role:     string(entity.Role),
 		Books:    entity.Books,
 	}
@@ -74,6 +75,15 @@ func FromMemberResponses(responses []member.Response) []MemberResponse {
 	result := make([]MemberResponse, len(responses))
 	for i, resp := range responses {
 		result[i] = FromMemberResponse(resp)
+	}
+	return result
+}
+
+// FromMemberEntities converts slice of domain member.Member to slice of MemberResponse
+func FromMemberEntities(entities []member.Member) []MemberResponse {
+	result := make([]MemberResponse, len(entities))
+	for i, entity := range entities {
+		result[i] = FromMemberEntity(entity)
 	}
 	return result
 }

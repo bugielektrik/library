@@ -1,0 +1,168 @@
+package paymentops
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+func TestListReceiptsUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name        string
+		request     ListReceiptsRequest
+		setupMock   func(*mockReceiptRepository)
+		wantErr     bool
+		wantErrType error
+		wantTotal   int
+	}{
+		{
+			name: "successfully list multiple receipts",
+			request: ListReceiptsRequest{
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				receipt1 := payment.Receipt{
+					ID:            "receipt-1",
+					ReceiptNumber: "REC-2025-001",
+					PaymentID:     "payment-1",
+					MemberID:      "member-1",
+					Amount:        10000,
+					Currency:      "KZT",
+					PaymentMethod: payment.PaymentMethodCard,
+					Status:        payment.StatusCompleted,
+					PaymentDate:   time.Now(),
+					ReceiptDate:   time.Now(),
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+
+				receipt2 := payment.Receipt{
+					ID:            "receipt-2",
+					ReceiptNumber: "REC-2025-002",
+					PaymentID:     "payment-2",
+					MemberID:      "member-1",
+					Amount:        5000,
+					Currency:      "KZT",
+					PaymentMethod: payment.PaymentMethodCard,
+					Status:        payment.StatusCompleted,
+					PaymentDate:   time.Now(),
+					ReceiptDate:   time.Now(),
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+
+				receipt3 := payment.Receipt{
+					ID:            "receipt-3",
+					ReceiptNumber: "REC-2025-003",
+					PaymentID:     "payment-3",
+					MemberID:      "member-1",
+					Amount:        15000,
+					Currency:      "KZT",
+					PaymentMethod: payment.PaymentMethodCard,
+					Status:        payment.StatusCompleted,
+					PaymentDate:   time.Now(),
+					ReceiptDate:   time.Now(),
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+
+				repo.On("ListByMemberID", "member-1").
+					Return([]payment.Receipt{receipt1, receipt2, receipt3}, nil)
+			},
+			wantErr:   false,
+			wantTotal: 3,
+		},
+		{
+			name: "successfully list single receipt",
+			request: ListReceiptsRequest{
+				MemberID: "member-2",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				receipt := payment.Receipt{
+					ID:            "receipt-1",
+					ReceiptNumber: "REC-2025-001",
+					PaymentID:     "payment-1",
+					MemberID:      "member-2",
+					Amount:        10000,
+					Currency:      "KZT",
+					PaymentMethod: payment.PaymentMethodCard,
+					Status:        payment.StatusCompleted,
+					PaymentDate:   time.Now(),
+					ReceiptDate:   time.Now(),
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+
+				repo.On("ListByMemberID", "member-2").
+					Return([]payment.Receipt{receipt}, nil)
+			},
+			wantErr:   false,
+			wantTotal: 1,
+		},
+		{
+			name: "successfully list no receipts - empty list",
+			request: ListReceiptsRequest{
+				MemberID: "member-3",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				// Member has no receipts
+				repo.On("ListByMemberID", "member-3").
+					Return([]payment.Receipt{}, nil)
+			},
+			wantErr:   false,
+			wantTotal: 0,
+		},
+		{
+			name: "error from repository",
+			request: ListReceiptsRequest{
+				MemberID: "member-4",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				// Database error
+				repo.On("ListByMemberID", "member-4").
+					Return([]payment.Receipt{}, errors.ErrDatabase)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrDatabase,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockRepo := new(mockReceiptRepository)
+			tt.setupMock(mockRepo)
+
+			uc := NewListReceiptsUseCase(mockRepo)
+			ctx := context.Background()
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrType != nil {
+					assert.ErrorIs(t, err, tt.wantErrType)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantTotal, result.Total)
+				assert.Len(t, result.Receipts, tt.wantTotal)
+
+				// Verify all receipts belong to the correct member
+				for _, receipt := range result.Receipts {
+					assert.Equal(t, tt.request.MemberID, receipt.MemberID)
+				}
+			}
+
+			// Verify mock expectations
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

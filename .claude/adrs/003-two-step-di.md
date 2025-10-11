@@ -373,8 +373,8 @@ After 6 months:
 
 - [Dependency Injection in Go](https://github.com/google/wire/blob/main/docs/best-practices.md)
 - [Clean Architecture Dependency Rule](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- `.claude/examples/README.md` - Examples of adding new components
-- `.claude/flows.md` - Visual diagram of two-step DI bootstrap
+- `.claude/common-tasks.md` - Guides for adding new components
+- `.claude/architecture.md` - Dependency injection patterns
 
 ## Related ADRs
 

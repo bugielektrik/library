@@ -2,6 +2,8 @@ package dto
 
 import (
 	"library-service/internal/domain/author"
+	"library-service/internal/usecase/bookops"
+	"library-service/pkg/strutil"
 )
 
 // CreateAuthorRequest represents the request to create a new author
@@ -56,9 +58,9 @@ func (r UpdateAuthorRequest) ToAuthorRequest() author.Request {
 func FromAuthorEntity(entity author.Author) AuthorResponse {
 	return AuthorResponse{
 		ID:        entity.ID,
-		FullName:  safeString(entity.FullName),
-		Pseudonym: safeString(entity.Pseudonym),
-		Specialty: safeString(entity.Specialty),
+		FullName:  strutil.SafeString(entity.FullName),
+		Pseudonym: strutil.SafeString(entity.Pseudonym),
+		Specialty: strutil.SafeString(entity.Specialty),
 	}
 }
 
@@ -77,6 +79,34 @@ func FromAuthorResponses(responses []author.Response) []AuthorResponse {
 	result := make([]AuthorResponse, len(responses))
 	for i, resp := range responses {
 		result[i] = FromAuthorResponse(resp)
+	}
+	return result
+}
+
+// ToAuthorResponse converts use case bookops.AuthorResponse to DTO AuthorResponse
+func ToAuthorResponse(resp bookops.AuthorResponse) AuthorResponse {
+	return AuthorResponse{
+		ID:        resp.ID,
+		FullName:  resp.FullName,
+		Pseudonym: resp.Pseudonym,
+		Specialty: resp.Specialty,
+	}
+}
+
+// ToAuthorResponses converts slice of use case bookops.AuthorResponse to slice of DTO AuthorResponse
+func ToAuthorResponses(authors []bookops.AuthorResponse) []AuthorResponse {
+	responses := make([]AuthorResponse, len(authors))
+	for i, a := range authors {
+		responses[i] = ToAuthorResponse(a)
+	}
+	return responses
+}
+
+// FromAuthorEntities converts slice of domain author.Author to slice of AuthorResponse
+func FromAuthorEntities(entities []author.Author) []AuthorResponse {
+	result := make([]AuthorResponse, len(entities))
+	for i, entity := range entities {
+		result[i] = FromAuthorEntity(entity)
 	}
 	return result
 }

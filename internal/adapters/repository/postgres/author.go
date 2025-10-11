@@ -2,57 +2,38 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 
 	"library-service/internal/domain/author"
-	"library-service/internal/infrastructure/store"
 )
 
 // AuthorRepository handles CRUD operations for authors in a PostgreSQL store.
 type AuthorRepository struct {
-	db *sqlx.DB
+	BaseRepository[author.Author]
 }
 
 // NewAuthorRepository creates a new AuthorRepository.
 func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
-	return &AuthorRepository{db: db}
+	return &AuthorRepository{
+		BaseRepository: NewBaseRepository[author.Author](db, "authors"),
+	}
 }
 
-// List retrieves all authors from the store.
-func (r *AuthorRepository) List(ctx context.Context) ([]author.Author, error) {
-	query := `SELECT id, full_name, pseudonym, specialty FROM authors ORDER BY id`
-	var authors []author.Author
-	err := r.db.SelectContext(ctx, &authors, query)
-	return authors, err
-}
+// List is inherited from BaseRepository
 
 // Add inserts a new author into the store.
 func (r *AuthorRepository) Add(ctx context.Context, data author.Author) (string, error) {
 	query := `INSERT INTO authors (full_name, pseudonym, specialty) VALUES ($1, $2, $3) RETURNING id`
 	args := []interface{}{data.FullName, data.Pseudonym, data.Specialty}
 	var id string
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return "", store.ErrorNotFound
-	}
-	return id, err
+	err := r.GetDB().QueryRowContext(ctx, query, args...).Scan(&id)
+	return id, HandleSQLError(err)
 }
 
-// Get retrieves an author by ID from the store.
-func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Author, error) {
-	query := `SELECT id, full_name, pseudonym, specialty FROM authors WHERE id=$1`
-	var author author.Author
-	err := r.db.GetContext(ctx, &author, query, id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return author, store.ErrorNotFound
-	}
-	return author, err
-}
+// Get is inherited from BaseRepository
 
 // Update modifies an existing author in the store.
 func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Author) error {
@@ -62,22 +43,11 @@ func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Au
 	}
 	args = append(args, id)
 	query := fmt.Sprintf("UPDATE authors SET %s, updated_at=CURRENT_TIMESTAMP WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
-	}
-	return err
+	err := r.GetDB().QueryRowContext(ctx, query, args...).Scan(&id)
+	return HandleSQLError(err)
 }
 
-// Delete removes an author by ID from the store.
-func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM authors WHERE id=$1 RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
-	}
-	return err
-}
+// Delete is inherited from BaseRepository
 
 // prepareArgs prepares the update arguments for the SQL query.
 func (r *AuthorRepository) prepareArgs(data author.Author) ([]string, []interface{}) {

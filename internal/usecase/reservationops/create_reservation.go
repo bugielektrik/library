@@ -7,8 +7,8 @@ import (
 
 	"library-service/internal/domain/member"
 	"library-service/internal/domain/reservation"
-	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // CreateReservationRequest represents the input for creating a reservation
@@ -22,7 +22,18 @@ type CreateReservationResponse struct {
 	reservation.Response
 }
 
-// CreateReservationUseCase handles the creation of a new reservation
+// CreateReservationUseCase handles the creation of a new reservation.
+//
+// Architecture Pattern: Business logic orchestration with cross-domain validation.
+// Demonstrates checking multiple entities (member, existing reservations) before creation.
+//
+// See Also:
+//   - Domain service: internal/domain/reservation/service.go (business rules)
+//   - Similar pattern: internal/usecase/bookops/create_book.go (simple CRUD)
+//   - HTTP handler: internal/adapters/http/handlers/reservation/handler.go
+//   - Repository: internal/adapters/repository/postgres/reservation.go
+//   - ADR: .claude/adr/002-clean-architecture-boundaries.md (layer dependencies)
+//   - Test: internal/usecase/reservationops/create_reservation_test.go
 type CreateReservationUseCase struct {
 	reservationRepo    reservation.Repository
 	memberRepo         member.Repository
@@ -44,23 +55,20 @@ func NewCreateReservationUseCase(
 
 // Execute creates a new reservation in the system
 func (uc *CreateReservationUseCase) Execute(ctx context.Context, req CreateReservationRequest) (CreateReservationResponse, error) {
-	logger := log.FromContext(ctx).Named("create_reservation_usecase").With(
-		zap.String("book_id", req.BookID),
-		zap.String("member_id", req.MemberID),
-	)
+	logger := logutil.UseCaseLogger(ctx, "reservation", "create")
 
 	// Get member to verify existence and get borrowed books
 	memberEntity, err := uc.memberRepo.Get(ctx, req.MemberID)
 	if err != nil {
 		logger.Error("failed to get member", zap.Error(err))
-		return CreateReservationResponse{}, errors.ErrMemberNotFound
+		return CreateReservationResponse{}, errors.NotFound("member")
 	}
 
 	// Get existing reservations for this member and book
 	existingReservations, err := uc.reservationRepo.GetActiveByMemberAndBook(ctx, req.MemberID, req.BookID)
 	if err != nil {
 		logger.Error("failed to get existing reservations", zap.Error(err))
-		return CreateReservationResponse{}, errors.ErrDatabase.Wrap(err)
+		return CreateReservationResponse{}, errors.Database("database operation", err)
 	}
 
 	// Check if member can reserve this book
@@ -76,7 +84,7 @@ func (uc *CreateReservationUseCase) Execute(ctx context.Context, req CreateReser
 	})
 
 	// Validate reservation using domain service
-	if err := uc.reservationService.ValidateReservation(reservationEntity); err != nil {
+	if err := uc.reservationService.Validate(reservationEntity); err != nil {
 		logger.Warn("validation failed", zap.Error(err))
 		return CreateReservationResponse{}, err
 	}
@@ -85,7 +93,7 @@ func (uc *CreateReservationUseCase) Execute(ctx context.Context, req CreateReser
 	id, err := uc.reservationRepo.Create(ctx, reservationEntity)
 	if err != nil {
 		logger.Error("failed to create reservation", zap.Error(err))
-		return CreateReservationResponse{}, errors.ErrDatabase.Wrap(err)
+		return CreateReservationResponse{}, errors.Database("database operation", err)
 	}
 	reservationEntity.ID = id
 

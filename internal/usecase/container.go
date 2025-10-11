@@ -1,49 +1,62 @@
+/*
+Package usecase provides the dependency injection container for all application use cases.
+
+This is the central wiring point following Clean Architecture principles:
+- Infrastructure services (JWT, Password, Gateway) are created in app.go
+- Domain services (Book, Member, Reservation) are created in factories
+- Use cases combine domain services with repositories
+
+The container is now split into domain-specific factories for better organization:
+- book_factory.go - Book and author use cases
+- auth_factory.go - Authentication and member use cases
+- payment_factory.go - Payment, saved card, and receipt use cases
+- reservation_factory.go - Reservation use cases
+
+For detailed workflow, see:
+- .claude/development-workflows.md - Step-by-step feature guide
+- .claude/adr/003-domain-services-vs-infrastructure.md - Service creation patterns
+*/
 package usecase
 
 import (
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
+	"library-service/internal/domain/payment"
 	"library-service/internal/domain/reservation"
 	"library-service/internal/infrastructure/auth"
-	"library-service/internal/usecase/authops"
-	"library-service/internal/usecase/bookops"
-	"library-service/internal/usecase/reservationops"
-	"library-service/internal/usecase/subops"
 )
 
-// Container holds all application usecases
+// Container holds all application use cases organized by domain
 type Container struct {
-	// Book usecases
-	CreateBook      *bookops.CreateBookUseCase
-	GetBook         *bookops.GetBookUseCase
-	ListBooks       *bookops.ListBooksUseCase
-	UpdateBook      *bookops.UpdateBookUseCase
-	DeleteBook      *bookops.DeleteBookUseCase
-	ListBookAuthors *bookops.ListBookAuthorsUseCase
+	// Book domain
+	Book   BookUseCases
+	Author AuthorUseCases
 
-	// Subscription usecases
-	SubscribeMember *subops.SubscribeMemberUseCase
+	// Member domain
+	Auth         AuthUseCases
+	Member       MemberUseCases
+	Subscription SubscriptionUseCases
 
-	// Auth usecases
-	RegisterMember   *authops.RegisterUseCase
-	LoginMember      *authops.LoginUseCase
-	RefreshToken     *authops.RefreshTokenUseCase
-	ValidateToken    *authops.ValidateTokenUseCase
+	// Reservation domain
+	Reservation ReservationUseCases
 
-	// Reservation usecases
-	CreateReservation      *reservationops.CreateReservationUseCase
-	CancelReservation      *reservationops.CancelReservationUseCase
-	GetReservation         *reservationops.GetReservationUseCase
-	ListMemberReservations *reservationops.ListMemberReservationsUseCase
+	// Payment domain
+	Payment   PaymentUseCases
+	SavedCard SavedCardUseCases
+	Receipt   ReceiptUseCases
 }
 
 // Repositories holds all repository interfaces
 type Repositories struct {
-	Book        book.Repository
-	Author      author.Repository
-	Member      member.Repository
-	Reservation reservation.Repository
+	Book          book.Repository
+	Author        author.Repository
+	Member        member.Repository
+	Reservation   reservation.Repository
+	Payment       payment.Repository
+	SavedCard     payment.SavedCardRepository
+	CallbackRetry payment.CallbackRetryRepository
+	Receipt       payment.ReceiptRepository
 }
 
 // Caches holds all cache interfaces
@@ -58,35 +71,70 @@ type AuthServices struct {
 	PasswordService *auth.PasswordService
 }
 
-// NewContainer creates a new usecase container with all dependencies injected
-func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices) *Container {
-	// Create domain services
-	bookService := book.NewService()
-	memberService := member.NewService()
-	reservationService := reservation.NewService()
+// GatewayServices holds all gateway services
+type GatewayServices struct {
+	PaymentGateway interface {
+		payment.Gateway
+		payment.GatewayConfig
+	}
+}
+
+// NewContainer creates a new use case container using domain-specific factories
+func NewContainer(
+	repos *Repositories,
+	caches *Caches,
+	authSvcs *AuthServices,
+	gatewaySvcs *GatewayServices,
+) *Container {
+	// Create book-related use cases
+	bookUseCases := newBookUseCases(
+		repos.Book,
+		repos.Author,
+		caches.Book,
+		caches.Author,
+	)
+
+	authorUseCases := newAuthorUseCases(repos.Author)
+
+	// Create authentication and member use cases
+	authUseCases := newAuthUseCases(
+		repos.Member,
+		authSvcs.JWTService,
+		authSvcs.PasswordService,
+	)
+
+	memberUseCases := newMemberUseCases(repos.Member)
+	subscriptionUseCases := newSubscriptionUseCases(repos.Member)
+
+	// Create reservation use cases
+	reservationUseCases := newReservationUseCases(
+		repos.Reservation,
+		repos.Member,
+	)
+
+	// Create payment-related use cases
+	paymentRepos := PaymentRepositories{
+		Payment:       repos.Payment,
+		SavedCard:     repos.SavedCard,
+		CallbackRetry: repos.CallbackRetry,
+		Receipt:       repos.Receipt,
+	}
+
+	paymentUseCases, savedCardUseCases, receiptUseCases := newPaymentUseCases(
+		paymentRepos,
+		repos.Member,
+		gatewaySvcs.PaymentGateway,
+	)
 
 	return &Container{
-		// Book usecases
-		CreateBook:      bookops.NewCreateBookUseCase(repos.Book, caches.Book, bookService),
-		GetBook:         bookops.NewGetBookUseCase(repos.Book, caches.Book),
-		ListBooks:       bookops.NewListBooksUseCase(repos.Book),
-		UpdateBook:      bookops.NewUpdateBookUseCase(repos.Book, caches.Book),
-		DeleteBook:      bookops.NewDeleteBookUseCase(repos.Book, caches.Book),
-		ListBookAuthors: bookops.NewListBookAuthorsUseCase(repos.Book, repos.Author, caches.Author),
-
-		// Subscription usecases
-		SubscribeMember: subops.NewSubscribeMemberUseCase(repos.Member, memberService),
-
-		// Auth usecases
-		RegisterMember:   authops.NewRegisterUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService, memberService),
-		LoginMember:      authops.NewLoginUseCase(repos.Member, authSvcs.PasswordService, authSvcs.JWTService),
-		RefreshToken:     authops.NewRefreshTokenUseCase(repos.Member, authSvcs.JWTService),
-		ValidateToken:    authops.NewValidateTokenUseCase(repos.Member, authSvcs.JWTService),
-
-		// Reservation usecases
-		CreateReservation:      reservationops.NewCreateReservationUseCase(repos.Reservation, repos.Member, reservationService),
-		CancelReservation:      reservationops.NewCancelReservationUseCase(repos.Reservation, reservationService),
-		GetReservation:         reservationops.NewGetReservationUseCase(repos.Reservation),
-		ListMemberReservations: reservationops.NewListMemberReservationsUseCase(repos.Reservation),
+		Book:         bookUseCases,
+		Author:       authorUseCases,
+		Auth:         authUseCases,
+		Member:       memberUseCases,
+		Subscription: subscriptionUseCases,
+		Reservation:  reservationUseCases,
+		Payment:      paymentUseCases,
+		SavedCard:    savedCardUseCases,
+		Receipt:      receiptUseCases,
 	}
 }

@@ -356,8 +356,8 @@ After 6 months:
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/15/index.html)
 - [pgx - PostgreSQL Driver for Go](https://github.com/jackc/pgx)
 - [PostgreSQL vs MongoDB](https://www.mongodb.com/compare/mongodb-postgresql)
-- `.claude/setup.md` - PostgreSQL setup instructions
-- `.claude/troubleshooting.md` - Database troubleshooting
+- `.claude/development-guide.md` - PostgreSQL setup instructions
+- `.claude/reference/debugging-guide.md` - Database debugging techniques
 
 ## Related ADRs
 

@@ -562,6 +562,6 @@ See `.github/workflows/ci.yml` for CI configuration.
 
 ## Next Steps
 
-- Review [Development Guide](./development.md) for workflow
-- Check [API Documentation](./api.md) for endpoint testing
+- Review [Development Guide](./development-guide.md) for workflow
+- Check [Architecture Documentation](./architecture.md) for patterns and endpoint testing
 - See [Standards](./standards.md) for code quality

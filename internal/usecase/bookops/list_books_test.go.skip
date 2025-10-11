@@ -1,0 +1,139 @@
+package bookops
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/adapters/repository/mocks"
+	"library-service/internal/domain/book"
+	"library-service/pkg/errors"
+	"library-service/test/testutil"
+)
+
+func TestListBooksUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name         string
+		request      ListBooksRequest
+		setupMocks   func(*mocks.MockRepository)
+		expectError  bool
+		errorCheck   func(*testing.T, error)
+		validateFunc func(*testing.T, ListBooksResponse)
+	}{
+		{
+			name:    "successful list with multiple books",
+			request: ListBooksRequest{},
+			setupMocks: func(repo *mocks.MockRepository) {
+				book1 := validBook()
+				book1.ID = "book-1"
+
+				book2 := validBook()
+				book2.ID = "book-2"
+				book2.Name = strPtr("The Pragmatic Programmer")
+
+				book3 := validBook()
+				book3.ID = "book-3"
+				book3.Name = strPtr("Design Patterns")
+
+				// Repository returns 3 books
+				repo.EXPECT().
+					List(mock.Anything).
+					Return([]book.Book{book1, book2, book3}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListBooksResponse) {
+				testutil.AssertEqual(t, 3, resp.Total)
+				testutil.AssertEqual(t, 3, len(resp.Books))
+				testutil.AssertEqual(t, "book-1", resp.Books[0].ID)
+				testutil.AssertEqual(t, "book-2", resp.Books[1].ID)
+				testutil.AssertEqual(t, "book-3", resp.Books[2].ID)
+				testutil.AssertEqual(t, "Clean Code: A Handbook of Agile Software Craftsmanship", resp.Books[0].Name)
+				testutil.AssertEqual(t, "The Pragmatic Programmer", resp.Books[1].Name)
+				testutil.AssertEqual(t, "Design Patterns", resp.Books[2].Name)
+			},
+		},
+		{
+			name:    "empty list (no books)",
+			request: ListBooksRequest{},
+			setupMocks: func(repo *mocks.MockRepository) {
+				// Repository returns empty slice
+				repo.EXPECT().
+					List(mock.Anything).
+					Return([]book.Book{}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListBooksResponse) {
+				testutil.AssertEqual(t, 0, resp.Total)
+				testutil.AssertEqual(t, 0, len(resp.Books))
+			},
+		},
+		{
+			name:    "repository error during list",
+			request: ListBooksRequest{},
+			setupMocks: func(repo *mocks.MockRepository) {
+				// Repository returns error
+				repo.EXPECT().
+					List(mock.Anything).
+					Return(nil, errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+			},
+		},
+		{
+			name:    "single book in list",
+			request: ListBooksRequest{},
+			setupMocks: func(repo *mocks.MockRepository) {
+				book1 := validBook()
+				book1.ID = "book-single"
+
+				// Repository returns 1 book
+				repo.EXPECT().
+					List(mock.Anything).
+					Return([]book.Book{book1}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListBooksResponse) {
+				testutil.AssertEqual(t, 1, resp.Total)
+				testutil.AssertEqual(t, 1, len(resp.Books))
+				testutil.AssertEqual(t, "book-single", resp.Books[0].ID)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := mocks.NewMockRepository(t)
+			tt.setupMocks(mockRepo)
+
+			// Create use case
+			uc := NewListBooksUseCase(mockRepo)
+
+			// Execute
+			ctx := context.Background()
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				testutil.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				testutil.AssertNoError(t, err)
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Mocks verify expectations automatically
+		})
+	}
+}

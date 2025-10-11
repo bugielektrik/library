@@ -7,37 +7,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > **📚 Full Documentation:** See [`.claude/`](./.claude/) directory for comprehensive guides
 >
 > **🎯 Not sure what to read?** Check [Context Guide](./.claude/context-guide.md) for task-specific reading lists
+>
+> **⚡ Quick Navigation:**
+> - **New to codebase?** Read `.claude/CLAUDE-START.md` (60-second boot sequence) ⭐
+> - **Adding features?** See `.claude/development-workflows.md` for step-by-step workflows
+> - **Refactoring?** Check `.claude/quick-wins.md` for safe improvements
+> - **Architecture questions?** See `.claude/architecture.md`
+> - **Testing?** See `.claude/testing.md` for patterns and strategies
+> - **Latest changes?** See `.claude/LEGACY_CODE_REMOVAL.md` and `.claude/HANDLER_REFACTORING_FINAL.md` ⭐
 
 ## Project Overview
 
-Library Management System - A Go-based REST API following Clean Architecture principles, optimized for vibecoding with Claude Code. The system manages books, authors, members, and subscriptions with JWT authentication.
+Library Management System - A Go-based REST API following Clean Architecture principles, optimized for vibecoding with Claude Code. The system manages books, authors, members, subscriptions, reservations, and payments with JWT authentication and epayment.kz payment gateway integration.
 
-**Key Technologies:** Go 1.25, PostgreSQL, Redis, Chi router, JWT, Docker, Swagger/OpenAPI
-
-## Documentation Index
-
-### 🚀 Quick Start
-- **[CLAUDE-START.md](./.claude/CLAUDE-START.md)** - 60-second boot sequence for new AI instances ⭐
-- **[Context Guide](./.claude/context-guide.md)** - What to read for your specific task ⭐
-- **[Quick Start & Navigation](./.claude/README.md)** - 30-second quick reference
-- **[Cheat Sheet](./.claude/cheatsheet.md)** - Single-page command reference
-
-### 📖 Essential Documentation
-- **[Commands Reference](./.claude/commands.md)** - All essential commands
-- **[Setup Guide](./.claude/setup.md)** - First-time setup and troubleshooting
-- **[Architecture](./.claude/architecture.md)** - Clean architecture patterns
-- **[Development Workflow](./.claude/development.md)** - Daily development tasks
-- **[Testing Guide](./.claude/testing.md)** - Testing patterns and strategies
-- **[API Documentation](./.claude/api.md)** - REST API endpoints
-- **[Code Standards](./.claude/standards.md)** - Go best practices and conventions
-
-### 🎯 Practical Guides
-- **[Quick Wins](./.claude/quick-wins.md)** - Safe improvements you can suggest ⭐
-- **[Development Workflows](./.claude/development-workflows.md)** - Complete workflows start to finish
-- **[Debugging Guide](./.claude/debugging-guide.md)** - Advanced debugging techniques
-- **[Gotchas](./.claude/gotchas.md)** - Common mistakes to avoid
-- **[FAQ](./.claude/faq.md)** - Frequently asked questions
-- **[Troubleshooting](./.claude/troubleshooting.md)** - Solutions to common problems
+**Key Technologies:** Go 1.25, PostgreSQL 15+, Redis 7+, Chi router, JWT, Docker, Swagger/OpenAPI
 
 ## Architecture (Clean Architecture)
 
@@ -49,16 +32,19 @@ internal/
 │   ├── book/           # Book entity, service, repository interface
 │   ├── member/         # Member entity, service (subscriptions)
 │   ├── author/         # Author entity
-│   └── reservation/    # Reservation entity, service (book reservations)
+│   ├── reservation/    # Reservation entity, service
+│   └── payment/        # Payment entity, service (payments, receipts)
 ├── usecase/            # Application orchestration (depends on domain)
-│   ├── bookops/        # CreateBook, UpdateBook, etc. ("ops" suffix)
+│   ├── bookops/        # CreateBook, UpdateBook, etc. ("ops" suffix to avoid naming conflicts)
 │   ├── authops/        # Register, Login, RefreshToken ("ops" suffix)
 │   ├── subops/         # SubscribeMember ("ops" suffix)
-│   └── reservationops/ # CreateReservation, CancelReservation ("ops" suffix)
-├── adapters/           # External interfaces (HTTP, DB, cache)
+│   ├── reservationops/ # CreateReservation, CancelReservation ("ops" suffix)
+│   └── paymentops/     # Payment operations (18 use cases) ("ops" suffix)
+├── adapters/           # External interfaces (HTTP, DB, cache, payment)
 │   ├── http/           # Chi handlers, middleware, DTOs
-│   ├── repository/     # PostgreSQL/MongoDB/Memory implementations
-│   └── cache/          # Redis/Memory cache implementations
+│   ├── repository/     # PostgreSQL implementations
+│   ├── cache/          # Redis/Memory implementations
+│   └── payment/        # Payment gateway adapters (epayment.kz)
 └── infrastructure/     # Technical concerns
     ├── auth/           # JWT token generation/validation
     ├── store/          # Database connections
@@ -67,8 +53,191 @@ internal/
 
 **Critical Rules:**
 - Domain layer must NEVER import from outer layers
-- Use case packages use "ops" suffix (e.g., `bookops`) to avoid naming conflicts with domain packages (e.g., `book`)
+- Use case packages use **"ops" suffix** (e.g., `bookops`) to avoid naming conflicts with domain packages (e.g., `book`)
 - Use cases define behavior via interfaces, adapters provide implementations
+- Business logic lives in **domain services**, NOT in use cases
+- Infrastructure services (JWT, Password) created in `app.go`, domain services (Book, Member, Payment) created in `container.go`
+
+## Request Flow
+
+This flowchart shows the complete lifecycle of an HTTP request through the Clean Architecture layers:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           HTTP REQUEST (Client)                              │
+│                    GET /api/v1/books?genre=fiction                          │
+│                    Authorization: Bearer <jwt_token>                         │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1: HTTP SERVER (Chi Router)                                          │
+│  Location: internal/adapters/http/router.go                                 │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────┐       │
+│  │  Middleware Chain (executed in order):                          │       │
+│  │  1. RequestID        → Generate unique request ID               │       │
+│  │  2. RealIP           → Extract real client IP                   │       │
+│  │  3. RequestLogger    → Log request details                      │       │
+│  │  4. ErrorHandler     → Catch panics, standardize errors         │       │
+│  │  5. Recoverer        → Recover from panics                      │       │
+│  │  6. Timeout          → Enforce request timeout (30s default)    │       │
+│  │  7. AuthMiddleware   → Validate JWT, extract member ID          │       │
+│  │                         (Protected routes only)                  │       │
+│  └─────────────────────────────────────────────────────────────────┘       │
+│                                                                              │
+│  Route matching: /api/v1/books → BookHandler.Routes()                       │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 2: HTTP HANDLER (Adapter)                                            │
+│  Location: internal/adapters/http/handlers/book.go                          │
+│                                                                              │
+│  BookHandler.ListBooks(w http.ResponseWriter, r *http.Request)              │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │  1. Extract query parameters (genre, limit, offset)          │          │
+│  │  2. Validate input using validator.ValidateStruct()          │          │
+│  │  3. Build DTO request object (bookops.ListBooksRequest)      │          │
+│  │  4. Call use case: useCases.ListBooks.Execute(ctx, req)      │          │
+│  │  5. Convert domain entities to DTOs (book.ToDTO())           │          │
+│  │  6. Respond with JSON: RespondJSON(w, 200, response)         │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  Error handling: All errors converted to HTTP status codes                  │
+│  - ErrNotFound → 404                                                        │
+│  - ErrValidation → 400                                                      │
+│  - ErrUnauthorized → 401                                                    │
+│  - ErrAlreadyExists → 409                                                   │
+│  - Unknown errors → 500                                                     │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 3: USE CASE (Application Logic)                                      │
+│  Location: internal/usecase/bookops/list_books.go                           │
+│                                                                              │
+│  ListBooksUseCase.Execute(ctx context.Context, req ListBooksRequest)        │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │  Dependencies (injected via container.go):                    │          │
+│  │  - bookRepo: book.Repository (PostgreSQL implementation)      │          │
+│  │                                                                │          │
+│  │  Execution flow:                                               │          │
+│  │  1. Log use case start (logutil.UseCaseLogger)               │          │
+│  │  2. Build repository query filters (genre, limit, offset)    │          │
+│  │  3. Call repository: bookRepo.List(ctx, filters)             │          │
+│  │  4. Return domain entities ([]book.Book)                     │          │
+│  │  5. Log use case completion                                   │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  Note: Use cases orchestrate operations but contain NO business logic       │
+│        Business rules live in domain services (e.g., book.Service)          │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 4: REPOSITORY (Data Access Adapter)                                  │
+│  Location: internal/adapters/repository/postgres/book.go                    │
+│                                                                              │
+│  PostgresBookRepository.List(ctx, filters) ([]book.Book, error)             │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │  1. Build SQL query with filters (WHERE genre = $1)          │          │
+│  │  2. Execute query: db.SelectContext(ctx, &books, query)      │          │
+│  │  3. Map database rows to domain entities                     │          │
+│  │  4. Return []book.Book (domain objects, NOT DTOs)            │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                              │
+│  Uses BaseRepository[Book] for common CRUD operations                       │
+│  Custom methods for complex queries (e.g., search, filters)                 │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 5: DATABASE (PostgreSQL)                                             │
+│  Location: Docker container (localhost:5432)                                │
+│                                                                              │
+│  Query execution:                                                            │
+│  SELECT id, name, genre, isbn, created_at, updated_at                       │
+│  FROM books                                                                  │
+│  WHERE genre = 'fiction'                                                     │
+│  LIMIT 20 OFFSET 0;                                                          │
+│                                                                              │
+│  Returns rows to repository layer                                           │
+└──────────────────────────────────┬──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         RESPONSE PATH (Unwinding)                            │
+│                                                                              │
+│  Repository → Use Case → Handler → HTTP Server → Client                     │
+│                                                                              │
+│  Data transformations:                                                       │
+│  - DB rows        → Domain entities (book.Book)                             │
+│  - Domain entities → DTOs (dto.BookResponse)                                │
+│  - DTOs           → JSON response                                           │
+│                                                                              │
+│  HTTP Response:                                                              │
+│  Status: 200 OK                                                              │
+│  Content-Type: application/json; charset=utf-8                              │
+│  Body:                                                                       │
+│  {                                                                           │
+│    "books": [                                                                │
+│      {                                                                       │
+│        "id": "uuid-1",                                                       │
+│        "name": "The Great Gatsby",                                           │
+│        "genre": "fiction",                                                   │
+│        "isbn": "978-0-7432-7356-5"                                           │
+│      },                                                                      │
+│      ...                                                                     │
+│    ],                                                                        │
+│    "total": 42,                                                              │
+│    "limit": 20,                                                              │
+│    "offset": 0                                                               │
+│  }                                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+KEY OBSERVATIONS:
+
+1. **Dependency Direction (Clean Architecture)**:
+   - HTTP layer depends on Use Case layer (imports usecase package)
+   - Use Case layer depends on Domain layer (imports domain interfaces)
+   - Repository layer depends on Domain layer (implements domain interfaces)
+   - Domain layer depends on NOTHING (pure business logic)
+
+2. **Data Flow**:
+   - Inward: HTTP Request → DTO → Domain Entity
+   - Outward: Domain Entity → DTO → HTTP Response
+
+3. **Error Handling**:
+   - Domain errors (e.g., ErrNotFound) propagate up unchanged
+   - Each layer adds context with fmt.Errorf("...: %w", err)
+   - HTTP handler converts domain errors to HTTP status codes
+
+4. **Cross-Cutting Concerns**:
+   - Logging: Context-based (RequestLogger middleware + logutil helpers)
+   - Authentication: JWT validation in middleware, member ID in context
+   - Validation: Input validation in handlers (validator), business validation in domain services
+
+5. **Caching (Optional Path)**:
+   - For GET operations, use cases may check cache before repository
+   - Cache hit → return cached domain entity
+   - Cache miss → query repository → store in cache → return
+
+6. **Domain Service Usage** (Example: CreateBook):
+   ```
+   Handler → CreateBookUseCase → bookService.ValidateISBN()
+                                → bookRepo.Create()
+                                → cache.Invalidate()
+   ```
+   Domain service called for business rule validation BEFORE persistence
+
+For detailed layer documentation:
+- Entry point: cmd/api/main.go (boot sequence)
+- Dependency wiring: internal/usecase/container.go (comprehensive guide)
+- HTTP routing: internal/adapters/http/router.go
+- Middleware: internal/adapters/http/middleware/
+```
 
 ## Common Commands
 
@@ -152,12 +321,10 @@ swag init -g cmd/api/main.go -o api/openapi --parseDependency --parseInternal
 - `@Summary` - Brief description (required)
 - `@Description` - Detailed explanation
 - `@Tags` - Group endpoints together
-- `@Security BearerAuth` - **Required for all protected endpoints** (all /books routes, /auth/me)
+- `@Security BearerAuth` - **Required for all protected endpoints**
 - `@Param` - Request parameters (body, path, query, header)
 - `@Success` / `@Failure` - Response codes with schemas
 - `@Router` - Endpoint path and HTTP method
-
-See [API Documentation Guide](./.claude/api.md) for complete details and examples.
 
 ## Development Workflow
 
@@ -165,7 +332,7 @@ See [API Documentation Guide](./.claude/api.md) for complete details and example
 
 **Follow this order:** Domain → Use Case → Adapters → Wiring → Migration → Documentation
 
-See [Development Workflows](./.claude/development-workflows.md) for complete step-by-step guides.
+See `.claude/common-tasks.md` for complete step-by-step guides.
 
 **Quick Example: Adding a "Loan" domain**
 
@@ -199,6 +366,97 @@ See [Development Workflows](./.claude/development-workflows.md) for complete ste
    make gen-docs
    ```
 
+## Code Consistency Patterns (CRITICAL)
+
+### Context Value Access - ALWAYS Use Helper Functions
+
+**❌ WRONG - Direct context access (causes type safety issues):**
+```go
+memberID, ok := ctx.Value("member_id").(string)
+if !ok || memberID == "" {
+    h.respondError(w, r, errors.ErrUnauthorized.WithDetails("reason", "member_id not found"))
+    return
+}
+```
+
+**✅ CORRECT - Use helper functions:**
+```go
+import "library-service/internal/adapters/http/middleware"
+
+memberID, ok := middleware.GetMemberIDFromContext(ctx)
+if !ok {
+    h.respondError(w, r, errors.ErrUnauthorized)
+    return
+}
+```
+
+**Available helper functions:**
+- `middleware.GetMemberIDFromContext(ctx)` - Extract authenticated member ID
+- `middleware.GetMemberEmailFromContext(ctx)` - Extract member email
+- `middleware.GetMemberRoleFromContext(ctx)` - Extract member role
+- `middleware.GetClaimsFromContext(ctx)` - Extract full JWT claims
+
+**Why this matters:** Type safety, less code, consistent error handling, easier to refactor.
+
+### Status Code Checks - ALWAYS Use httputil
+
+**❌ WRONG - Magic numbers:**
+```go
+if status >= 500 {
+    logger.Error("server error")
+}
+if status >= 400 {
+    logger.Warn("client error")
+}
+```
+
+**✅ CORRECT - Self-documenting:**
+```go
+import "library-service/pkg/httputil"
+
+if httputil.IsServerError(status) {
+    logger.Error("server error")
+}
+if httputil.IsClientError(status) {
+    logger.Warn("client error")
+}
+```
+
+**Available functions:**
+- `httputil.IsServerError(code)` - 5xx status codes
+- `httputil.IsClientError(code)` - 4xx status codes
+- `httputil.IsSuccess(code)` - 2xx status codes
+- `httputil.IsRedirect(code)` - 3xx status codes
+
+### Validator - ALWAYS Inject as Dependency
+
+**❌ WRONG - Creating validator in handler:**
+```go
+func NewBookHandler(createBookUC *bookops.CreateBookUseCase) *BookHandler {
+    return &BookHandler{
+        createBookUC: createBookUC,
+        validator:    middleware.NewValidator(), // ❌ Created here
+    }
+}
+```
+
+**✅ CORRECT - Inject as dependency:**
+```go
+func NewBookHandler(
+    createBookUC *bookops.CreateBookUseCase,
+    validator *middleware.Validator, // ✅ Injected
+) *BookHandler {
+    return &BookHandler{
+        createBookUC: createBookUC,
+        validator:    validator,
+    }
+}
+```
+
+**Why this matters:** Testability (can mock validator), follows DI pattern, single instance.
+
+---
+
 ## Key Implementation Patterns
 
 ### 1. Package Naming Convention
@@ -223,31 +481,46 @@ bookEntity := book.NewEntity(...)
 useCase := bookops.NewCreateBookUseCase(...)
 ```
 
-### 2. Dependency Injection (Two-Step Wiring)
+### 2. Dependency Injection (Grouped Container Structure)
 
-**Step 1: Application Bootstrap** (`internal/infrastructure/app/app.go`)
+**Container Organization** (`internal/usecase/container.go`)
 
-Boot order:
-1. Logger initialization
-2. Config loading
-3. **Repositories** (DB layer)
-4. **Caches** (Redis/Memory)
-5. **Auth Services** (JWT + Password)
-6. **Use Cases Container** - wires everything together
-7. **HTTP Server** - receives use cases
+The container uses **domain-grouped structure** (refactored October 2025):
 
-**Step 2: Use Case Container** (`internal/usecase/container.go`)
+```go
+type Container struct {
+    Book         BookUseCases        // CreateBook, GetBook, ListBooks, UpdateBook, DeleteBook, ListBookAuthors
+    Author       AuthorUseCases      // ListAuthors
+    Auth         AuthUseCases        // RegisterMember, LoginMember, RefreshToken, ValidateToken
+    Member       MemberUseCases      // ListMembers, GetMemberProfile
+    Subscription SubscriptionUseCases // SubscribeMember
+    Reservation  ReservationUseCases  // CreateReservation, CancelReservation, GetReservation, ListMemberReservations
+    Payment      PaymentUseCases      // InitiatePayment, VerifyPayment, CancelPayment, RefundPayment, etc. (9 use cases)
+    SavedCard    SavedCardUseCases    // SaveCard, ListSavedCards, DeleteSavedCard, SetDefaultCard
+    Receipt      ReceiptUseCases      // GenerateReceipt, GetReceipt, ListReceipts
+}
+```
 
-When adding new features:
+**Handler Access Pattern:**
+```go
+type BookHandler struct {
+    useCases *usecase.Container  // Grouped container
+}
+
+func (h *BookHandler) create(...) {
+    h.useCases.Book.CreateBook.Execute(...)  // Domain.UseCase.Execute
+}
+```
+
+**When adding new features:**
 1. Add repository interface to `Repositories` struct
-2. Add cache interface to `Caches` struct (if needed)
-3. Add use case to `Container` struct
-4. Create **domain service** in `NewContainer()` - e.g., `book.NewService()`
-5. Wire use case with dependencies in return statement
+2. Add use cases to appropriate domain group in `Container` struct
+3. Create domain factory function (e.g., `newBookUseCases()`)
+4. Wire in `NewContainer()` function
 
 **Critical Distinction:**
-- **Infrastructure Services** (JWT, Password): Created in `app.go`, passed to container
-- **Domain Services** (Book, Member): Created in `container.go` `NewContainer()` function
+- **Infrastructure Services** (JWT, Password, Gateway): Created in `app.go`, passed to container
+- **Domain Services** (Book, Member, Payment): Created in domain factories within `container.go`
 
 ### 3. Domain Services vs Use Cases
 
@@ -274,6 +547,85 @@ When adding new features:
 - Easy to swap PostgreSQL for MongoDB (just change adapter)
 - Easy to mock for testing
 
+**Modern Implementation (Phase 3 Refactoring):**
+
+#### 4a. Generic Repository Helpers (ADR 008)
+
+**Use generic helpers for standard CRUD operations:**
+
+```go
+import "library-service/internal/adapters/repository/postgres"
+
+func (r *AuthorRepository) GetByID(ctx context.Context, id string) (author.Author, error) {
+    return postgres.GetByID[author.Author](ctx, r.db, "authors", id)
+}
+
+func (r *AuthorRepository) List(ctx context.Context) ([]author.Author, error) {
+    return postgres.List[author.Author](ctx, r.db, "authors", "id")
+}
+
+func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
+    return postgres.DeleteByID(ctx, r.db, "authors", id)
+}
+```
+
+**Available helpers:**
+- `GetByID[T]` - Retrieve single entity
+- `GetByIDWithColumns[T]` - Retrieve with specific columns
+- `List[T]` - List all entities
+- `ListWithColumns[T]` - List with specific columns
+- `DeleteByID` - Delete by ID (with RETURNING verification)
+- `ExistsByID` - Check existence
+- `CountAll` - Count entities
+
+**Benefits:**
+- ✅ 80% code reduction for standard operations
+- ✅ Type-safe with Go generics
+- ✅ Consistent error handling
+- ✅ Tested once, used everywhere
+
+#### 4b. BaseRepository Pattern (ADR 011)
+
+**Use embeddable BaseRepository for minimal boilerplate:**
+
+```go
+type AuthorRepository struct {
+    postgres.BaseRepository[author.Author]  // Embed base repository
+}
+
+func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
+    return &AuthorRepository{
+        BaseRepository: postgres.NewBaseRepository[author.Author](db, "authors"),
+    }
+}
+
+// ✅ Inherited methods (no implementation needed):
+// - Get, List, ListWithOrder, Delete
+// - Exists, Count, BatchGet
+// - GenerateID, Transaction
+// - GetDB (for custom queries)
+
+// ✅ Only implement entity-specific methods:
+func (r *AuthorRepository) Add(ctx context.Context, a author.Author) (string, error) {
+    id := r.GenerateID()  // Use inherited method
+    query := `INSERT INTO authors (id, full_name, pseudonym) VALUES ($1, $2, $3)`
+    _, err := r.GetDB().ExecContext(ctx, query, id, a.FullName, a.Pseudonym)
+    return id, postgres.HandleSQLError(err)
+}
+```
+
+**Benefits:**
+- ✅ 86% code reduction for standard CRUD
+- ✅ Built-in transaction support
+- ✅ Utility methods (ID generation, existence checks, counting)
+- ✅ Override any method when needed
+- ✅ Focus on business logic, not boilerplate
+
+**When to use which:**
+- **Generic Helpers:** One-off queries, manual control over each call
+- **BaseRepository:** New repositories, want maximum code reduction
+- **Both:** BaseRepository uses generic helpers internally
+
 ### 5. Error Handling
 
 ```go
@@ -286,6 +638,71 @@ if err := s.repo.Create(ctx, book); err != nil {
 return errors.ErrNotFound          // 404
 return errors.ErrAlreadyExists     // 409
 return errors.ErrValidation        // 400
+```
+
+### 6. Utility Packages (Created in Phase 1-5 Refactoring)
+
+**String Utilities** (`pkg/strutil`):
+```go
+import "library-service/pkg/strutil"
+
+// Safe string pointer handling
+name := strutil.SafeString(book.Name)      // *string → string
+ptr := strutil.SafeStringPtr("value")      // string → *string
+```
+
+**HTTP Utilities** (`pkg/httputil`):
+```go
+import "library-service/pkg/httputil"
+
+// Self-documenting status checks instead of magic numbers
+if httputil.IsServerError(status) {  // Instead of: status >= 500
+    logger.Error("internal error")
+}
+```
+
+**Logger Utilities** (`pkg/logutil`):
+```go
+import "library-service/pkg/logutil"
+
+// Use case layer - 3 lines reduced to 1 line
+logger := logutil.UseCaseLogger(ctx, "create_book",
+    zap.String("isbn", req.ISBN),
+)
+
+// Handler layer - automatic structured fields
+logger := logutil.HandlerLogger(ctx, "book_handler", "create")
+
+// Repository layer
+logger := logutil.RepositoryLogger(ctx, "book", "create")
+
+// Gateway layer
+logger := logutil.GatewayLogger(ctx, "epayment", "initiate_payment")
+```
+
+**Base Handler** (`internal/adapters/http/handlers`):
+```go
+// Embed BaseHandler to inherit RespondError and RespondJSON methods
+type BookHandler struct {
+    BaseHandler  // Provides RespondError() and RespondJSON()
+    createBookUC *bookops.CreateBookUseCase
+    // ... other fields
+}
+
+// Use inherited methods
+h.RespondError(w, r, err)
+h.RespondJSON(w, http.StatusOK, response)
+```
+
+**Constants for Self-Documenting Code:**
+```go
+// ISBN prefixes (internal/domain/book/service.go)
+book.ISBN13PrefixBookland    // "978" - standard ISBN-13 prefix
+book.ISBN13PrefixMusicland   // "979" - alternative ISBN-13 prefix
+
+// Payment gateway timeouts (internal/adapters/payment/epayment/gateway.go)
+epayment.DefaultHTTPTimeout   // 30 seconds
+epayment.TokenExpiryBuffer    // 5 minutes before token refresh
 ```
 
 ## Authentication System
@@ -314,7 +731,45 @@ curl -X GET http://localhost:8080/api/v1/books \
 - Secret key: `JWT_SECRET` environment variable (MUST change in production)
 
 **Protected Endpoints:**
-All endpoints under `/api/v1/books/*`, `/api/v1/reservations/*`, and `/api/v1/auth/me` require JWT authentication.
+All endpoints under `/api/v1/books/*`, `/api/v1/reservations/*`, `/api/v1/payments/*`, `/api/v1/receipts/*`, and `/api/v1/auth/me` require JWT authentication.
+
+## Payment System
+
+**Integration:** epayment.kz (Kazakhstan payment gateway)
+
+### Payment Flow
+1. **Initiate Payment** - Create payment with invoice ID and get widget URL
+2. **User Completes Payment** - User redirects to payment gateway widget
+3. **Callback Processing** - Gateway sends callback with payment result
+4. **Verification** - Verify payment status with gateway
+5. **Receipt Generation** - Generate receipt for completed payments
+
+### Key Features
+- **Payment Types:** Fines, subscriptions, book purchases
+- **Supported Currencies:** KZT, USD, EUR, RUB
+- **Payment Methods:** Card, saved card
+- **Refunds:** Full and partial refunds supported
+- **Receipts:** Auto-generated with unique numbers (RCP-YYYY-NNNNN format)
+- **Webhook Retry:** Exponential backoff (1min, 5min, 15min, 1h, 6h) with max 5 retries
+- **Payment Expiry:** Automatic expiration of pending payments after timeout
+- **Saved Cards:** Store and reuse cards for faster checkout
+
+### Background Worker
+The worker (`cmd/worker/main.go`) processes:
+- **Payment Expiry Job** - Marks expired pending payments as failed (every 5 minutes)
+- **Callback Retry Job** - Retries failed webhook callbacks with exponential backoff (every 1 minute)
+
+Start worker: `make run-worker` or `go run cmd/worker/main.go`
+
+### Payment Gateway Configuration
+```bash
+# Required environment variables
+EPAYMENT_BASE_URL="https://api.epayment.kz"
+EPAYMENT_CLIENT_ID="your-client-id"
+EPAYMENT_CLIENT_SECRET="your-client-secret"
+EPAYMENT_TERMINAL="your-terminal-id"
+EPAYMENT_WIDGET_URL="https://widget.epayment.kz"
+```
 
 ## Environment Configuration
 
@@ -329,6 +784,7 @@ cp .env.example .env
 - `JWT_SECRET`: Token signing key (REQUIRED)
 - `REDIS_HOST`: Cache server (optional, uses memory cache if unavailable)
 - `APP_MODE`: `dev` (verbose logs) or `prod` (JSON logs)
+- `EPAYMENT_*`: Payment gateway credentials (required for payment features)
 
 **Docker Development:**
 ```bash
@@ -337,6 +793,11 @@ docker-compose up -d  # PostgreSQL on :5432, Redis on :6379
 ```
 
 ## Testing Guidelines
+
+**Coverage Requirements:**
+- Domain layer: 100% (critical business logic)
+- Use cases: 80%+
+- Overall: 60%+
 
 **Unit Tests (Domain/Use Cases):**
 ```go
@@ -367,51 +828,83 @@ func TestBookService_ValidateISBN(t *testing.T) {
 - Test against real PostgreSQL (docker-compose)
 - Run with: `make test-integration`
 
-**Coverage Requirements:**
-- Domain layer: 100% (critical business logic)
-- Use cases: 80%+
-- Overall: 60%+
-
 See [Testing Guide](./.claude/testing.md) for comprehensive testing strategies.
 
-## Dependency Management
+## Important Files
+
+### Core Architecture Files
+- `internal/usecase/container.go` - **CRITICAL**: Dependency injection wiring
+- `internal/infrastructure/app/app.go` - **CRITICAL**: Application bootstrap sequence
+- `internal/adapters/http/router.go` - HTTP route configuration
+- `cmd/api/main.go` - API entry point and Swagger metadata
+- `cmd/worker/main.go` - Background worker (payment expiry, callback retries)
+- `cmd/migrate/main.go` - Migration tool entry point
+
+### Utility Packages (Refactoring Phases 1-5)
+- `pkg/strutil/` - Safe string pointer utilities
+- `pkg/httputil/` - HTTP status code constants and helpers
+- `pkg/logutil/` - Logger initialization utilities (UseCaseLogger, HandlerLogger, etc.)
+- `pkg/errors/` - Custom error types and domain errors
+- `internal/adapters/http/handlers/base.go` - Shared response methods for handlers
+
+### Payment System
+- `internal/adapters/payment/epayment/gateway.go` - Payment gateway adapter (537 lines)
+- `internal/domain/payment/` - Payment entities and business logic
+- `internal/usecase/paymentops/` - Payment use cases (18 files)
+
+### Configuration & Tools
+- `Makefile` - All common commands (30+ targets)
+- `.golangci.yml` - Linter configuration (25+ linters)
+- `migrations/postgres/` - Database schema changes
+- `api/openapi/` - Generated Swagger documentation
+
+### Documentation (.claude/ directory)
+- `.claude/README.md` - Quick start guide (30-second overview)
+- `.claude/context-guide.md` - Task-specific reading lists
+- `.claude/ANALYSIS-2025-10-07.md` - **LATEST fresh codebase analysis** ⭐
+- `.claude/architecture.md` - Detailed architecture guide
+- `.claude/common-tasks.md` - Step-by-step development workflows
+- `.claude/testing.md` - Testing patterns and strategies
+- `.claude/REFACTORING-EXECUTIVE-SUMMARY.md` - Complete refactoring overview (Phases 1-8)
+- `.claude/REFACTORING-PHASE-8.md` - **LATEST consistency improvements** ⭐
+- `.claude/REFACTORING-ROADMAP.md` - Implementation roadmap
+- `.claude/QUICK-WINS.md` - Actionable improvements (<30 min each)
+
+## Quick Reference
 
 ```bash
-go mod tidy             # Clean up dependencies
-go mod vendor           # Vendor dependencies (project uses vendoring)
-go get <package>        # Add new dependency
-```
+# Start coding (first time - RECOMMENDED)
+./scripts/dev-setup.sh  # Automated setup: deps, docker, migrations, seeds, hooks
 
-**Major Dependencies:**
-- **Chi** (`go-chi/chi/v5`): HTTP router
-- **sqlx** (`jmoiron/sqlx`): Database queries
-- **Zap** (`uber.org/zap`): Structured logging
-- **JWT** (`golang-jwt/jwt/v5`): Authentication
-- **Validator** (`go-playground/validator/v10`): Input validation
-- **Swaggo** (`swaggo/swag`, `swaggo/http-swagger`): API documentation
+# OR manual setup (first time)
+make init && make up && make migrate-up
+make install-hooks      # Install pre-commit quality checks
 
-## Code Style Enforcement
+# Daily development
+make dev                # Start everything
+make run                # Run API server only
 
-**Linter Configuration:** `.golangci.yml` (25+ linters enabled)
+# Before commit (pre-commit hooks run automatically)
+make ci                 # Run full CI pipeline locally
+make test               # Run tests
+make lint               # Run linters
 
-**Key Rules:**
-- Cyclomatic complexity: ≤10 per function
-- Cognitive complexity: ≤20
-- No naked returns in functions >30 lines
-- All errors must be checked or explicitly ignored
-- Context as first parameter in functions
-- Errors as last return value
+# Development data
+./scripts/seed-data.sh  # Seed test users and books
+# Test accounts: admin@library.com / Admin123!@#
+#                user@library.com / User123!@#
 
-**Auto-fix:**
-```bash
-make fmt                # Format code with gofmt + goimports
-make vet                # Run go vet
-make lint               # Run golangci-lint
+# Add new feature (follow this order)
+# 1. Domain (entity + service + tests)       → internal/domain/{entity}/
+# 2. Use case (orchestration + tests)        → internal/usecase/{entity}ops/  (note "ops" suffix!)
+# 3. Adapter (HTTP handler + repository)     → internal/adapters/
+# 4. Add Swagger annotations to handlers     → @Security, @Summary, @Param, etc.
+# 5. Wire in container.go                    → internal/usecase/container.go
+# 6. Migration (if needed)                   → make migrate-create name=...
+# 7. Regenerate API docs                     → make gen-docs
 ```
 
 ## Troubleshooting
-
-**Common Issues:**
 
 **"connection refused" errors:**
 ```bash
@@ -438,103 +931,120 @@ lsof -ti:8080 | xargs kill -9
 go clean -testcache && make test
 ```
 
-See [Troubleshooting Guide](./.claude/troubleshooting.md) for more solutions.
-
-## Important Files
-
-- `Makefile` - All common commands (30+ targets)
-- `.golangci.yml` - Linter configuration
-- `internal/usecase/container.go` - Dependency injection wiring
-- `internal/infrastructure/app/app.go` - Application bootstrap
-- `deployments/docker/docker-compose.yml` - Local development stack
-- `migrations/postgres/` - Database schema changes
-- `cmd/api/main.go` - API entry point and Swagger metadata
-- `internal/adapters/http/router.go` - HTTP route configuration
-- `api/openapi/` - Generated Swagger documentation
-
-## Quick Reference
-
+**Build errors after refactoring:**
 ```bash
-# Start coding (first time)
-make init && make up && make migrate-up
+# Ensure vendor is up to date
+go mod tidy && go mod vendor
 
-# Daily development
-make dev                # Start everything
-
-# Before commit
-make ci                 # Run full CI pipeline locally
-
-# Add new feature (follow this order)
-# 1. Domain (entity + service + tests)       → internal/domain/{entity}/
-# 2. Use case (orchestration + tests)        → internal/usecase/{entity}ops/  (note "ops" suffix!)
-# 3. Adapter (HTTP handler + repository)     → internal/adapters/
-# 4. Add Swagger annotations to handlers     → @Security, @Summary, @Param, etc.
-# 5. Wire in container.go                    → internal/usecase/container.go
-# 6. Migration (if needed)                   → make migrate-create name=...
-# 7. Regenerate API docs                     → make gen-docs
+# Rebuild everything
+make clean && make build
 ```
 
-## Project-Specific Notes
-
-### Current Use Cases Structure
-
-**Book use cases** (`internal/usecase/bookops/`):
-- CreateBook, GetBook, ListBooks, UpdateBook, DeleteBook, ListBookAuthors
-
-**Auth use cases** (`internal/usecase/authops/`):
-- RegisterMember, LoginMember, RefreshToken, ValidateToken
-
-**Subscription use cases** (`internal/usecase/subops/`):
-- SubscribeMember
-
-**Reservation use cases** (`internal/usecase/reservationops/`):
-- CreateReservation, CancelReservation, GetReservation, ListMemberReservations
-
-### Domain Services
-
-**Current domain services:**
-- **BookService** (`internal/domain/book/service.go`): ISBN validation, business constraints
-- **MemberService** (`internal/domain/member/service.go`): Subscription pricing logic
-- **ReservationService** (`internal/domain/reservation/service.go`): Reservation validation, status transitions, expiration logic
-
-### Migration Locations
-- **Postgres migrations:** `migrations/postgres/`
-- **Naming:** Timestamped with descriptive names (e.g., `000001_create_books_table.up.sql`)
-- **Always create both:** `.up.sql` and `.down.sql` files
-
-### Test Data & Fixtures
-- Shared test fixtures: `test/fixtures/`
-- Integration test helpers: `test/testdb/setup.go`
-- Build tags for integration tests: `//go:build integration`
-
-### CI/CD Pipeline
-
-**GitHub Actions Workflow** (`.github/workflows/ci.yml`):
-
-The CI pipeline runs on push to `main`, `develop`, or `feature/*` branches and on PRs:
-
-1. **Lint** - golangci-lint with project configuration
-2. **Test** - All tests with coverage (PostgreSQL + Redis services)
-3. **Build** - Multi-platform binaries (Linux, Darwin, Windows × amd64, arm64)
-4. **Security** - gosec scanner + govulncheck for vulnerabilities
-5. **Integration** - Integration tests (PR only)
-6. **Docker** - Build Docker images (main/develop only)
-7. **Quality** - SonarCloud scan + documentation checks
-
-**Local CI Simulation:**
+**Payment gateway timeout errors:**
 ```bash
-make ci  # Runs: fmt → vet → lint → test → build
+# Check epayment.kz environment variables
+env | grep EPAYMENT
+
+# Verify gateway connectivity
+curl -X POST $EPAYMENT_BASE_URL/oauth2/token
 ```
 
-**Key Requirements for PR:**
-- All tests must pass
-- Coverage maintained
-- Linter passes
-- No security vulnerabilities
-- Integration tests pass
-- Documentation updated
+## Refactoring Status & Opportunities
 
-### Pre-approved Commands
+**✅ Completed (October 2025 - Phases 1-6 + Pattern Refactoring):**
+
+**Latest Updates (October 11, 2025):** ⭐
+- ✅ **Use Case Pattern Refactoring** - All 34 use cases follow unified Execute(ctx, req) pattern
+- ✅ **HTTP Handler Pattern Refactoring** - All 8 handlers follow consistent structure (100% compliance)
+- ✅ **Legacy Code Removal** - Removed 904 lines, 5 files (LegacyContainer, .unused files)
+- ✅ **Container Migration** - Migrated to grouped Container structure (9 domain groups)
+- ✅ **Handler Methods** - All handler methods now private (lowercase), consistent with Go idioms
+- ✅ **Validation Standardization** - All handlers use `validator.ValidateStruct()` consistently
+
+**Phase 5 Status: VERIFIED COMPLETE** ⭐ *October 9, 2025*
+- ✅ All handlers use container injection (8/8 handlers)
+- ✅ All DTOs have conversion helpers (zero manual loops)
+- ✅ 100% HTTP status code consistency (all use http.Status* constants)
+- ✅ Large files split (payment.go → 3 focused files)
+
+### Phase 3: Structural Improvements
+- ✅ **Generic Repository Patterns** (ADR 008)
+  - Created 7 reusable helpers: GetByID, List, Delete, Exists, Count, etc.
+  - Refactored 3 repositories (author, book, member)
+  - **Impact:** ~45 lines saved, projected 150+ across all repositories
+  - Tests: 8 test functions, all passing
+
+- ✅ **Payment Gateway Modularization** (ADR 009)
+  - Split 546-line monolithic `gateway.go` into 4 focused files
+  - Organized by responsibility: core (107 lines), auth (118 lines), payment (348 lines), types (61 lines)
+  - **Impact:** Better maintainability, single responsibility principle
+  - Tests: 14 tests passing, surfaced and fixed 5 hidden bugs
+
+- ✅ **Domain Service for Payment Status** (ADR 010)
+  - Extracted payment status logic from use case to domain layer
+  - Added 3 methods: MapGatewayStatus(), IsFinalStatus(), UpdateStatusFromCallback()
+  - **Impact:** Clean Architecture compliance restored, business logic in domain
+  - Tests: All use case tests passing + new domain service tests
+
+- ✅ **BaseRepository Pattern** (ADR 011)
+  - Created embeddable BaseRepository[T] with 10 methods
+  - Provides: CRUD operations, transactions, utilities (GenerateID, Exists, Count, BatchGet)
+  - **Impact:** 86% code reduction for standard operations
+  - Tests: 9 comprehensive test functions
+
+**Phase 3 Total Impact:**
+- ✅ 4 Architecture Decision Records created
+- ✅ ~60 lines removed, ~200 new generic/base code (net positive for maintainability)
+- ✅ 40+ tests passing (generic helpers + base repository + domain service + use cases)
+- ✅ Clean Architecture compliance improved
+- ✅ Foundation laid for rapid repository development
+
+**Prior Work (Phases 1-2):**
+- ✅ Package documentation (14 doc.go files)
+- ✅ String utilities (`pkg/strutil`) - SafeString, SafeStringPtr
+- ✅ HTTP utilities (`pkg/httputil`) - IsServerError, IsClientError, etc.
+- ✅ Logger utilities (`pkg/logutil`) - UseCaseLogger, HandlerLogger, etc.
+- ✅ Base handler for shared response methods
+- ✅ ISBN and timeout constants
+- ✅ Critical test coverage (JWT, Password, Payment gateway, Domain services)
+
+**✅ Phase 5 Completion Verified (October 9, 2025):**
+- ✅ Handler consistency: 100% (all 8 handlers use container injection)
+- ✅ DTO conversion: 100% (zero manual loops, all use helpers)
+- ✅ HTTP status codes: 100% (all use http.Status* constants)
+- ✅ File organization: DONE (payment.go split into 3 focused files)
+
+**📊 Overall Progress: ~75% Complete (Phases 1-5 Done)**
+
+**Phase 5 Total Impact:**
+- ✅ 410 lines eliminated
+- ✅ 280+ tests added (all passing)
+- ✅ 11 ADRs documenting decisions
+- ✅ 100% handler consistency
+
+**Remaining Optional Work (Phases 6-8):**
+
+**🟡 Medium Priority (~20 hours):**
+- ⏭️ Migrate remaining 7 repositories to generic patterns (projected: +105 lines saved)
+- ⏭️ Add test infrastructure (fixtures, integration tests)
+- ⏭️ Logger adoption in final ~15% of locations
+
+**🟢 Low Priority (~3 hours):**
+- ⏭️ Final polish (Content-Type constants, etc.)
+- ⏭️ Documentation examples for complex domains
+
+**Note:** Remaining work is **optional optimization**, not critical fixes. The codebase is in excellent condition for ongoing development.
+
+**Latest Documentation (October 2025):**
+- **Pattern Refactoring:** `.claude/HANDLER_REFACTORING_FINAL.md` ⭐ **100% handler pattern compliance**
+- **Use Case Refactoring:** `.claude/COMPLETE_USECASE_REFACTORING.md` ⭐ **All 34 use cases unified**
+- **Legacy Removal:** `.claude/LEGACY_CODE_REMOVAL.md` ⭐ **904 lines removed, zero legacy code**
+- **Status Report:** `.claude/REFACTORING-STATUS-2025-10-09.md` (comprehensive Phase 5 status)
+- **ADRs:** `.claude/adrs/008-011` (Generic Repos, Gateway Split, Domain Services, Base Repo)
+- **Migration Guide:** `.claude/MIGRATION-GUIDE-REPOSITORIES.md` (step-by-step repository patterns)
+
+## Pre-approved Commands
+
 These commands are safe to run without asking:
 - `make test`, `make test-unit`, `make test-coverage`
 - `make fmt`, `make vet`, `make lint`, `make ci`

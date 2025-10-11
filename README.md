@@ -60,39 +60,99 @@ library/
 
 ## Getting Started
 
-### 1. Clone the repository
+### ⚡ Quick Setup (Recommended)
+
+Get your development environment ready in minutes:
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd library
+
+# Run automated setup (checks prerequisites, installs deps, starts services, seeds data)
+./scripts/dev-setup.sh
+
+# Start developing!
+make run
+```
+
+The setup script will:
+- ✅ Check prerequisites (Go, Docker, Make)
+- ✅ Install dependencies and tools
+- ✅ Configure git hooks for quality checks
+- ✅ Start Docker services (PostgreSQL, Redis)
+- ✅ Run database migrations
+- ✅ Seed development data (test users & books)
+- ✅ Build the project
+
+**Test Accounts** (after seeding):
+- `admin@library.com` / `Admin123!@#`
+- `user@library.com` / `User123!@#`
+- `premium@library.com` / `Premium123!@#`
+
+### 📖 Manual Setup
+
+If you prefer step-by-step setup:
+
+#### 1. Clone the repository
 
 ```bash
 git clone <repository-url>
 cd library
 ```
 
-### 2. Set up environment variables
+#### 2. Set up environment variables
 
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
-### 3. Install dependencies
+#### 3. Install dependencies
 
 ```bash
 go mod download
 ```
 
-### 4. Run database migrations
+#### 4. Install git hooks (optional but recommended)
 
 ```bash
-go run cmd/migrate/main.go up
+make install-hooks
 ```
 
-### 5. Start the API server
+Pre-commit hooks will automatically run:
+- Code formatting (gofmt, goimports)
+- Go vet checks
+- Unit tests
+- Log file detection
+
+#### 5. Start Docker services
 
 ```bash
-go run cmd/api/main.go
+make up  # Starts PostgreSQL and Redis
+```
+
+#### 6. Run database migrations
+
+```bash
+make migrate-up
+```
+
+#### 7. Seed development data (optional)
+
+```bash
+./scripts/seed-data.sh
+```
+
+#### 8. Start the API server
+
+```bash
+make run
 ```
 
 The API will be available at http://localhost:8080
+
+**Swagger UI**: http://localhost:8080/swagger/index.html
 
 ## Development
 
@@ -268,12 +328,24 @@ Please read our [Contributing Guidelines](./docs/guides/CONTRIBUTING.md) for:
 
 **Quick Start for Contributors**:
 ```bash
-# Setup
-make init && make up && make migrate-up
+# Automated setup (recommended)
+./scripts/dev-setup.sh
 
-# Before commit
-make ci  # Runs: fmt → vet → lint → test → build
+# OR manual setup
+make init && make up && make migrate-up
+make install-hooks  # Install pre-commit hooks
+
+# Development workflow
+make test           # Run tests
+make lint           # Check code quality
+make ci             # Full CI pipeline: fmt → vet → lint → test → build
+
+# Pre-commit hooks run automatically on git commit
+# They ensure: formatting, vet checks, unit tests, no log files
 ```
+
+**Pre-commit Hooks**:
+Git hooks are automatically installed by the dev-setup script or via `make install-hooks`. They run quality checks before each commit to catch issues early.
 
 See also:
 - [Architecture Decisions](./docs/adr/README.md) - Understanding design choices

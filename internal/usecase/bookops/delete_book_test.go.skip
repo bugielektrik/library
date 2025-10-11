@@ -1,0 +1,141 @@
+package bookops
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/adapters/repository/mocks"
+	"library-service/internal/infrastructure/store"
+	"library-service/pkg/errors"
+	"library-service/test/testutil"
+)
+
+func TestDeleteBookUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name        string
+		request     DeleteBookRequest
+		setupMocks  func(*mocks.MockRepository, *mocks.MockCache)
+		expectError bool
+		errorCheck  func(*testing.T, error)
+	}{
+		{
+			name: "successful delete",
+			request: DeleteBookRequest{
+				ID: "book-123",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// Repository delete succeeds
+				repo.EXPECT().
+					Delete(mock.Anything, "book-123").
+					Return(nil).
+					Once()
+
+				// Cache removal succeeds
+				cache.EXPECT().
+					Set(mock.Anything, "book-123", mock.Anything).
+					Return(nil).
+					Once()
+			},
+			expectError: false,
+		},
+		{
+			name: "empty ID validation error",
+			request: DeleteBookRequest{
+				ID: "",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// No mocks should be called
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+				testutil.AssertStringContains(t, err.Error(), "Invalid input")
+			},
+		},
+		{
+			name: "book not found error",
+			request: DeleteBookRequest{
+				ID: "non-existent-book",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// Repository returns not found error
+				repo.EXPECT().
+					Delete(mock.Anything, "non-existent-book").
+					Return(store.ErrorNotFound).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+				testutil.AssertStringContains(t, err.Error(), "not found")
+			},
+		},
+		{
+			name: "repository error during delete",
+			request: DeleteBookRequest{
+				ID: "book-error",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// Repository returns database error
+				repo.EXPECT().
+					Delete(mock.Anything, "book-error").
+					Return(errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+			},
+		},
+		{
+			name: "cache removal failure (non-critical, should succeed)",
+			request: DeleteBookRequest{
+				ID: "book-cache-fail",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// Repository delete succeeds
+				repo.EXPECT().
+					Delete(mock.Anything, "book-cache-fail").
+					Return(nil).
+					Once()
+
+				// Cache removal fails (non-critical)
+				cache.EXPECT().
+					Set(mock.Anything, "book-cache-fail", mock.Anything).
+					Return(errors.ErrCache).
+					Once()
+			},
+			expectError: false, // Should succeed despite cache failure
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := mocks.NewMockRepository(t)
+			mockCache := mocks.NewMockCache(t)
+			tt.setupMocks(mockRepo, mockCache)
+
+			// Create use case
+			uc := NewDeleteBookUseCase(mockRepo, mockCache)
+
+			// Execute
+			ctx := context.Background()
+			err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				testutil.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				testutil.AssertNoError(t, err)
+			}
+
+			// Mocks verify expectations automatically
+		})
+	}
+}

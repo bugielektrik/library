@@ -1,0 +1,59 @@
+# Production configuration overrides
+# This file overrides settings from config.yaml for production environment
+
+app:
+  env: production
+  debug: false
+
+server:
+  read_timeout: 60s
+  write_timeout: 60s
+  idle_timeout: 120s
+  shutdown_timeout: 30s
+  enable_cors: false
+  allowed_origins:
+    - "https://library.example.com"
+    - "https://app.library.example.com"
+  enable_rate_limit: true
+  rate_limit: 1000  # Higher rate limit for production
+
+database:
+  ssl_mode: require
+  max_open_conns: 100
+  max_idle_conns: 50
+  conn_max_lifetime: 30m
+  enable_migration: false  # Migrations should be run separately in production
+
+redis:
+  enabled: true
+  pool_size: 50
+  ttl: 6h
+
+jwt:
+  access_token_ttl: 2h   # Shorter in production for security
+  refresh_token_ttl: 72h  # 3 days
+
+payment:
+  provider: stripe  # Use real payment provider
+  sandbox: false
+  retry_attempts: 5
+  retry_delay: 2s
+
+logging:
+  level: info
+  format: json
+  output: stdout
+  enable_caller: false
+  enable_stacktrace: true  # Enable for error tracking
+  max_size: 100
+  max_backups: 10
+  max_age: 30
+  compress: true
+
+metrics:
+  enabled: true
+  histograms: true
+
+features:
+  enable_swagger: false  # Disable in production
+  maintenance_mode: false

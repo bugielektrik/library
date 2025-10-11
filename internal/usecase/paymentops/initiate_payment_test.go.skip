@@ -1,0 +1,364 @@
+package paymentops
+
+import (
+	"library-service/test/helpers"
+	"library-service/test/builders"
+	"library-service/internal/adapters/repository/mocks"
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+// Mock for payment.Repository
+type mockPaymentRepository struct {
+	mock.Mock
+}
+
+func (m *mocks.MockPaymentRepository) Create(ctx context.Context, payment payment.Payment) (string, error) {
+	args := m.Called(ctx, payment)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mocks.MockPaymentRepository) GetByID(ctx context.Context, id string) (payment.Payment, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(payment.Payment), args.Error(1)
+}
+
+func (m *mocks.MockPaymentRepository) GetByInvoiceID(ctx context.Context, invoiceID string) (payment.Payment, error) {
+	args := m.Called(ctx, invoiceID)
+	return args.Get(0).(payment.Payment), args.Error(1)
+}
+
+func (m *mocks.MockPaymentRepository) ListByMemberID(ctx context.Context, memberID string) ([]payment.Payment, error) {
+	args := m.Called(ctx, memberID)
+	return args.Get(0).([]payment.Payment), args.Error(1)
+}
+
+func (m *mocks.MockPaymentRepository) ListByStatus(ctx context.Context, status payment.Status) ([]payment.Payment, error) {
+	args := m.Called(ctx, status)
+	return args.Get(0).([]payment.Payment), args.Error(1)
+}
+
+func (m *mocks.MockPaymentRepository) UpdateStatus(ctx context.Context, id string, status payment.Status) error {
+	args := m.Called(ctx, id, status)
+	return args.Error(0)
+}
+
+func (m *mocks.MockPaymentRepository) Update(ctx context.Context, id string, payment payment.Payment) error {
+	args := m.Called(ctx, id, payment)
+	return args.Error(0)
+}
+
+// Mock for PaymentGateway
+type mockPaymentGateway struct {
+	mock.Mock
+}
+
+func (m *mockPaymentGateway) GetAuthToken(ctx context.Context) (string, error) {
+	args := m.Called(ctx)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockPaymentGateway) GetTerminal() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *mockPaymentGateway) GetBackLink() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *mockPaymentGateway) GetPostLink() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *mockPaymentGateway) GetWidgetURL() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+func (m *mockPaymentGateway) CheckPaymentStatus(ctx context.Context, invoiceID string) (*payment.GatewayStatusResponse, error) {
+	args := m.Called(ctx, invoiceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*payment.GatewayStatusResponse), args.Error(1)
+}
+
+func (m *mockPaymentGateway) RefundPayment(ctx context.Context, transactionID string, amount *float64, externalID string) error {
+	args := m.Called(ctx, transactionID, amount, externalID)
+	return args.Error(0)
+}
+
+func (m *mockPaymentGateway) CancelPayment(ctx context.Context, transactionID string) error {
+	args := m.Called(ctx, transactionID)
+	return args.Error(0)
+}
+
+func (m *mockPaymentGateway) ChargeCard(ctx context.Context, req *payment.CardChargeRequest) (*payment.CardChargeResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*payment.CardChargeResponse), args.Error(1)
+}
+
+// Helper function to create a valid payment request
+func validPaymentRequest() InitiatePaymentRequest {
+	return InitiatePaymentRequest{
+		MemberID:    "member-123",
+		Amount:      10000, // 100.00 KZT
+		Currency:    "KZT",
+		PaymentType: payment.PaymentTypeFine,
+	}
+}
+
+// Helper function to create a pointer to string
+func strPtr(s string) *string {
+	return &s
+}
+
+func TestInitiatePaymentUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name         string
+		request      InitiatePaymentRequest
+		setupMocks   func(*mocks.MockPaymentRepository, *mockPaymentGateway)
+		expectError  bool
+		errorCheck   func(*testing.T, error)
+		validateFunc func(*testing.T, InitiatePaymentResponse)
+	}{
+		{
+			name:    "successful payment initiation",
+			request: validPaymentRequest(),
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// Repository create succeeds
+				repo.On("Create", mock.Anything, mock.MatchedBy(func(p payment.Payment) bool {
+					return p.MemberID == "member-123" &&
+						p.Amount == 10000 &&
+						p.Currency == "KZT" &&
+						p.PaymentType == payment.PaymentTypeFine &&
+						p.Status == payment.StatusPending
+				})).Return("payment-123", nil).Once()
+
+				// Gateway returns auth token
+				gateway.On("GetAuthToken", mock.Anything).
+					Return("auth-token-abc123", nil).
+					Once()
+
+				// Gateway info methods
+				gateway.On("GetTerminal").Return("terminal-123").Once()
+				gateway.On("GetBackLink").Return("https://example.com/back").Once()
+				gateway.On("GetPostLink").Return("https://example.com/callback").Once()
+				gateway.On("GetWidgetURL").Return("https://gateway.example.com/widget.js").Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp InitiatePaymentResponse) {
+				helpers.AssertEqual(t, "payment-123", resp.PaymentID)
+				helpers.AssertTrue(t, resp.InvoiceID != "")
+				helpers.AssertEqual(t, "auth-token-abc123", resp.AuthToken)
+				helpers.AssertEqual(t, "terminal-123", resp.Terminal)
+				helpers.AssertEqual(t, int64(10000), resp.Amount)
+				helpers.AssertEqual(t, "KZT", resp.Currency)
+				helpers.AssertEqual(t, "https://example.com/back", resp.BackLink)
+				helpers.AssertEqual(t, "https://example.com/callback", resp.PostLink)
+				helpers.AssertEqual(t, "https://gateway.example.com/widget.js", resp.WidgetURL)
+			},
+		},
+		{
+			name: "validation error - invalid amount (zero)",
+			request: InitiatePaymentRequest{
+				MemberID:    "member-123",
+				Amount:      0, // Invalid
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// No mocks should be called - validation fails first
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Validation failed")
+			},
+		},
+		{
+			name: "validation error - invalid amount (negative)",
+			request: InitiatePaymentRequest{
+				MemberID:    "member-123",
+				Amount:      -5000, // Invalid
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// No mocks should be called
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Validation failed")
+			},
+		},
+		{
+			name: "validation error - invalid currency",
+			request: InitiatePaymentRequest{
+				MemberID:    "member-123",
+				Amount:      10000,
+				Currency:    "INVALID", // Not in KZT, USD, EUR, RUB
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// No mocks should be called
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Validation failed")
+			},
+		},
+		{
+			name: "validation error - empty member ID",
+			request: InitiatePaymentRequest{
+				MemberID:    "", // Invalid
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// No mocks should be called
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Validation failed")
+			},
+		},
+		{
+			name:    "repository create error",
+			request: validPaymentRequest(),
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// Repository create fails
+				repo.On("Create", mock.Anything, mock.Anything).
+					Return("", errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+			},
+		},
+		{
+			name:    "gateway auth token error - payment marked as failed",
+			request: validPaymentRequest(),
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// Repository create succeeds
+				repo.On("Create", mock.Anything, mock.Anything).
+					Return("payment-456", nil).
+					Once()
+
+				// Gateway fails to return auth token
+				gateway.On("GetAuthToken", mock.Anything).
+					Return("", errors.ErrPaymentGateway).
+					Once()
+
+				// Payment status should be updated to failed
+				repo.On("UpdateStatus", mock.Anything, "payment-456", payment.StatusFailed).
+					Return(nil).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+			},
+		},
+		{
+			name: "successful with related entity ID",
+			request: InitiatePaymentRequest{
+				MemberID:        "member-123",
+				Amount:          5000,
+				Currency:        "USD",
+				PaymentType:     payment.PaymentTypeSubscription,
+				RelatedEntityID: strPtr("subscription-789"),
+			},
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// Repository create with related entity
+				repo.On("Create", mock.Anything, mock.MatchedBy(func(p payment.Payment) bool {
+					return p.RelatedEntityID != nil &&
+						*p.RelatedEntityID == "subscription-789" &&
+						p.PaymentType == payment.PaymentTypeSubscription
+				})).Return("payment-789", nil).Once()
+
+				// Gateway methods
+				gateway.On("GetAuthToken", mock.Anything).Return("token-xyz", nil).Once()
+				gateway.On("GetTerminal").Return("terminal-456").Once()
+				gateway.On("GetBackLink").Return("https://example.com/back").Once()
+				gateway.On("GetPostLink").Return("https://example.com/callback").Once()
+				gateway.On("GetWidgetURL").Return("https://gateway.example.com/widget.js").Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp InitiatePaymentResponse) {
+				helpers.AssertEqual(t, "payment-789", resp.PaymentID)
+				helpers.AssertEqual(t, int64(5000), resp.Amount)
+				helpers.AssertEqual(t, "USD", resp.Currency)
+			},
+		},
+		{
+			name: "validation error - invalid payment type",
+			request: InitiatePaymentRequest{
+				MemberID:    "member-123",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: "invalid-type", // Invalid
+			},
+			setupMocks: func(repo *mocks.MockPaymentRepository, gateway *mockPaymentGateway) {
+				// No mocks should be called
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Validation failed")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := new(mocks.MockPaymentRepository)
+			mockGateway := new(mockPaymentGateway)
+			tt.setupMocks(mockRepo, mockGateway)
+
+			// Create real payment service
+			paymentService := payment.NewService()
+
+			// Create use case
+			uc := NewInitiatePaymentUseCase(mockRepo, paymentService, mockGateway)
+
+			// Execute
+			ctx := helpers.TestContext(t)
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				helpers.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				helpers.AssertNoError(t, err)
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Verify all expectations were met
+			mockRepo.AssertExpectations(t)
+			mockGateway.AssertExpectations(t)
+		})
+	}
+}

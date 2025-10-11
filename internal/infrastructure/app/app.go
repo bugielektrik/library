@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"library-service/internal/adapters/http"
+	"library-service/internal/adapters/payment/epayment"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,7 +32,24 @@ type App struct {
 	server       *http.Server
 }
 
-// New creates a new application instance
+// New creates a new application instance.
+//
+// Bootstrap Order (CRITICAL - must follow this sequence):
+//  1. Logger - First so all subsequent steps can log
+//  2. Config - Load environment variables and settings
+//  3. Repositories - PostgreSQL/memory implementations
+//  4. Caches - Redis/memory cache layer
+//  5. Auth Services - JWT + Password (infrastructure services)
+//  6. Gateway Services - Payment gateway client
+//  7. Use Case Container - Wires everything together
+//  8. HTTP Server - Routes and middleware
+//
+// See Also:
+//   - Counterpart: internal/usecase/container.go (domain service creation)
+//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (where to create services)
+//   - ADR: .claude/adr/002-clean-architecture-boundaries.md (layer dependencies)
+//   - Example: internal/infrastructure/auth/jwt.go (infrastructure service)
+//   - Documentation: cmd/api/main.go (application entry point)
 func New() (*App, error) {
 	app := &App{}
 
@@ -85,18 +103,31 @@ func New() (*App, error) {
 	app.authServices = authServices
 	app.logger.Info("auth services initialized")
 
+	// Initialize payment gateway
+	epaymentConfig, err := epayment.LoadConfigFromEnv()
+	if err != nil {
+		app.logger.Warn("failed to load epayment config, payment features may not work", zap.Error(err))
+	}
+	paymentGateway := epayment.NewGateway(epaymentConfig, app.logger)
+
+	gatewayServices := &usecase.GatewayServices{
+		PaymentGateway: paymentGateway,
+	}
+	app.logger.Info("gateway services initialized")
+
 	// Initialize usecases
 	usecaseRepos := &usecase.Repositories{
 		Book:        repos.Book,
 		Author:      repos.Author,
 		Member:      repos.Member,
 		Reservation: repos.Reservation,
+		Payment:     repos.Payment,
 	}
 	usecaseCaches := &usecase.Caches{
 		Book:   caches.Book,
 		Author: caches.Author,
 	}
-	usecases := usecase.NewContainer(usecaseRepos, usecaseCaches, authServices)
+	usecases := usecase.NewContainer(usecaseRepos, usecaseCaches, authServices, gatewayServices)
 	app.usecases = usecases
 	app.logger.Info("usecases initialized")
 

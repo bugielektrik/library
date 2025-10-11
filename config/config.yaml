@@ -1,0 +1,94 @@
+# Base configuration file
+# This file contains default settings that can be overridden by environment-specific files
+# or environment variables
+
+app:
+  name: Library Service
+  version: 1.0.0
+  env: development
+  debug: true
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 60s
+  shutdown_timeout: 10s
+  max_request_size: 10485760  # 10MB
+  enable_cors: true
+  allowed_origins:
+    - "*"
+  enable_rate_limit: true
+  rate_limit: 100  # requests per minute
+
+database:
+  driver: postgres
+  host: localhost
+  port: 5432
+  database: library
+  username: library
+  password: library123
+  ssl_mode: disable
+  max_open_conns: 25
+  max_idle_conns: 25
+  conn_max_lifetime: 5m
+  conn_max_idle_time: 5m
+  enable_migration: true
+  migration_path: migrations/postgres
+
+redis:
+  enabled: false
+  host: localhost
+  port: 6379
+  database: 0
+  max_retries: 3
+  dial_timeout: 5s
+  read_timeout: 3s
+  write_timeout: 3s
+  pool_size: 10
+  ttl: 1h
+
+jwt:
+  secret: "change-this-secret-key-in-production-minimum-32-chars"
+  issuer: library-service
+  access_token_ttl: 24h
+  refresh_token_ttl: 168h  # 7 days
+  algorithm: HS256
+
+payment:
+  provider: mock
+  currency: USD
+  timeout: 30s
+  retry_attempts: 3
+  retry_delay: 1s
+  sandbox: true
+
+logging:
+  level: debug
+  format: console
+  output: stdout
+  enable_caller: true
+  enable_stacktrace: false
+  skip_paths:
+    - /health
+    - /metrics
+  slow_query_threshold: 100ms
+
+metrics:
+  enabled: true
+  path: /metrics
+  port: 9090
+  namespace: library
+  collect_interval: 10s
+  histograms: true
+
+features:
+  enable_swagger: true
+  enable_graphql: false
+  enable_websocket: false
+  enable_notifications: false
+  enable_search: true
+  enable_reservations: true
+  enable_payments: true
+  maintenance_mode: false

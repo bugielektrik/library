@@ -2,12 +2,14 @@ package authops
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"go.uber.org/zap"
 
 	"library-service/internal/domain/member"
 	"library-service/internal/infrastructure/auth"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // LoginUseCase handles member authentication
@@ -43,22 +45,27 @@ type LoginResponse struct {
 }
 
 // Execute performs member authentication
-func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginResponse, error) {
+func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (LoginResponse, error) {
+	logger := logutil.UseCaseLogger(ctx, "auth", "login")
+
 	// Validate email format
 	if err := auth.ValidateEmail(req.Email); err != nil {
-		return nil, errors.ErrInvalidInput.WithDetails("email", err.Error())
+		logger.Warn("email validation failed", zap.Error(err))
+		return LoginResponse{}, errors.NewError(errors.CodeValidation).WithField("email", "invalid format").WithDetail("details", err.Error()).Build()
 	}
 
 	// Find member by email
 	memberEntity, err := uc.memberRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		// Don't reveal if email exists or not for security
-		return nil, errors.ErrInvalidCredentials
+		logger.Warn("authentication failed", zap.String("reason", "member_not_found"))
+		return LoginResponse{}, errors.Unauthorized("invalid credentials")
 	}
 
 	// Verify password
 	if !uc.passwordService.CheckPasswordHash(req.Password, memberEntity.PasswordHash) {
-		return nil, errors.ErrInvalidCredentials
+		logger.Warn("authentication failed", zap.String("reason", "invalid_password"))
+		return LoginResponse{}, errors.Unauthorized("invalid credentials")
 	}
 
 	// Generate JWT tokens
@@ -68,7 +75,11 @@ func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginRe
 		memberEntity.Role,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		logger.Error("failed to generate JWT tokens", zap.Error(err))
+		return LoginResponse{}, errors.ErrInternal.
+			WithDetails("operation", "generate_tokens").
+			WithDetails("member_id", memberEntity.ID).
+			Wrap(err)
 	}
 
 	// Update last login timestamp
@@ -76,14 +87,16 @@ func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginRe
 	if err := uc.memberRepo.UpdateLastLogin(ctx, memberEntity.ID, now); err != nil {
 		// Log the error but don't fail the login
 		// This is a non-critical operation
-		fmt.Printf("failed to update last login for member %s: %v\n", memberEntity.ID, err)
+		logger.Warn("failed to update last login",
+			zap.String("member_id", memberEntity.ID),
+			zap.Error(err),
+		)
 	}
 
-	// Prepare response
-	response := &LoginResponse{
+	logger.Info("member logged in successfully", zap.String("member_id", memberEntity.ID))
+
+	return LoginResponse{
 		Member:    member.ParseFromMember(memberEntity),
 		TokenPair: tokenPair,
-	}
-
-	return response, nil
+	}, nil
 }

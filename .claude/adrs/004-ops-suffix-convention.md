@@ -323,8 +323,7 @@ After 6 months:
 
 - [Effective Go - Package Names](https://golang.org/doc/effective_go#names)
 - [Go Blog - Package Names](https://blog.golang.org/package-names)
-- `.claude/faq.md` - Q&A about "ops" suffix convention
-- `.claude/gotchas.md` - Warning about package naming conflicts
+- `.claude/coding-standards.md` - Package naming conventions and best practices
 
 ## Related ADRs
 

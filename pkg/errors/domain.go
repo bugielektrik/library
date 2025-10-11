@@ -99,3 +99,36 @@ var (
 		HTTPStatus: http.StatusUnprocessableEntity,
 	}
 )
+
+// Payment errors
+var (
+	ErrPaymentNotFound = &Error{
+		Code:       "PAYMENT_NOT_FOUND",
+		Message:    "Payment not found",
+		HTTPStatus: http.StatusNotFound,
+	}
+
+	ErrPaymentAlreadyProcessed = &Error{
+		Code:       "PAYMENT_ALREADY_PROCESSED",
+		Message:    "Payment has already been processed",
+		HTTPStatus: http.StatusConflict,
+	}
+
+	ErrPaymentExpired = &Error{
+		Code:       "PAYMENT_EXPIRED",
+		Message:    "Payment has expired",
+		HTTPStatus: http.StatusGone,
+	}
+
+	ErrPaymentGateway = &Error{
+		Code:       "PAYMENT_GATEWAY_ERROR",
+		Message:    "Payment gateway error",
+		HTTPStatus: http.StatusBadGateway,
+	}
+
+	ErrInvalidPaymentStatus = &Error{
+		Code:       "INVALID_PAYMENT_STATUS",
+		Message:    "Invalid payment status transition",
+		HTTPStatus: http.StatusBadRequest,
+	}
+)

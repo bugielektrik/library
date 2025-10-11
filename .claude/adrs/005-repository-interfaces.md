@@ -415,8 +415,8 @@ After 6 months:
 - [Dependency Inversion Principle (SOLID)](https://en.wikipedia.org/wiki/Dependency_inversion_principle)
 - [Clean Architecture - Dependency Rule](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
-- `.claude/examples/README.md` - Repository implementation examples
-- `.claude/faq.md` - Q&A about where to define interfaces
+- `.claude/common-tasks.md` - Repository implementation guides
+- `.claude/common-tasks.md` - Repository implementation examples
 
 ## Related ADRs
 

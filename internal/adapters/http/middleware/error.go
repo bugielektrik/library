@@ -9,6 +9,7 @@ import (
 	"library-service/internal/adapters/http/dto"
 	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
+	"library-service/pkg/httputil"
 )
 
 // ErrorHandler is a middleware that recovers from panics and handles errors
@@ -40,7 +41,7 @@ func respondError(w http.ResponseWriter, r *http.Request, err error) {
 	status := errors.GetHTTPStatus(err)
 
 	// Log the error
-	if status >= 500 {
+	if httputil.IsServerError(status) {
 		logger.Error("internal error",
 			zap.Error(err),
 			zap.String("path", r.URL.Path),
@@ -56,7 +57,7 @@ func respondError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	// Write response
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(httputil.HeaderContentType, httputil.ContentTypeJSON)
 	w.WriteHeader(status)
 
 	response := dto.FromError(err)

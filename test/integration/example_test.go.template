@@ -1,0 +1,279 @@
+//go:build integration
+// +build integration
+
+package integration
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"library-service/internal/adapters/repository/postgres"
+	"library-service/internal/domain/book"
+	"library-service/internal/usecase/bookops"
+	"library-service/test/fixtures"
+	"library-service/test/testutil"
+)
+
+// TestBookCRUDIntegration demonstrates a complete CRUD workflow integration test.
+// This is a template/example - rename this file to example_test.go to run it.
+//
+// This test demonstrates:
+// - Setting up database connection
+// - Creating real repositories and use cases
+// - Testing complete workflows (Create → Read → Update → Delete)
+// - Verifying database state at each step
+// - Proper cleanup with defer
+// - Using fixtures and testutil helpers
+func TestBookCRUDIntegration(t *testing.T) {
+	// Setup: Get database connection with automatic cleanup
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Setup: Create repositories and services
+	bookRepo := postgres.NewBookRepository(db)
+	bookService := book.NewService()
+
+	// Setup: Create use cases
+	createUC := bookops.NewCreateBookUseCase(bookRepo, nil, bookService)
+	getUC := bookops.NewGetBookUseCase(bookRepo, nil)
+	updateUC := bookops.NewUpdateBookUseCase(bookRepo, nil, bookService)
+	deleteUC := bookops.NewDeleteBookUseCase(bookRepo, nil)
+
+	ctx := context.Background()
+
+	// Generate unique ISBN for this test run
+	testISBN := "978-" + time.Now().Format("20060102150405")
+
+	t.Run("Complete CRUD Workflow", func(t *testing.T) {
+		// Step 1: Create Book
+		createReq := bookops.CreateBookRequest{
+			Name:    "Integration Test Book",
+			Genre:   "Technology",
+			ISBN:    testISBN,
+			Authors: []string{uuid.New().String()},
+		}
+
+		createResp, err := createUC.Execute(ctx, createReq)
+		testutil.AssertNoError(t, err)
+		testutil.AssertNotNil(t, createResp)
+		assert.NotEmpty(t, createResp.ID, "Book ID should be generated")
+		testutil.AssertEqual(t, createReq.Name, createResp.Name)
+		testutil.AssertEqual(t, createReq.ISBN, createResp.ISBN)
+
+		bookID := createResp.ID
+
+		// Step 2: Read Book
+		getReq := bookops.GetBookRequest{
+			ID: bookID,
+		}
+
+		getResp, err := getUC.Execute(ctx, getReq)
+		testutil.AssertNoError(t, err)
+		testutil.AssertNotNil(t, getResp)
+		testutil.AssertEqual(t, bookID, getResp.ID)
+		testutil.AssertEqual(t, createReq.Name, getResp.Name)
+		testutil.AssertEqual(t, createReq.ISBN, getResp.ISBN)
+
+		// Step 3: Update Book
+		updateReq := bookops.UpdateBookRequest{
+			ID:    bookID,
+			Name:  "Updated Integration Test Book",
+			Genre: "Science",
+			ISBN:  testISBN, // Keep same ISBN
+		}
+
+		err = updateUC.Execute(ctx, updateReq)
+		testutil.AssertNoError(t, err)
+
+		// Verify update in database
+		updatedBook, err := bookRepo.Get(ctx, bookID)
+		testutil.AssertNoError(t, err)
+		testutil.AssertEqual(t, updateReq.Name, *updatedBook.Name)
+		testutil.AssertEqual(t, updateReq.Genre, *updatedBook.Genre)
+
+		// Step 4: Delete Book
+		deleteReq := bookops.DeleteBookRequest{
+			ID: bookID,
+		}
+
+		err = deleteUC.Execute(ctx, deleteReq)
+		testutil.AssertNoError(t, err)
+
+		// Verify deletion
+		_, err = bookRepo.Get(ctx, bookID)
+		testutil.AssertError(t, err, "Should get error when fetching deleted book")
+	})
+}
+
+// TestBookValidationIntegration demonstrates testing validation errors in integration tests.
+func TestBookValidationIntegration(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	bookRepo := postgres.NewBookRepository(db)
+	bookService := book.NewService()
+	createUC := bookops.NewCreateBookUseCase(bookRepo, nil, bookService)
+
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		request     bookops.CreateBookRequest
+		expectError bool
+		errorCheck  func(*testing.T, error)
+	}{
+		{
+			name: "Valid Book",
+			request: bookops.CreateBookRequest{
+				Name:    "Valid Book",
+				Genre:   "Fiction",
+				ISBN:    "978-" + time.Now().Format("20060102150405"),
+				Authors: []string{uuid.New().String()},
+			},
+			expectError: false,
+		},
+		{
+			name: "Empty Name",
+			request: bookops.CreateBookRequest{
+				Name:    "",
+				Genre:   "Fiction",
+				ISBN:    "978-0134190440",
+				Authors: []string{uuid.New().String()},
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertStringContains(t, err.Error(), "name")
+			},
+		},
+		{
+			name: "Empty ISBN",
+			request: bookops.CreateBookRequest{
+				Name:    "Test Book",
+				Genre:   "Fiction",
+				ISBN:    "",
+				Authors: []string{uuid.New().String()},
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertStringContains(t, err.Error(), "ISBN")
+			},
+		},
+		{
+			name: "No Authors",
+			request: bookops.CreateBookRequest{
+				Name:    "Test Book",
+				Genre:   "Fiction",
+				ISBN:    "978-0134190440",
+				Authors: []string{},
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertStringContains(t, err.Error(), "author")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := createUC.Execute(ctx, tt.request)
+
+			if tt.expectError {
+				testutil.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				testutil.AssertNoError(t, err)
+				testutil.AssertNotNil(t, result)
+				assert.NotEmpty(t, result.ID)
+			}
+		})
+	}
+}
+
+// TestBookConcurrency demonstrates testing concurrent operations.
+func TestBookConcurrency(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	bookRepo := postgres.NewBookRepository(db)
+	ctx := context.Background()
+
+	t.Run("Concurrent Creates", func(t *testing.T) {
+		// Create multiple books concurrently
+		bookCount := 5
+		results := make(chan error, bookCount)
+
+		for i := 0; i < bookCount; i++ {
+			i := i // Capture loop variable
+			go func() {
+				book := fixtures.ValidBook()
+				isbn := "978-" + time.Now().Format("20060102") + "-" + string(rune('0'+i))
+				book.ISBN = &isbn
+
+				_, err := bookRepo.Add(ctx, book)
+				results <- err
+			}()
+		}
+
+		// Collect results
+		for i := 0; i < bookCount; i++ {
+			err := <-results
+			testutil.AssertNoError(t, err)
+		}
+	})
+}
+
+// TestBookWithFixtures demonstrates using test fixtures for integration tests.
+func TestBookWithFixtures(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	bookRepo := postgres.NewBookRepository(db)
+	ctx := context.Background()
+
+	t.Run("Create Book from Fixture", func(t *testing.T) {
+		// Use fixture for consistent test data
+		book := fixtures.ValidBook()
+
+		// Customize for this test
+		testISBN := "978-" + time.Now().Format("20060102150405")
+		book.ISBN = &testISBN
+
+		// Create in database
+		bookID, err := bookRepo.Add(ctx, book)
+		testutil.AssertNoError(t, err)
+		assert.NotEmpty(t, bookID)
+
+		// Verify
+		retrieved, err := bookRepo.Get(ctx, bookID)
+		testutil.AssertNoError(t, err)
+		testutil.AssertEqual(t, *book.Name, *retrieved.Name)
+		testutil.AssertEqual(t, *book.Genre, *retrieved.Genre)
+	})
+
+	t.Run("List Books", func(t *testing.T) {
+		// Add multiple books using fixtures
+		books := []book.Book{
+			fixtures.ValidBook(),
+			fixtures.MinimalBook(),
+		}
+
+		for i, b := range books {
+			isbn := "978-list-" + string(rune('0'+i))
+			b.ISBN = &isbn
+			_, err := bookRepo.Add(ctx, b)
+			testutil.AssertNoError(t, err)
+		}
+
+		// List all books
+		allBooks, err := bookRepo.List(ctx)
+		testutil.AssertNoError(t, err)
+		assert.GreaterOrEqual(t, len(allBooks), 2, "Should have at least 2 books")
+	})
+}

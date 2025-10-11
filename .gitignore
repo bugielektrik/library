@@ -10,14 +10,30 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+coverage.out
+coverage.html
+coverage.txt
 
 # Projects
 *.DS_Store
+.DS_Store
 *.idea
 *.data
 *.bin
 *.log
 .env
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# Test artifacts
+*.test.out
+test.log
 
 # Deprecated files (migration artifacts) golang projects
 /deprecated/
@@ -25,3 +41,4 @@
 /logs/
 /data/
 library-api
+service.log

@@ -3,6 +3,8 @@ module library-service
 go 1.25.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
@@ -21,6 +23,7 @@ require (
 	go.mongodb.org/mongo-driver v1.17.3
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.70.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -41,7 +44,6 @@ require (
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/telemetry v0.0.0-20250908211612-aef8a434d053 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

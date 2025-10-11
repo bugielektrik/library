@@ -2,23 +2,23 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
 	"library-service/internal/domain/reservation"
-	"library-service/internal/infrastructure/store"
 )
 
 // ReservationRepository handles CRUD operations for reservations in a PostgreSQL store.
 type ReservationRepository struct {
-	db *sqlx.DB
+	BaseRepository[reservation.Reservation]
 }
 
 // NewReservationRepository creates a new ReservationRepository.
 func NewReservationRepository(db *sqlx.DB) *ReservationRepository {
-	return &ReservationRepository{db: db}
+	return &ReservationRepository{
+		BaseRepository: NewBaseRepository[reservation.Reservation](db, "reservations"),
+	}
 }
 
 // Create inserts a new reservation into the store.
@@ -39,26 +39,13 @@ func (r *ReservationRepository) Create(ctx context.Context, data reservation.Res
 	}
 
 	var id string
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return "", store.ErrorNotFound
-	}
-	return id, err
+	err := r.GetDB().QueryRowContext(ctx, query, args...).Scan(&id)
+	return id, HandleSQLError(err)
 }
 
-// GetByID retrieves a reservation by ID from the store.
+// GetByID retrieves a reservation by ID from the store (delegates to BaseRepository.Get).
 func (r *ReservationRepository) GetByID(ctx context.Context, id string) (reservation.Reservation, error) {
-	query := `
-		SELECT id, book_id, member_id, status, created_at, expires_at, fulfilled_at, cancelled_at
-		FROM reservations
-		WHERE id=$1
-	`
-	var res reservation.Reservation
-	err := r.db.GetContext(ctx, &res, query, id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return res, store.ErrorNotFound
-	}
-	return res, err
+	return r.Get(ctx, id)
 }
 
 // GetByMemberID retrieves all reservations for a specific member.
@@ -70,9 +57,9 @@ func (r *ReservationRepository) GetByMemberID(ctx context.Context, memberID stri
 		ORDER BY created_at DESC
 	`
 	var reservations []reservation.Reservation
-	err := r.db.SelectContext(ctx, &reservations, query, memberID)
+	err := r.GetDB().SelectContext(ctx, &reservations, query, memberID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting reservations by member ID: %w", err)
 	}
 	return reservations, nil
 }
@@ -86,9 +73,9 @@ func (r *ReservationRepository) GetByBookID(ctx context.Context, bookID string) 
 		ORDER BY created_at ASC
 	`
 	var reservations []reservation.Reservation
-	err := r.db.SelectContext(ctx, &reservations, query, bookID)
+	err := r.GetDB().SelectContext(ctx, &reservations, query, bookID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting reservations by book ID: %w", err)
 	}
 	return reservations, nil
 }
@@ -102,9 +89,9 @@ func (r *ReservationRepository) GetActiveByMemberAndBook(ctx context.Context, me
 		ORDER BY created_at ASC
 	`
 	var reservations []reservation.Reservation
-	err := r.db.SelectContext(ctx, &reservations, query, memberID, bookID)
+	err := r.GetDB().SelectContext(ctx, &reservations, query, memberID, bookID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting active reservations by member and book: %w", err)
 	}
 	return reservations, nil
 }
@@ -125,23 +112,11 @@ func (r *ReservationRepository) Update(ctx context.Context, data reservation.Res
 	}
 
 	var id string
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
-	}
-	return err
+	err := r.GetDB().QueryRowContext(ctx, query, args...).Scan(&id)
+	return HandleSQLError(err)
 }
 
-// Delete removes a reservation by ID from the store.
-func (r *ReservationRepository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM reservations WHERE id=$1 RETURNING id`
-	var resultID string
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&resultID)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
-	}
-	return err
-}
+// Delete is inherited from BaseRepository
 
 // ListPending retrieves all pending reservations.
 func (r *ReservationRepository) ListPending(ctx context.Context) ([]reservation.Reservation, error) {
@@ -152,9 +127,9 @@ func (r *ReservationRepository) ListPending(ctx context.Context) ([]reservation.
 		ORDER BY created_at ASC
 	`
 	var reservations []reservation.Reservation
-	err := r.db.SelectContext(ctx, &reservations, query)
+	err := r.GetDB().SelectContext(ctx, &reservations, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("listing pending reservations: %w", err)
 	}
 	return reservations, nil
 }
@@ -168,9 +143,9 @@ func (r *ReservationRepository) ListExpired(ctx context.Context) ([]reservation.
 		ORDER BY created_at ASC
 	`
 	var reservations []reservation.Reservation
-	err := r.db.SelectContext(ctx, &reservations, query)
+	err := r.GetDB().SelectContext(ctx, &reservations, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("listing expired reservations: %w", err)
 	}
 	return reservations, nil
 }

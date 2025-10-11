@@ -1,0 +1,331 @@
+//go:build integration
+// +build integration
+
+package integration
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"library-service/internal/adapters/repository/postgres"
+	"library-service/internal/domain/payment"
+	"library-service/internal/usecase/paymentops"
+)
+
+// TestSaveCard tests saving a card
+func TestSaveCard(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	savedCardRepo := postgres.NewSavedCardRepository(db)
+	saveCardUC := paymentops.NewSaveCardUseCase(savedCardRepo)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	t.Run("Save New Card", func(t *testing.T) {
+		req := payment.SaveCardRequest{
+			MemberID:  memberID,
+			CardID:    "card-token-" + uuid.New().String(),
+			CardMask:  "4111 11** **** 1111",
+			ExpiryMM:  "12",
+			ExpiryYY:  "25",
+			IsDefault: true,
+		}
+
+		resp, err := saveCardUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.NotEmpty(t, resp.ID)
+		assert.Equal(t, memberID, resp.MemberID)
+		assert.Equal(t, req.CardMask, resp.CardMask)
+		assert.True(t, resp.IsDefault)
+	})
+}
+
+// TestListSavedCards tests listing saved cards
+func TestListSavedCards(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	savedCardRepo := postgres.NewSavedCardRepository(db)
+	saveCardUC := paymentops.NewSaveCardUseCase(savedCardRepo)
+	listCardsUC := paymentops.NewListSavedCardsUseCase(savedCardRepo)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Save multiple cards
+	card1Req := payment.SaveCardRequest{
+		MemberID:  memberID,
+		CardID:    "card-1-" + uuid.New().String(),
+		CardMask:  "4111 11** **** 1111",
+		ExpiryMM:  "12",
+		ExpiryYY:  "25",
+		IsDefault: true,
+	}
+	_, err := saveCardUC.Execute(ctx, card1Req)
+	require.NoError(t, err)
+
+	card2Req := payment.SaveCardRequest{
+		MemberID:  memberID,
+		CardID:    "card-2-" + uuid.New().String(),
+		CardMask:  "5555 55** **** 4444",
+		ExpiryMM:  "06",
+		ExpiryYY:  "26",
+		IsDefault: false,
+	}
+	_, err = saveCardUC.Execute(ctx, card2Req)
+	require.NoError(t, err)
+
+	t.Run("List Cards", func(t *testing.T) {
+		resp, err := listCardsUC.Execute(ctx, paymentops.ListSavedCardsRequest{
+			MemberID: memberID,
+		})
+		require.NoError(t, err)
+		assert.Len(t, resp.Cards, 2)
+		assert.Equal(t, 2, resp.Total)
+
+		// Verify default card is first
+		assert.True(t, resp.Cards[0].IsDefault)
+	})
+}
+
+// TestSetDefaultCard tests setting a default card
+func TestSetDefaultCard(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	savedCardRepo := postgres.NewSavedCardRepository(db)
+	saveCardUC := paymentops.NewSaveCardUseCase(savedCardRepo)
+	setDefaultUC := paymentops.NewSetDefaultCardUseCase(savedCardRepo)
+	listCardsUC := paymentops.NewListSavedCardsUseCase(savedCardRepo)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Save two cards
+	card1Req := payment.SaveCardRequest{
+		MemberID:  memberID,
+		CardID:    "card-1-" + uuid.New().String(),
+		CardMask:  "4111 11** **** 1111",
+		ExpiryMM:  "12",
+		ExpiryYY:  "25",
+		IsDefault: true,
+	}
+	card1, err := saveCardUC.Execute(ctx, card1Req)
+	require.NoError(t, err)
+
+	card2Req := payment.SaveCardRequest{
+		MemberID:  memberID,
+		CardID:    "card-2-" + uuid.New().String(),
+		CardMask:  "5555 55** **** 4444",
+		ExpiryMM:  "06",
+		ExpiryYY:  "26",
+		IsDefault: false,
+	}
+	card2, err := saveCardUC.Execute(ctx, card2Req)
+	require.NoError(t, err)
+
+	t.Run("Set Second Card as Default", func(t *testing.T) {
+		req := paymentops.SetDefaultCardRequest{
+			CardID:   card2.ID,
+			MemberID: memberID,
+		}
+
+		resp, err := setDefaultUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, card2.ID, resp.CardID)
+		assert.True(t, resp.IsDefault)
+
+		// Verify first card is no longer default
+		cards, err := listCardsUC.Execute(ctx, paymentops.ListSavedCardsRequest{
+			MemberID: memberID,
+		})
+		require.NoError(t, err)
+
+		// Find cards by ID
+		var firstCard, secondCard payment.SavedCardResponse
+		for _, card := range cards.Cards {
+			if card.ID == card1.ID {
+				firstCard = card
+			} else if card.ID == card2.ID {
+				secondCard = card
+			}
+		}
+
+		assert.False(t, firstCard.IsDefault)
+		assert.True(t, secondCard.IsDefault)
+	})
+}
+
+// TestDeleteSavedCard tests deleting a saved card
+func TestDeleteSavedCard(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	savedCardRepo := postgres.NewSavedCardRepository(db)
+	saveCardUC := paymentops.NewSaveCardUseCase(savedCardRepo)
+	deleteCardUC := paymentops.NewDeleteSavedCardUseCase(savedCardRepo)
+	listCardsUC := paymentops.NewListSavedCardsUseCase(savedCardRepo)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Save a card
+	cardReq := payment.SaveCardRequest{
+		MemberID:  memberID,
+		CardID:    "card-" + uuid.New().String(),
+		CardMask:  "4111 11** **** 1111",
+		ExpiryMM:  "12",
+		ExpiryYY:  "25",
+		IsDefault: true,
+	}
+	card, err := saveCardUC.Execute(ctx, cardReq)
+	require.NoError(t, err)
+
+	t.Run("Delete Card", func(t *testing.T) {
+		req := paymentops.DeleteSavedCardRequest{
+			CardID:   card.ID,
+			MemberID: memberID,
+		}
+
+		resp, err := deleteCardUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.True(t, resp.Deleted)
+
+		// Verify card is deleted
+		cards, err := listCardsUC.Execute(ctx, paymentops.ListSavedCardsRequest{
+			MemberID: memberID,
+		})
+		require.NoError(t, err)
+		assert.Len(t, cards.Cards, 0)
+	})
+}
+
+// TestPayWithSavedCard tests making a payment with a saved card
+func TestPayWithSavedCard(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	savedCardRepo := postgres.NewSavedCardRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	saveCardUC := paymentops.NewSaveCardUseCase(savedCardRepo)
+	payWithCardUC := paymentops.NewPayWithSavedCardUseCase(paymentRepo, savedCardRepo, paymentService, mockGateway)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Save a card first
+	cardReq := payment.SaveCardRequest{
+		MemberID:  memberID,
+		CardID:    "card-token-" + uuid.New().String(),
+		CardMask:  "4111 11** **** 1111",
+		ExpiryMM:  "12",
+		ExpiryYY:  "25",
+		IsDefault: true,
+	}
+	card, err := saveCardUC.Execute(ctx, cardReq)
+	require.NoError(t, err)
+
+	t.Run("Pay With Saved Card", func(t *testing.T) {
+		req := paymentops.PayWithSavedCardRequest{
+			MemberID:    memberID,
+			CardID:      card.ID,
+			Amount:      3000,
+			Currency:    "KZT",
+			PaymentType: payment.PaymentTypeFine,
+			Description: "Test payment with saved card",
+		}
+
+		resp, err := payWithCardUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.NotEmpty(t, resp.PaymentID)
+		assert.NotEmpty(t, resp.InvoiceID)
+		assert.Equal(t, int64(3000), resp.Amount)
+
+		// Verify payment was created in database
+		paymentEntity, err := paymentRepo.GetByID(ctx, resp.PaymentID)
+		require.NoError(t, err)
+		assert.Equal(t, memberID, paymentEntity.MemberID)
+		assert.Equal(t, int64(3000), paymentEntity.Amount)
+		assert.Equal(t, payment.PaymentMethodCard, paymentEntity.PaymentMethod)
+	})
+
+	t.Run("Pay With Non-Existent Card", func(t *testing.T) {
+		req := paymentops.PayWithSavedCardRequest{
+			MemberID:    memberID,
+			CardID:      "non-existent-card-id",
+			Amount:      2000,
+			Currency:    "KZT",
+			PaymentType: payment.PaymentTypeFine,
+			Description: "Test with invalid card",
+		}
+
+		_, err := payWithCardUC.Execute(ctx, req)
+		assert.Error(t, err)
+	})
+
+	t.Run("Pay With Another Member's Card", func(t *testing.T) {
+		anotherMemberID := uuid.New().String()
+		req := paymentops.PayWithSavedCardRequest{
+			MemberID:    anotherMemberID,
+			CardID:      card.ID, // Card belongs to original member
+			Amount:      2000,
+			Currency:    "KZT",
+			PaymentType: payment.PaymentTypeFine,
+			Description: "Test with another member's card",
+		}
+
+		_, err := payWithCardUC.Execute(ctx, req)
+		assert.Error(t, err)
+	})
+}
+
+// TestCardExpiry tests handling of expired cards
+func TestCardExpiry(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	savedCardRepo := postgres.NewSavedCardRepository(db)
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create an expired card directly in database
+	expiredCard := payment.SavedCard{
+		ID:        uuid.New().String(),
+		MemberID:  memberID,
+		CardID:    "expired-card-" + uuid.New().String(),
+		CardMask:  "4111 11** **** 1111",
+		ExpiryMM:  "01",
+		ExpiryYY:  "20", // Expired (2020)
+		IsDefault: true,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	err := savedCardRepo.Create(ctx, &expiredCard)
+	require.NoError(t, err)
+
+	t.Run("List Should Include Expired Cards", func(t *testing.T) {
+		// Note: Expiry validation happens at payment time, not at listing
+		listCardsUC := paymentops.NewListSavedCardsUseCase(savedCardRepo)
+		resp, err := listCardsUC.Execute(ctx, paymentops.ListSavedCardsRequest{
+			MemberID: memberID,
+		})
+		require.NoError(t, err)
+		assert.Len(t, resp.Cards, 1)
+	})
+}

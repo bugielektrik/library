@@ -72,6 +72,5 @@ package "github.com/santhosh-tekuri/jsonschema/formats".
 "application/json" contentMediaType is supported. Custom mediatypes can be registered using package "github.com/santhosh-tekuri/jsonschema/mediatypes".
 
 The ValidationError returned by Validate method contains detailed context to understand why and where the error is.
-
 */
 package jsonschema

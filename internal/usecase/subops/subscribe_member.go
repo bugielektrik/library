@@ -7,9 +7,9 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/member"
-	"library-service/internal/infrastructure/log"
 	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // SubscribeMemberRequest represents the input for subscribing a member
@@ -52,10 +52,7 @@ func NewSubscribeMemberUseCase(memberRepo member.Repository, memberService *memb
 
 // Execute subscribes a member to the library service
 func (uc *SubscribeMemberUseCase) Execute(ctx context.Context, req SubscribeMemberRequest) (SubscribeMemberResponse, error) {
-	logger := log.FromContext(ctx).Named("subscribe_member_usecase").With(
-		zap.String("member_id", req.MemberID),
-		zap.String("subscription_type", req.SubscriptionType),
-	)
+	logger := logutil.UseCaseLogger(ctx, "subscription", "subscribe")
 
 	// Step 1: Validate request using domain service
 	if err := uc.memberService.ValidateSubscriptionType(req.SubscriptionType); err != nil {
@@ -69,7 +66,7 @@ func (uc *SubscribeMemberUseCase) Execute(ctx context.Context, req SubscribeMemb
 	}
 
 	if req.MemberID == "" {
-		err := errors.ErrInvalidInput.WithDetails("field", "member_id")
+		err := errors.ValidationRequired("member_id")
 		logger.Warn("validation failed", zap.Error(err))
 		return SubscribeMemberResponse{}, err
 	}
@@ -79,10 +76,10 @@ func (uc *SubscribeMemberUseCase) Execute(ctx context.Context, req SubscribeMemb
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
 			logger.Warn("member not found")
-			return SubscribeMemberResponse{}, errors.ErrMemberNotFound.WithDetails("id", req.MemberID)
+			return SubscribeMemberResponse{}, errors.NotFoundWithID("member", req.MemberID)
 		}
 		logger.Error("failed to get member", zap.Error(err))
-		return SubscribeMemberResponse{}, errors.ErrDatabase.Wrap(err)
+		return SubscribeMemberResponse{}, errors.Database("database operation", err)
 	}
 
 	// Step 3: Check for active subscription (business rule)
@@ -105,7 +102,8 @@ func (uc *SubscribeMemberUseCase) Execute(ctx context.Context, req SubscribeMemb
 	// - Publish domain event
 
 	logger.Info("member subscribed successfully",
-		zap.Time("subscribed_at", now),
+		zap.String("member_id", req.MemberID),
+		zap.String("subscription_type", req.SubscriptionType),
 		zap.Time("expires_at", expiresAt),
 	)
 

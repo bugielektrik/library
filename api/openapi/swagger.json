@@ -174,6 +174,43 @@
                 }
             }
         },
+        "/authors": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of all authors in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authors"
+                ],
+                "summary": "List all authors",
+                "responses": {
+                    "200": {
+                        "description": "List of authors",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/library-service_internal_adapters_http_dto.AuthorResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books": {
             "get": {
                 "security": [
@@ -458,6 +495,704 @@
                 }
             }
         },
+        "/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of all members in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "List all members",
+                "responses": {
+                    "200": {
+                        "description": "List of members",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/library-service_internal_adapters_http_dto.MemberResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/members/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves detailed profile information for a specific member",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "members"
+                ],
+                "summary": "Get member profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Member ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Member profile",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.MemberResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid member ID",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment": {
+            "get": {
+                "description": "Displays the payment page for completing a payment",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Payment page",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "paymentId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Invoice ID",
+                        "name": "invoiceId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Payment gateway auth token",
+                        "name": "authToken",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Terminal ID",
+                        "name": "terminal",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Amount in cents",
+                        "name": "amount",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "KZT",
+                        "description": "Currency code",
+                        "name": "currency",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Redirect URL after payment",
+                        "name": "backLink",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Callback URL",
+                        "name": "postLink",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "HTML page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/callback": {
+            "post": {
+                "description": "Process callback from payment gateway",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Handle payment callback",
+                "parameters": [
+                    {
+                        "description": "Payment callback data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.PaymentCallbackRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.PaymentCallbackResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/initiate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Initiate a payment and get payment gateway details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Initiate a payment",
+                "parameters": [
+                    {
+                        "description": "Payment initiation data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.InitiatePaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.InitiatePaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/member/{memberId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all payments for a specific member",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "List member payments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Member ID",
+                        "name": "memberId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ListPaymentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/pay-with-card": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Make a payment using a saved card",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Pay with saved card",
+                "parameters": [
+                    {
+                        "description": "Payment data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.PayWithSavedCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.PayWithSavedCardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get the current status of a payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Verify payment status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.PaymentResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cancel a pending or processing payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Cancel a payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Cancellation reason",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.CancelPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.CancelPaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}/refund": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refund a completed payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Refund a payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Refund reason",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.RefundPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.RefundPaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/receipts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all receipts for the authenticated member",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "receipts"
+                ],
+                "summary": "List member receipts",
+                "responses": {
+                    "200": {
+                        "description": "List of receipts",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ListReceiptsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generates a receipt for a completed payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "receipts"
+                ],
+                "summary": "Generate receipt for payment",
+                "parameters": [
+                    {
+                        "description": "Receipt generation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.GenerateReceiptRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Receipt generated",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ReceiptResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Payment not found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/receipts/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a receipt by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "receipts"
+                ],
+                "summary": "Get receipt by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Receipt ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Receipt details",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ReceiptResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Receipt not found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/reservations": {
             "get": {
                 "security": [
@@ -681,6 +1416,193 @@
                     }
                 }
             }
+        },
+        "/saved-cards": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all saved cards for the authenticated member",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "saved-cards"
+                ],
+                "summary": "List saved cards",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ListSavedCardsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Save a payment card for future use",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "saved-cards"
+                ],
+                "summary": "Save a payment card",
+                "parameters": [
+                    {
+                        "description": "Card data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_domain_payment.SaveCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_domain_payment.SavedCardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/saved-cards/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a saved payment card",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "saved-cards"
+                ],
+                "summary": "Delete a saved card",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Card ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.DeleteSavedCardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/saved-cards/{id}/set-default": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set a saved card as the default payment method",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "saved-cards"
+                ],
+                "summary": "Set default card",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Card ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.SetDefaultCardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -732,6 +1654,28 @@
                 }
             }
         },
+        "library-service_internal_adapters_http_dto.CancelPaymentRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.CancelPaymentResponse": {
+            "type": "object",
+            "properties": {
+                "cancelled_at": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.Status"
+                }
+            }
+        },
         "library-service_internal_adapters_http_dto.CreateBookRequest": {
             "type": "object",
             "required": [
@@ -774,6 +1718,14 @@
                 }
             }
         },
+        "library-service_internal_adapters_http_dto.DeleteSavedCardResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "library-service_internal_adapters_http_dto.ErrorDetail": {
             "type": "object",
             "properties": {
@@ -794,6 +1746,458 @@
             "properties": {
                 "error": {
                     "$ref": "#/definitions/library-service_internal_adapters_http_dto.ErrorDetail"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.GenerateReceiptRequest": {
+            "type": "object",
+            "required": [
+                "payment_id"
+            ],
+            "properties": {
+                "notes": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.InitiatePaymentRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "currency",
+                "payment_type"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "payment_type": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.PaymentType"
+                },
+                "related_entity_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.InitiatePaymentResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "auth_token": {
+                    "type": "string"
+                },
+                "back_link": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "invoice_id": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "post_link": {
+                    "type": "string"
+                },
+                "terminal": {
+                    "type": "string"
+                },
+                "widget_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.ListPaymentsResponse": {
+            "type": "object",
+            "properties": {
+                "payments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/library-service_internal_adapters_http_dto.PaymentSummaryResponse"
+                    }
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.ListReceiptsResponse": {
+            "type": "object",
+            "properties": {
+                "receipts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/library-service_internal_adapters_http_dto.ReceiptResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.ListSavedCardsResponse": {
+            "type": "object",
+            "properties": {
+                "cards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/library-service_internal_domain_payment.SavedCardResponse"
+                    }
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.MemberResponse": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.PayWithSavedCardRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "currency",
+                "payment_type",
+                "saved_card_id"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "payment_type": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.PaymentType"
+                },
+                "related_entity_id": {
+                    "type": "string"
+                },
+                "saved_card_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.PayWithSavedCardResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "card_mask": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "invoice_id": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.Status"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.PaymentCallbackRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "Transaction amount",
+                    "type": "integer"
+                },
+                "approvalCode": {
+                    "description": "Approval code",
+                    "type": "string"
+                },
+                "cardMask": {
+                    "description": "Masked card number",
+                    "type": "string"
+                },
+                "code": {
+                    "description": "\"ok\" or \"error\"",
+                    "type": "string"
+                },
+                "currency": {
+                    "description": "Currency code",
+                    "type": "string"
+                },
+                "extra": {
+                    "description": "Additional fields",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "invoiceId": {
+                    "description": "Order number",
+                    "type": "string"
+                },
+                "reason": {
+                    "description": "\"success\" or error description",
+                    "type": "string"
+                },
+                "reasonCode": {
+                    "description": "Error numeric code",
+                    "type": "string"
+                },
+                "reference": {
+                    "description": "Reference number",
+                    "type": "string"
+                },
+                "terminal": {
+                    "description": "Terminal ID",
+                    "type": "string"
+                },
+                "transactionId": {
+                    "description": "Gateway transaction ID",
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.PaymentCallbackResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.Status"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.PaymentResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "approval_code": {
+                    "type": "string"
+                },
+                "card_mask": {
+                    "type": "string"
+                },
+                "completed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "error_code": {
+                    "type": "string"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "gateway_transaction_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoice_id": {
+                    "type": "string"
+                },
+                "member_id": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.PaymentMethod"
+                },
+                "payment_type": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.PaymentType"
+                },
+                "related_entity_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.Status"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.PaymentSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "completed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoice_id": {
+                    "type": "string"
+                },
+                "payment_type": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.PaymentType"
+                },
+                "status": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.Status"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.ReceiptItemDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "unit_price": {
+                    "type": "integer"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.ReceiptResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "card_mask": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/library-service_internal_adapters_http_dto.ReceiptItemDTO"
+                    }
+                },
+                "member_email": {
+                    "type": "string"
+                },
+                "member_id": {
+                    "type": "string"
+                },
+                "member_name": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "payment_date": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "payment_type": {
+                    "type": "string"
+                },
+                "receipt_date": {
+                    "type": "string"
+                },
+                "receipt_number": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tax_amount": {
+                    "type": "integer"
+                },
+                "total_amount": {
+                    "type": "integer"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.RefundPaymentRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "refund_amount": {
+                    "description": "Optional: if nil, full refund; if specified, partial refund",
+                    "type": "integer"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.RefundPaymentResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "payment_id": {
+                    "type": "string"
+                },
+                "refunded_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/library-service_internal_domain_payment.Status"
                 }
             }
         },
@@ -823,6 +2227,14 @@
                 },
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "library-service_internal_adapters_http_dto.SetDefaultCardResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -873,6 +2285,104 @@
                     "type": "string"
                 }
             }
+        },
+        "library-service_internal_domain_payment.PaymentMethod": {
+            "type": "string",
+            "enum": [
+                "card",
+                "wallet"
+            ],
+            "x-enum-varnames": [
+                "PaymentMethodCard",
+                "PaymentMethodWallet"
+            ]
+        },
+        "library-service_internal_domain_payment.PaymentType": {
+            "type": "string",
+            "enum": [
+                "fine",
+                "subscription",
+                "deposit"
+            ],
+            "x-enum-varnames": [
+                "PaymentTypeFine",
+                "PaymentTypeSubscription",
+                "PaymentTypeDeposit"
+            ]
+        },
+        "library-service_internal_domain_payment.SaveCardRequest": {
+            "type": "object",
+            "properties": {
+                "card_mask": {
+                    "type": "string"
+                },
+                "card_token": {
+                    "type": "string"
+                },
+                "card_type": {
+                    "type": "string"
+                },
+                "expiry_month": {
+                    "type": "integer"
+                },
+                "expiry_year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "library-service_internal_domain_payment.SavedCardResponse": {
+            "type": "object",
+            "properties": {
+                "card_mask": {
+                    "type": "string"
+                },
+                "card_type": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expiry_month": {
+                    "type": "integer"
+                },
+                "expiry_year": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "is_expired": {
+                    "type": "boolean"
+                },
+                "last_used_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "library-service_internal_domain_payment.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "processing",
+                "completed",
+                "failed",
+                "cancelled",
+                "refunded"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusProcessing",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusCancelled",
+                "StatusRefunded"
+            ]
         },
         "library-service_internal_infrastructure_auth.Claims": {
             "type": "object",

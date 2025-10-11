@@ -1,0 +1,205 @@
+package bookops
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/adapters/repository/mocks"
+	"library-service/internal/domain/book"
+	"library-service/pkg/errors"
+	"library-service/test/testutil"
+)
+
+// Helper function to create string pointers
+func strPtr(s string) *string {
+	return &s
+}
+
+// Helper function to create a valid book entity for testing
+func validBook() book.Book {
+	return book.Book{
+		Name:    strPtr("Clean Code: A Handbook of Agile Software Craftsmanship"),
+		Genre:   strPtr("Technology"),
+		ISBN:    strPtr("978-0132350884"),
+		Authors: []string{"author-1", "author-2"},
+	}
+}
+
+func TestGetBookUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name         string
+		request      GetBookRequest
+		setupMocks   func(*mocks.MockRepository, *mocks.MockCache)
+		expectError  bool
+		errorCheck   func(*testing.T, error)
+		validateFunc func(*testing.T, GetBookResponse)
+	}{
+		{
+			name: "successful retrieval from cache",
+			request: GetBookRequest{
+				ID: "book-123",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				bookEntity := validBook()
+				bookEntity.ID = "book-123"
+
+				// Cache hit
+				cache.EXPECT().
+					Get(mock.Anything, "book-123").
+					Return(bookEntity, nil).
+					Once()
+
+				// Repository should not be called
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp GetBookResponse) {
+				testutil.AssertEqual(t, "book-123", resp.ID)
+				testutil.AssertEqual(t, "Clean Code: A Handbook of Agile Software Craftsmanship", resp.Name)
+			},
+		},
+		{
+			name: "successful retrieval from repository (cache miss)",
+			request: GetBookRequest{
+				ID: "book-456",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				bookEntity := validBook()
+				bookEntity.ID = "book-456"
+
+				// Cache miss
+				cache.EXPECT().
+					Get(mock.Anything, "book-456").
+					Return(book.Book{}, errors.ErrNotFound).
+					Once()
+
+				// Repository retrieval
+				repo.EXPECT().
+					Get(mock.Anything, "book-456").
+					Return(bookEntity, nil).
+					Once()
+
+				// Cache update
+				cache.EXPECT().
+					Set(mock.Anything, "book-456", bookEntity).
+					Return(nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp GetBookResponse) {
+				testutil.AssertEqual(t, "book-456", resp.ID)
+			},
+		},
+		{
+			name: "book not found in cache and repository",
+			request: GetBookRequest{
+				ID: "non-existent-book",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// Cache miss
+				cache.EXPECT().
+					Get(mock.Anything, "non-existent-book").
+					Return(book.Book{}, errors.ErrNotFound).
+					Once()
+
+				// Repository miss
+				repo.EXPECT().
+					Get(mock.Anything, "non-existent-book").
+					Return(book.Book{}, errors.ErrNotFound).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+				testutil.AssertStringContains(t, err.Error(), "not found")
+			},
+		},
+		{
+			name: "repository error during retrieval",
+			request: GetBookRequest{
+				ID: "book-error",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				// Cache miss
+				cache.EXPECT().
+					Get(mock.Anything, "book-error").
+					Return(book.Book{}, errors.ErrNotFound).
+					Once()
+
+				// Repository error
+				repo.EXPECT().
+					Get(mock.Anything, "book-error").
+					Return(book.Book{}, errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+			},
+		},
+		{
+			name: "cache error (fallback to repository)",
+			request: GetBookRequest{
+				ID: "book-789",
+			},
+			setupMocks: func(repo *mocks.MockRepository, cache *mocks.MockCache) {
+				bookEntity := validBook()
+				bookEntity.ID = "book-789"
+
+				// Cache error (not critical, fallback to repo)
+				cache.EXPECT().
+					Get(mock.Anything, "book-789").
+					Return(book.Book{}, errors.ErrCache).
+					Once()
+
+				// Repository retrieval
+				repo.EXPECT().
+					Get(mock.Anything, "book-789").
+					Return(bookEntity, nil).
+					Once()
+
+				// Try to update cache (might fail, but non-critical)
+				cache.EXPECT().
+					Set(mock.Anything, "book-789", bookEntity).
+					Return(nil).
+					Maybe()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp GetBookResponse) {
+				testutil.AssertEqual(t, "book-789", resp.ID)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := mocks.NewMockRepository(t)
+			mockCache := mocks.NewMockCache(t)
+			tt.setupMocks(mockRepo, mockCache)
+
+			// Create use case
+			uc := NewGetBookUseCase(mockRepo, mockCache)
+
+			// Execute
+			ctx := context.Background()
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				testutil.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				testutil.AssertNoError(t, err)
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Mocks verify expectations automatically
+		})
+	}
+}

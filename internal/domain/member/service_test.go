@@ -323,7 +323,7 @@ func TestService_CanUpgradeSubscription(t *testing.T) {
 	}
 }
 
-func TestService_ValidateMember(t *testing.T) {
+func TestService_Validate(t *testing.T) {
 	service := NewService()
 
 	validName := "John Doe"
@@ -362,7 +362,7 @@ func TestService_ValidateMember(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ValidateMember(tt.member)
+			err := service.Validate(tt.member)
 
 			if tt.wantError {
 				assert.Error(t, err)

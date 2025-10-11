@@ -1,0 +1,220 @@
+package paymentops
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+func TestSetDefaultCardUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name        string
+		request     SetDefaultCardRequest
+		setupMock   func(*mockSavedCardRepository)
+		wantErr     bool
+		wantErrType error
+		wantSuccess bool
+	}{
+		{
+			name: "successfully set card as default - authorized and active",
+			request: SetDefaultCardRequest{
+				CardID:   "card-2",
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Card exists, belongs to member, and is active (not expired)
+				card := payment.NewSavedCard(
+					"member-1",
+					"token-456",
+					"**** 5678",
+					"MasterCard",
+					12,
+					time.Now().Year()+1, // Expires next year (not expired)
+				)
+				card.ID = "card-2"
+				card.IsDefault = false
+				card.IsActive = true
+
+				repo.On("GetByID", mock.Anything, "card-2").
+					Return(card, nil)
+
+				repo.On("SetAsDefault", mock.Anything, "member-1", "card-2").
+					Return(nil)
+			},
+			wantErr:     false,
+			wantSuccess: true,
+		},
+		{
+			name: "card not found",
+			request: SetDefaultCardRequest{
+				CardID:   "card-999",
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Card does not exist
+				repo.On("GetByID", mock.Anything, "card-999").
+					Return(payment.SavedCard{}, errors.ErrNotFound)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "unauthorized set default - card belongs to different member",
+			request: SetDefaultCardRequest{
+				CardID:   "card-1",
+				MemberID: "member-2",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Card exists but belongs to member-1, not member-2
+				card := payment.NewSavedCard(
+					"member-1",
+					"token-123",
+					"**** 1234",
+					"Visa",
+					12,
+					time.Now().Year()+1,
+				)
+				card.ID = "card-1"
+				card.IsActive = true
+
+				repo.On("GetByID", mock.Anything, "card-1").
+					Return(card, nil)
+
+				// SetAsDefault should NOT be called
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "card cannot be used - expired",
+			request: SetDefaultCardRequest{
+				CardID:   "card-1",
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Card exists and belongs to member, but is expired
+				card := payment.NewSavedCard(
+					"member-1",
+					"token-123",
+					"**** 1234",
+					"Visa",
+					1,
+					2020, // Expired
+				)
+				card.ID = "card-1"
+				card.IsActive = true
+
+				repo.On("GetByID", mock.Anything, "card-1").
+					Return(card, nil)
+
+				// SetAsDefault should NOT be called
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrValidation,
+		},
+		{
+			name: "card cannot be used - inactive",
+			request: SetDefaultCardRequest{
+				CardID:   "card-1",
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Card exists and belongs to member, but is inactive
+				card := payment.NewSavedCard(
+					"member-1",
+					"token-123",
+					"**** 1234",
+					"Visa",
+					12,
+					time.Now().Year()+1,
+				)
+				card.ID = "card-1"
+				card.IsActive = false // Inactive
+
+				repo.On("GetByID", mock.Anything, "card-1").
+					Return(card, nil)
+
+				// SetAsDefault should NOT be called
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrValidation,
+		},
+		{
+			name: "error retrieving card",
+			request: SetDefaultCardRequest{
+				CardID:   "card-1",
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Database error when retrieving card
+				repo.On("GetByID", mock.Anything, "card-1").
+					Return(payment.SavedCard{}, errors.ErrDatabase)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound, // Wrapped as ErrNotFound
+		},
+		{
+			name: "error setting as default",
+			request: SetDefaultCardRequest{
+				CardID:   "card-1",
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mockSavedCardRepository) {
+				// Card exists and belongs to member
+				card := payment.NewSavedCard(
+					"member-1",
+					"token-123",
+					"**** 1234",
+					"Visa",
+					12,
+					time.Now().Year()+1,
+				)
+				card.ID = "card-1"
+				card.IsActive = true
+
+				repo.On("GetByID", mock.Anything, "card-1").
+					Return(card, nil)
+
+				// Database error when setting as default
+				repo.On("SetAsDefault", mock.Anything, "member-1", "card-1").
+					Return(errors.ErrDatabase)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrDatabase,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockRepo := new(mockSavedCardRepository)
+			tt.setupMock(mockRepo)
+
+			uc := NewSetDefaultCardUseCase(mockRepo)
+			ctx := context.Background()
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrType != nil {
+					assert.ErrorIs(t, err, tt.wantErrType)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSuccess, result.Success)
+			}
+
+			// Verify mock expectations
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

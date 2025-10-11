@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -12,31 +10,20 @@ import (
 	"github.com/lib/pq"
 
 	"library-service/internal/domain/member"
-	"library-service/internal/infrastructure/store"
 )
 
 type MemberRepository struct {
-	db *sqlx.DB
+	BaseRepository[member.Member]
 }
 
 // NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository(db *sqlx.DB) *MemberRepository {
-	return &MemberRepository{db: db}
-}
-
-// List retrieves all members from the store.
-func (r *MemberRepository) List(ctx context.Context) ([]member.Member, error) {
-	query := `
-		SELECT id, email, password_hash, full_name, role, books, created_at, updated_at, last_login_at
-		FROM members
-		ORDER BY id`
-
-	var members []member.Member
-	if err := r.db.SelectContext(ctx, &members, query); err != nil {
-		return nil, err
+	return &MemberRepository{
+		BaseRepository: NewBaseRepository[member.Member](db, "members"),
 	}
-	return members, nil
 }
+
+// List is inherited from BaseRepository
 
 // Add inserts a new member into the store.
 func (r *MemberRepository) Add(ctx context.Context, data member.Member) (string, error) {
@@ -56,28 +43,13 @@ func (r *MemberRepository) Add(ctx context.Context, data member.Member) (string,
 	}
 
 	var id string
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-		return "", err
+	if err := r.GetDB().QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		return "", fmt.Errorf("inserting member: %w", HandleSQLError(err))
 	}
 	return id, nil
 }
 
-// Get retrieves a member by ID from the store.
-func (r *MemberRepository) Get(ctx context.Context, id string) (member.Member, error) {
-	query := `
-		SELECT id, email, password_hash, full_name, role, books, created_at, updated_at, last_login_at
-		FROM members
-		WHERE id=$1`
-
-	var member member.Member
-	if err := r.db.GetContext(ctx, &member, query, id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return member, store.ErrorNotFound
-		}
-		return member, err
-	}
-	return member, nil
-}
+// Get is inherited from BaseRepository
 
 // Update modifies an existing member in the store.
 func (r *MemberRepository) Update(ctx context.Context, id string, data member.Member) error {
@@ -90,13 +62,8 @@ func (r *MemberRepository) Update(ctx context.Context, id string, data member.Me
 	sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
 	query := fmt.Sprintf("UPDATE members SET %s WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
 
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return store.ErrorNotFound
-		}
-		return err
-	}
-	return nil
+	err := r.GetDB().QueryRowContext(ctx, query, args...).Scan(&id)
+	return HandleSQLError(err)
 }
 
 // prepareUpdateArgs prepares the arguments for the update query.
@@ -117,21 +84,7 @@ func (r *MemberRepository) prepareUpdateArgs(data member.Member) ([]string, []in
 	return sets, args
 }
 
-// Delete removes a member by ID from the store.
-func (r *MemberRepository) Delete(ctx context.Context, id string) error {
-	query := `
-		DELETE FROM members
-		WHERE id=$1
-		RETURNING id`
-
-	if err := r.db.QueryRowContext(ctx, query, id).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return store.ErrorNotFound
-		}
-		return err
-	}
-	return nil
-}
+// Delete is inherited from BaseRepository
 
 // GetByEmail retrieves a member by email
 func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (member.Member, error) {
@@ -141,13 +94,8 @@ func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (member
 		WHERE email=$1`
 
 	var m member.Member
-	if err := r.db.GetContext(ctx, &m, query, email); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return m, store.ErrorNotFound
-		}
-		return m, err
-	}
-	return m, nil
+	err := r.GetDB().GetContext(ctx, &m, query, email)
+	return m, HandleSQLError(err)
 }
 
 // UpdateLastLogin updates last login time
@@ -158,13 +106,8 @@ func (r *MemberRepository) UpdateLastLogin(ctx context.Context, id string, login
 		WHERE id=$2
 		RETURNING id`
 
-	if err := r.db.QueryRowContext(ctx, query, loginTime, id).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return store.ErrorNotFound
-		}
-		return err
-	}
-	return nil
+	err := r.GetDB().QueryRowContext(ctx, query, loginTime, id).Scan(&id)
+	return HandleSQLError(err)
 }
 
 // EmailExists checks if email exists
@@ -172,8 +115,8 @@ func (r *MemberRepository) EmailExists(ctx context.Context, email string) (bool,
 	query := `SELECT EXISTS(SELECT 1 FROM members WHERE email=$1)`
 
 	var exists bool
-	if err := r.db.GetContext(ctx, &exists, query, email); err != nil {
-		return false, err
+	if err := r.GetDB().GetContext(ctx, &exists, query, email); err != nil {
+		return false, fmt.Errorf("checking email existence: %w", err)
 	}
 	return exists, nil
 }

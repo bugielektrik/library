@@ -13,12 +13,12 @@ type CreateReservationRequest struct {
 
 // ReservationResponse represents the response for a reservation
 type ReservationResponse struct {
-	ID          string    `json:"id"`
-	BookID      string    `json:"book_id"`
-	MemberID    string    `json:"member_id"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	ExpiresAt   time.Time `json:"expires_at"`
+	ID          string     `json:"id"`
+	BookID      string     `json:"book_id"`
+	MemberID    string     `json:"member_id"`
+	Status      string     `json:"status"`
+	CreatedAt   time.Time  `json:"created_at"`
+	ExpiresAt   time.Time  `json:"expires_at"`
 	FulfilledAt *time.Time `json:"fulfilled_at,omitempty"`
 	CancelledAt *time.Time `json:"cancelled_at,omitempty"`
 }

@@ -1,3 +1,14 @@
+/*
+Package book provides domain service for book-related business logic.
+
+Domain service contains pure business rules without external dependencies:
+- ISBN validation and normalization (checksum, format)
+- Cross-entity validation (can book be deleted?)
+- Business constraints and rules
+
+This keeps entities simple and business logic centralized and testable.
+See .claude/adr/003-domain-services-vs-infrastructure.md for design rationale.
+*/
 package book
 
 import (
@@ -7,11 +18,50 @@ import (
 	"library-service/pkg/errors"
 )
 
-// Service encapsulates business logic for books that doesn't naturally
-// belong to a single entity. This is a domain service in DDD terms.
+// ISBN prefix constants for standardization
+const (
+	// ISBN13PrefixBookland is the standard ISBN-13 prefix for most books (978).
+	// This prefix was introduced when migrating from ISBN-10 to ISBN-13.
+	// Rationale: 978 is the "Bookland" prefix, analogous to country codes in barcodes.
+	ISBN13PrefixBookland = "978"
+
+	// ISBN13PrefixMusicland is an alternative ISBN-13 prefix (979).
+	// Originally intended for music publications, now also used for books
+	// when 978 namespace becomes exhausted.
+	// Rationale: As book ISBNs proliferate, 979 provides additional namespace capacity.
+	ISBN13PrefixMusicland = "979"
+)
+
+// Service encapsulates book-related business logic that doesn't naturally
+// belong to a single entity.
+//
+// See Also:
+//   - Use case example: internal/usecase/bookops/create_book.go (uses this service)
+//   - Similar services: internal/domain/payment/service.go, internal/domain/reservation/service.go
+//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (when to use domain services)
+//   - Infrastructure services: internal/infrastructure/auth/jwt.go (contrast: external dependencies)
+//   - Test: internal/domain/book/service_test.go (100% coverage)
+//
+// DESIGN DECISIONS:
+//   - Stateless (no fields, created per request if needed)
+//   - Pure functions (no side effects, deterministic)
+//   - No external dependencies (100% unit testable)
+//   - Created in usecase/container.go: bookService := book.NewService()
+//
+// RESPONSIBILITIES:
+//   - ISBN validation and normalization (complex algorithmic rules)
+//   - Book deletion eligibility (cross-entity business rules)
+//   - Format standardization (ISBN-10 to ISBN-13 conversion)
+//
+// NOT RESPONSIBILITIES:
+//   - Persistence (use BookRepository)
+//   - Caching (use BookCache)
+//   - Orchestration (use BookUseCase)
+//   - HTTP concerns (use BookHandler)
 type Service struct {
-	// Domain services are typically stateless
-	// If state is needed, it should be passed as parameters
+	// Domain services are typically stateless.
+	// If state is needed, it should be passed as parameters.
+	// This follows the Stateless Service pattern for better testability.
 }
 
 // NewService creates a new book domain service
@@ -56,7 +106,7 @@ func (s *Service) ValidateISBN(isbn string) error {
 }
 
 // ValidateBook validates book entity according to business rules
-func (s *Service) ValidateBook(book Book) error {
+func (s *Service) Validate(book Book) error {
 	if book.Name == nil || *book.Name == "" {
 		return errors.ErrInvalidBookData.WithDetails("field", "name")
 	}
@@ -115,8 +165,8 @@ func (s *Service) NormalizeISBN(isbn string) (string, error) {
 
 	// Convert ISBN-10 to ISBN-13 format
 	if len(cleanISBN) == 10 {
-		// ISBN-10 to ISBN-13: prefix with 978 and recalculate checksum
-		isbn13 := "978" + cleanISBN[:9]
+		// ISBN-10 to ISBN-13: prefix with standard bookland prefix and recalculate checksum
+		isbn13 := ISBN13PrefixBookland + cleanISBN[:9]
 		checksum := s.calculateISBN13Checksum(isbn13)
 		return isbn13 + string(rune('0'+checksum)), nil
 	}

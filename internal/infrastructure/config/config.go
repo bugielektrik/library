@@ -134,8 +134,3 @@ func logStructured(level string, action string, params map[string]interface{}) {
 	// Use the standard log package to emit the message.
 	log.Println(msg)
 }
-
-// Load is an alias for New for backwards compatibility
-func Load() (*Config, error) {
-	return New()
-}

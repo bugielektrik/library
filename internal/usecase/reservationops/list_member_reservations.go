@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/reservation"
-	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // ListMemberReservationsRequest represents the input for listing a member's reservations
@@ -34,15 +34,13 @@ func NewListMemberReservationsUseCase(reservationRepo reservation.Repository) *L
 
 // Execute retrieves all reservations for a member
 func (uc *ListMemberReservationsUseCase) Execute(ctx context.Context, req ListMemberReservationsRequest) (ListMemberReservationsResponse, error) {
-	logger := log.FromContext(ctx).Named("list_member_reservations_usecase").With(
-		zap.String("member_id", req.MemberID),
-	)
+	logger := logutil.UseCaseLogger(ctx, "reservation", "list_member")
 
 	// Get reservations from repository
 	reservations, err := uc.reservationRepo.GetByMemberID(ctx, req.MemberID)
 	if err != nil {
 		logger.Error("failed to get member reservations", zap.Error(err))
-		return ListMemberReservationsResponse{}, errors.ErrDatabase.Wrap(err)
+		return ListMemberReservationsResponse{}, errors.Database("database operation", err)
 	}
 
 	logger.Info("member reservations retrieved successfully", zap.Int("count", len(reservations)))

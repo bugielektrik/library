@@ -6,9 +6,10 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
-	"library-service/internal/infrastructure/log"
 	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
+	"library-service/pkg/strutil"
 )
 
 // GetBookRequest represents the input for getting a book
@@ -41,10 +42,10 @@ func NewGetBookUseCase(bookRepo book.Repository, bookCache book.Cache) *GetBookU
 
 // Execute retrieves a book from cache or repository
 func (uc *GetBookUseCase) Execute(ctx context.Context, req GetBookRequest) (GetBookResponse, error) {
-	logger := log.FromContext(ctx).Named("get_book_usecase").With(zap.String("id", req.ID))
+	logger := logutil.UseCaseLogger(ctx, "book", "get")
 
 	if req.ID == "" {
-		return GetBookResponse{}, errors.ErrInvalidInput.WithDetails("field", "id")
+		return GetBookResponse{}, errors.ValidationRequired("id")
 	}
 
 	// Try cache first
@@ -59,10 +60,10 @@ func (uc *GetBookUseCase) Execute(ctx context.Context, req GetBookRequest) (GetB
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
 			logger.Warn("book not found")
-			return GetBookResponse{}, errors.ErrBookNotFound.WithDetails("id", req.ID)
+			return GetBookResponse{}, errors.NotFoundWithID("book", req.ID)
 		}
 		logger.Error("failed to get book from repository", zap.Error(err))
-		return GetBookResponse{}, errors.ErrDatabase.Wrap(err)
+		return GetBookResponse{}, errors.Database("database operation", err)
 	}
 
 	// Update cache
@@ -79,9 +80,9 @@ func (uc *GetBookUseCase) Execute(ctx context.Context, req GetBookRequest) (GetB
 func (uc *GetBookUseCase) toResponse(entity book.Book) GetBookResponse {
 	return GetBookResponse{
 		ID:      entity.ID,
-		Name:    safeString(entity.Name),
-		Genre:   safeString(entity.Genre),
-		ISBN:    safeString(entity.ISBN),
+		Name:    strutil.SafeString(entity.Name),
+		Genre:   strutil.SafeString(entity.Genre),
+		ISBN:    strutil.SafeString(entity.ISBN),
 		Authors: entity.Authors,
 	}
 }

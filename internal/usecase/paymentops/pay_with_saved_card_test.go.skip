@@ -1,0 +1,262 @@
+package paymentops
+
+import (
+	"library-service/test/helpers"
+	"library-service/test/builders"
+	"library-service/internal/adapters/repository/mocks"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+func TestPayWithSavedCardUseCase_Execute(t *testing.T) {
+	now := time.Now()
+	futureExpiry := now.Add(365 * 24 * time.Hour) // 1 year from now
+
+	tests := []struct {
+		name         string
+		request      PayWithSavedCardRequest
+		setupMocks   func(*mocks.MockPaymentRepository, *mocks.MockSavedCardRepository, *mockPaymentGateway)
+		wantErr      bool
+		wantErrType  error
+		validateResp func(*testing.T, PayWithSavedCardResponse)
+	}{
+		{
+			name: "successfully pay with saved card",
+			request: PayWithSavedCardRequest{
+				MemberID:    "member-1",
+				SavedCardID: "card-1",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, cardRepo *mocks.MockSavedCardRepository, gateway *mockPaymentGateway) {
+				savedCard := payment.SavedCard{
+					ID:          "card-1",
+					MemberID:    "member-1",
+					CardToken:   "token-123",
+					CardMask:    "****1234",
+					ExpiryMonth: int(futureExpiry.Month()),
+					ExpiryYear:  futureExpiry.Year(),
+					IsActive:    true,
+					IsDefault:   true,
+					CreatedAt:   now,
+				}
+
+				cardRepo.On("GetByID", mock.Anything, "card-1").
+					Return(savedCard, nil)
+
+				payRepo.On("Create", mock.Anything, mock.MatchedBy(func(p payment.Payment) bool {
+					return p.MemberID == "member-1" && p.Amount == 10000
+				})).Return("payment-1", nil)
+
+				gatewayResp := &payment.CardChargeResponse{
+					TransactionID: "txn-123",
+					Status:        "Success",
+				}
+				gateway.On("ChargeCard", mock.Anything, mock.MatchedBy(func(req *payment.CardChargeRequest) bool {
+					return req.CardID == "token-123" && req.Amount == 10000
+				})).Return(gatewayResp, nil)
+
+				payRepo.On("Update", mock.Anything, "payment-1", mock.MatchedBy(func(p payment.Payment) bool {
+					return p.Status == payment.StatusCompleted
+				})).Return(nil)
+
+				// Update card last used timestamp
+				cardRepo.On("Update", mock.Anything, "card-1", mock.MatchedBy(func(c payment.SavedCard) bool {
+					return c.LastUsedAt != nil
+				})).Return(nil)
+			},
+			wantErr: false,
+			validateResp: func(t *testing.T, resp PayWithSavedCardResponse) {
+				assert.Equal(t, "payment-1", resp.PaymentID)
+				assert.NotEmpty(t, resp.InvoiceID)
+				assert.Equal(t, payment.StatusCompleted, resp.Status)
+				assert.Equal(t, int64(10000), resp.Amount)
+				assert.Equal(t, "KZT", resp.Currency)
+				assert.Equal(t, "****1234", resp.CardMask)
+			},
+		},
+		{
+			name: "error - saved card not found",
+			request: PayWithSavedCardRequest{
+				MemberID:    "member-1",
+				SavedCardID: "nonexistent",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, cardRepo *mocks.MockSavedCardRepository, gateway *mockPaymentGateway) {
+				cardRepo.On("GetByID", mock.Anything, "nonexistent").
+					Return(payment.SavedCard{}, errors.ErrNotFound)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "error - unauthorized card usage",
+			request: PayWithSavedCardRequest{
+				MemberID:    "wrong-member",
+				SavedCardID: "card-2",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, cardRepo *mocks.MockSavedCardRepository, gateway *mockPaymentGateway) {
+				savedCard := payment.SavedCard{
+					ID:          "card-2",
+					MemberID:    "actual-member",
+					CardToken:   "token-456",
+					CardMask:    "****5678",
+					ExpiryMonth: int(futureExpiry.Month()),
+					ExpiryYear:  futureExpiry.Year(),
+					IsActive:    true,
+					CreatedAt:   now,
+				}
+
+				cardRepo.On("GetByID", mock.Anything, "card-2").
+					Return(savedCard, nil)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "error - card is inactive",
+			request: PayWithSavedCardRequest{
+				MemberID:    "member-1",
+				SavedCardID: "card-inactive",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, cardRepo *mocks.MockSavedCardRepository, gateway *mockPaymentGateway) {
+				savedCard := payment.SavedCard{
+					ID:          "card-inactive",
+					MemberID:    "member-1",
+					CardToken:   "token-789",
+					CardMask:    "****9012",
+					ExpiryMonth: int(futureExpiry.Month()),
+					ExpiryYear:  futureExpiry.Year(),
+					IsActive:    false, // Inactive
+					CreatedAt:   now,
+				}
+
+				cardRepo.On("GetByID", mock.Anything, "card-inactive").
+					Return(savedCard, nil)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrValidation,
+		},
+		{
+			name: "error - failed to create payment in repository",
+			request: PayWithSavedCardRequest{
+				MemberID:    "member-1",
+				SavedCardID: "card-3",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, cardRepo *mocks.MockSavedCardRepository, gateway *mockPaymentGateway) {
+				savedCard := payment.SavedCard{
+					ID:          "card-3",
+					MemberID:    "member-1",
+					CardToken:   "token-abc",
+					CardMask:    "****3456",
+					ExpiryMonth: int(futureExpiry.Month()),
+					ExpiryYear:  futureExpiry.Year(),
+					IsActive:    true,
+					CreatedAt:   now,
+				}
+
+				cardRepo.On("GetByID", mock.Anything, "card-3").
+					Return(savedCard, nil)
+
+				payRepo.On("Create", mock.Anything, mock.Anything).
+					Return("", errors.ErrDatabase)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrDatabase,
+		},
+		{
+			name: "error - gateway charge fails",
+			request: PayWithSavedCardRequest{
+				MemberID:    "member-1",
+				SavedCardID: "card-4",
+				Amount:      10000,
+				Currency:    "KZT",
+				PaymentType: payment.PaymentTypeFine,
+			},
+			setupMocks: func(payRepo *mocks.MockPaymentRepository, cardRepo *mocks.MockSavedCardRepository, gateway *mockPaymentGateway) {
+				savedCard := payment.SavedCard{
+					ID:          "card-4",
+					MemberID:    "member-1",
+					CardToken:   "token-def",
+					CardMask:    "****7890",
+					ExpiryMonth: int(futureExpiry.Month()),
+					ExpiryYear:  futureExpiry.Year(),
+					IsActive:    true,
+					CreatedAt:   now,
+				}
+
+				cardRepo.On("GetByID", mock.Anything, "card-4").
+					Return(savedCard, nil)
+
+				payRepo.On("Create", mock.Anything, mock.Anything).
+					Return("payment-failed", nil)
+
+				gateway.On("ChargeCard", mock.Anything, mock.Anything).
+					Return((*payment.CardChargeResponse)(nil), errors.ErrPaymentGateway.WithDetail("reason", "insufficient funds"))
+
+				// Expect status update to failed
+				payRepo.On("UpdateStatus", mock.Anything, "payment-failed", payment.StatusFailed).
+					Return(nil)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrPaymentGateway,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockPayRepo := new(mocks.MockPaymentRepository)
+			mockCardRepo := new(mocks.MockSavedCardRepository)
+			mockGateway := new(mockPaymentGateway)
+			tt.setupMocks(mockPayRepo, mockCardRepo, mockGateway)
+
+			// Use real domain service
+			service := payment.NewService()
+			uc := NewPayWithSavedCardUseCase(mockPayRepo, mockCardRepo, service, mockGateway)
+			ctx := helpers.TestContext(t)
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrType != nil {
+					assert.ErrorIs(t, err, tt.wantErrType)
+				}
+			} else {
+				assert.NoError(t, err)
+
+				// Run custom validation if provided
+				if tt.validateResp != nil {
+					tt.validateResp(t, result)
+				}
+			}
+
+			// Verify mock expectations
+			mockPayRepo.AssertExpectations(t)
+			mockCardRepo.AssertExpectations(t)
+			mockGateway.AssertExpectations(t)
+		})
+	}
+}

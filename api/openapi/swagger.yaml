@@ -31,6 +31,20 @@ definitions:
       name:
         type: string
     type: object
+  library-service_internal_adapters_http_dto.CancelPaymentRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  library-service_internal_adapters_http_dto.CancelPaymentResponse:
+    properties:
+      cancelled_at:
+        type: string
+      payment_id:
+        type: string
+      status:
+        $ref: '#/definitions/library-service_internal_domain_payment.Status'
+    type: object
   library-service_internal_adapters_http_dto.CreateBookRequest:
     properties:
       authors:
@@ -61,6 +75,11 @@ definitions:
     required:
     - book_id
     type: object
+  library-service_internal_adapters_http_dto.DeleteSavedCardResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
   library-service_internal_adapters_http_dto.ErrorDetail:
     properties:
       code:
@@ -75,6 +94,308 @@ definitions:
     properties:
       error:
         $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorDetail'
+    type: object
+  library-service_internal_adapters_http_dto.GenerateReceiptRequest:
+    properties:
+      notes:
+        type: string
+      payment_id:
+        type: string
+    required:
+    - payment_id
+    type: object
+  library-service_internal_adapters_http_dto.InitiatePaymentRequest:
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+      payment_type:
+        $ref: '#/definitions/library-service_internal_domain_payment.PaymentType'
+      related_entity_id:
+        type: string
+    required:
+    - amount
+    - currency
+    - payment_type
+    type: object
+  library-service_internal_adapters_http_dto.InitiatePaymentResponse:
+    properties:
+      amount:
+        type: integer
+      auth_token:
+        type: string
+      back_link:
+        type: string
+      currency:
+        type: string
+      invoice_id:
+        type: string
+      payment_id:
+        type: string
+      post_link:
+        type: string
+      terminal:
+        type: string
+      widget_url:
+        type: string
+    type: object
+  library-service_internal_adapters_http_dto.ListPaymentsResponse:
+    properties:
+      payments:
+        items:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.PaymentSummaryResponse'
+        type: array
+    type: object
+  library-service_internal_adapters_http_dto.ListReceiptsResponse:
+    properties:
+      receipts:
+        items:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.ReceiptResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  library-service_internal_adapters_http_dto.ListSavedCardsResponse:
+    properties:
+      cards:
+        items:
+          $ref: '#/definitions/library-service_internal_domain_payment.SavedCardResponse'
+        type: array
+    type: object
+  library-service_internal_adapters_http_dto.MemberResponse:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      role:
+        type: string
+    type: object
+  library-service_internal_adapters_http_dto.PayWithSavedCardRequest:
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+      payment_type:
+        $ref: '#/definitions/library-service_internal_domain_payment.PaymentType'
+      related_entity_id:
+        type: string
+      saved_card_id:
+        type: string
+    required:
+    - amount
+    - currency
+    - payment_type
+    - saved_card_id
+    type: object
+  library-service_internal_adapters_http_dto.PayWithSavedCardResponse:
+    properties:
+      amount:
+        type: integer
+      card_mask:
+        type: string
+      currency:
+        type: string
+      invoice_id:
+        type: string
+      payment_id:
+        type: string
+      status:
+        $ref: '#/definitions/library-service_internal_domain_payment.Status'
+    type: object
+  library-service_internal_adapters_http_dto.PaymentCallbackRequest:
+    properties:
+      amount:
+        description: Transaction amount
+        type: integer
+      approvalCode:
+        description: Approval code
+        type: string
+      cardMask:
+        description: Masked card number
+        type: string
+      code:
+        description: '"ok" or "error"'
+        type: string
+      currency:
+        description: Currency code
+        type: string
+      extra:
+        additionalProperties: true
+        description: Additional fields
+        type: object
+      invoiceId:
+        description: Order number
+        type: string
+      reason:
+        description: '"success" or error description'
+        type: string
+      reasonCode:
+        description: Error numeric code
+        type: string
+      reference:
+        description: Reference number
+        type: string
+      terminal:
+        description: Terminal ID
+        type: string
+      transactionId:
+        description: Gateway transaction ID
+        type: string
+    type: object
+  library-service_internal_adapters_http_dto.PaymentCallbackResponse:
+    properties:
+      message:
+        type: string
+      payment_id:
+        type: string
+      status:
+        $ref: '#/definitions/library-service_internal_domain_payment.Status'
+    type: object
+  library-service_internal_adapters_http_dto.PaymentResponse:
+    properties:
+      amount:
+        type: integer
+      approval_code:
+        type: string
+      card_mask:
+        type: string
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      error_code:
+        type: string
+      error_message:
+        type: string
+      expires_at:
+        type: string
+      gateway_transaction_id:
+        type: string
+      id:
+        type: string
+      invoice_id:
+        type: string
+      member_id:
+        type: string
+      payment_method:
+        $ref: '#/definitions/library-service_internal_domain_payment.PaymentMethod'
+      payment_type:
+        $ref: '#/definitions/library-service_internal_domain_payment.PaymentType'
+      related_entity_id:
+        type: string
+      status:
+        $ref: '#/definitions/library-service_internal_domain_payment.Status'
+      updated_at:
+        type: string
+    type: object
+  library-service_internal_adapters_http_dto.PaymentSummaryResponse:
+    properties:
+      amount:
+        type: integer
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: string
+      invoice_id:
+        type: string
+      payment_type:
+        $ref: '#/definitions/library-service_internal_domain_payment.PaymentType'
+      status:
+        $ref: '#/definitions/library-service_internal_domain_payment.Status'
+    type: object
+  library-service_internal_adapters_http_dto.ReceiptItemDTO:
+    properties:
+      amount:
+        type: integer
+      description:
+        type: string
+      quantity:
+        type: integer
+      unit_price:
+        type: integer
+    type: object
+  library-service_internal_adapters_http_dto.ReceiptResponse:
+    properties:
+      amount:
+        type: integer
+      card_mask:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.ReceiptItemDTO'
+        type: array
+      member_email:
+        type: string
+      member_id:
+        type: string
+      member_name:
+        type: string
+      notes:
+        type: string
+      payment_date:
+        type: string
+      payment_id:
+        type: string
+      payment_method:
+        type: string
+      payment_type:
+        type: string
+      receipt_date:
+        type: string
+      receipt_number:
+        type: string
+      status:
+        type: string
+      tax_amount:
+        type: integer
+      total_amount:
+        type: integer
+      transaction_id:
+        type: string
+    type: object
+  library-service_internal_adapters_http_dto.RefundPaymentRequest:
+    properties:
+      reason:
+        type: string
+      refund_amount:
+        description: 'Optional: if nil, full refund; if specified, partial refund'
+        type: integer
+    type: object
+  library-service_internal_adapters_http_dto.RefundPaymentResponse:
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+      payment_id:
+        type: string
+      refunded_at:
+        type: string
+      status:
+        $ref: '#/definitions/library-service_internal_domain_payment.Status'
     type: object
   library-service_internal_adapters_http_dto.ReservationResponse:
     properties:
@@ -94,6 +415,11 @@ definitions:
         type: string
       status:
         type: string
+    type: object
+  library-service_internal_adapters_http_dto.SetDefaultCardResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   library-service_internal_adapters_http_dto.UpdateBookRequest:
     properties:
@@ -128,6 +454,76 @@ definitions:
       role:
         type: string
     type: object
+  library-service_internal_domain_payment.PaymentMethod:
+    enum:
+    - card
+    - wallet
+    type: string
+    x-enum-varnames:
+    - PaymentMethodCard
+    - PaymentMethodWallet
+  library-service_internal_domain_payment.PaymentType:
+    enum:
+    - fine
+    - subscription
+    - deposit
+    type: string
+    x-enum-varnames:
+    - PaymentTypeFine
+    - PaymentTypeSubscription
+    - PaymentTypeDeposit
+  library-service_internal_domain_payment.SaveCardRequest:
+    properties:
+      card_mask:
+        type: string
+      card_token:
+        type: string
+      card_type:
+        type: string
+      expiry_month:
+        type: integer
+      expiry_year:
+        type: integer
+    type: object
+  library-service_internal_domain_payment.SavedCardResponse:
+    properties:
+      card_mask:
+        type: string
+      card_type:
+        type: string
+      created_at:
+        type: string
+      expiry_month:
+        type: integer
+      expiry_year:
+        type: integer
+      id:
+        type: string
+      is_active:
+        type: boolean
+      is_default:
+        type: boolean
+      is_expired:
+        type: boolean
+      last_used_at:
+        type: string
+    type: object
+  library-service_internal_domain_payment.Status:
+    enum:
+    - pending
+    - processing
+    - completed
+    - failed
+    - cancelled
+    - refunded
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusProcessing
+    - StatusCompleted
+    - StatusFailed
+    - StatusCancelled
+    - StatusRefunded
   library-service_internal_infrastructure_auth.Claims:
     properties:
       aud:
@@ -346,6 +742,29 @@ paths:
       summary: Register a new member
       tags:
       - auth
+  /authors:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all authors in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of authors
+          schema:
+            items:
+              $ref: '#/definitions/library-service_internal_adapters_http_dto.AuthorResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all authors
+      tags:
+      - authors
   /books:
     get:
       consumes:
@@ -524,6 +943,453 @@ paths:
       summary: List authors of a book
       tags:
       - books
+  /members:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all members in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of members
+          schema:
+            items:
+              $ref: '#/definitions/library-service_internal_adapters_http_dto.MemberResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all members
+      tags:
+      - members
+  /members/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed profile information for a specific member
+      parameters:
+      - description: Member ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Member profile
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.MemberResponse'
+        "400":
+          description: Invalid member ID
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Member not found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get member profile
+      tags:
+      - members
+  /payment:
+    get:
+      description: Displays the payment page for completing a payment
+      parameters:
+      - description: Payment ID
+        in: query
+        name: paymentId
+        required: true
+        type: string
+      - description: Invoice ID
+        in: query
+        name: invoiceId
+        required: true
+        type: string
+      - description: Payment gateway auth token
+        in: query
+        name: authToken
+        required: true
+        type: string
+      - description: Terminal ID
+        in: query
+        name: terminal
+        required: true
+        type: string
+      - description: Amount in cents
+        in: query
+        name: amount
+        required: true
+        type: string
+      - default: KZT
+        description: Currency code
+        in: query
+        name: currency
+        type: string
+      - description: Redirect URL after payment
+        in: query
+        name: backLink
+        type: string
+      - description: Callback URL
+        in: query
+        name: postLink
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page
+          schema:
+            type: string
+      summary: Payment page
+      tags:
+      - payments
+  /payments/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get the current status of a payment
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.PaymentResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify payment status
+      tags:
+      - payments
+  /payments/{id}/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel a pending or processing payment
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cancellation reason
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.CancelPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.CancelPaymentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel a payment
+      tags:
+      - payments
+  /payments/{id}/refund:
+    post:
+      consumes:
+      - application/json
+      description: Refund a completed payment
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Refund reason
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.RefundPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.RefundPaymentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Refund a payment
+      tags:
+      - payments
+  /payments/callback:
+    post:
+      consumes:
+      - application/json
+      description: Process callback from payment gateway
+      parameters:
+      - description: Payment callback data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.PaymentCallbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.PaymentCallbackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      summary: Handle payment callback
+      tags:
+      - payments
+  /payments/initiate:
+    post:
+      consumes:
+      - application/json
+      description: Initiate a payment and get payment gateway details
+      parameters:
+      - description: Payment initiation data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.InitiatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.InitiatePaymentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Initiate a payment
+      tags:
+      - payments
+  /payments/member/{memberId}:
+    get:
+      consumes:
+      - application/json
+      description: Get all payments for a specific member
+      parameters:
+      - description: Member ID
+        in: path
+        name: memberId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ListPaymentsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List member payments
+      tags:
+      - payments
+  /payments/pay-with-card:
+    post:
+      consumes:
+      - application/json
+      description: Make a payment using a saved card
+      parameters:
+      - description: Payment data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.PayWithSavedCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.PayWithSavedCardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Pay with saved card
+      tags:
+      - payments
+  /receipts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all receipts for the authenticated member
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of receipts
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ListReceiptsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List member receipts
+      tags:
+      - receipts
+    post:
+      consumes:
+      - application/json
+      description: Generates a receipt for a completed payment
+      parameters:
+      - description: Receipt generation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_adapters_http_dto.GenerateReceiptRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Receipt generated
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ReceiptResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Payment not found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate receipt for payment
+      tags:
+      - receipts
+  /receipts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a receipt by its ID
+      parameters:
+      - description: Receipt ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Receipt details
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ReceiptResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Receipt not found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get receipt by ID
+      tags:
+      - receipts
   /reservations:
     get:
       consumes:
@@ -667,6 +1533,124 @@ paths:
       summary: Get a reservation by ID
       tags:
       - reservations
+  /saved-cards:
+    get:
+      consumes:
+      - application/json
+      description: Get all saved cards for the authenticated member
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ListSavedCardsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List saved cards
+      tags:
+      - saved-cards
+    post:
+      consumes:
+      - application/json
+      description: Save a payment card for future use
+      parameters:
+      - description: Card data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/library-service_internal_domain_payment.SaveCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_domain_payment.SavedCardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Save a payment card
+      tags:
+      - saved-cards
+  /saved-cards/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a saved payment card
+      parameters:
+      - description: Card ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.DeleteSavedCardResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a saved card
+      tags:
+      - saved-cards
+  /saved-cards/{id}/set-default:
+    post:
+      consumes:
+      - application/json
+      description: Set a saved card as the default payment method
+      parameters:
+      - description: Card ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.SetDefaultCardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/library-service_internal_adapters_http_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set default card
+      tags:
+      - saved-cards
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token

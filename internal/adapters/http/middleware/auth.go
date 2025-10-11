@@ -10,6 +10,7 @@ import (
 	"library-service/internal/domain/member"
 	"library-service/internal/infrastructure/auth"
 	"library-service/pkg/errors"
+	"library-service/pkg/httputil"
 )
 
 // ContextKey type for context values
@@ -41,28 +42,12 @@ func NewAuthMiddleware(jwtService *auth.JWTService) *AuthMiddleware {
 // Authenticate is a middleware that validates JWT tokens
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract token from Authorization header
-		token := m.extractToken(r)
-		if token == "" {
-			m.respondError(w, errors.ErrUnauthorized.WithDetails("reason", "missing or invalid authorization header"))
+		claims := m.validateAndExtractClaims(w, r)
+		if claims == nil {
 			return
 		}
 
-		// Validate token
-		claims, err := m.jwtService.ValidateToken(token)
-		if err != nil {
-			m.respondError(w, errors.ErrUnauthorized.WithDetails("reason", err.Error()))
-			return
-		}
-
-		// Add claims to context
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, ContextKeyMemberID, claims.MemberID)
-		ctx = context.WithValue(ctx, ContextKeyMemberEmail, claims.Email)
-		ctx = context.WithValue(ctx, ContextKeyMemberRole, claims.Role)
-		ctx = context.WithValue(ctx, ContextKeyClaims, claims)
-
-		// Continue with the request
+		ctx := addClaimsToContext(r.Context(), claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -71,17 +56,8 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 func (m *AuthMiddleware) RequireRole(roles ...member.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// First ensure the user is authenticated
-			token := m.extractToken(r)
-			if token == "" {
-				m.respondError(w, errors.ErrUnauthorized.WithDetails("reason", "authentication required"))
-				return
-			}
-
-			// Validate token
-			claims, err := m.jwtService.ValidateToken(token)
-			if err != nil {
-				m.respondError(w, errors.ErrUnauthorized.WithDetails("reason", err.Error()))
+			claims := m.validateAndExtractClaims(w, r)
+			if claims == nil {
 				return
 			}
 
@@ -99,14 +75,7 @@ func (m *AuthMiddleware) RequireRole(roles ...member.Role) func(http.Handler) ht
 				return
 			}
 
-			// Add claims to context
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, ContextKeyMemberID, claims.MemberID)
-			ctx = context.WithValue(ctx, ContextKeyMemberEmail, claims.Email)
-			ctx = context.WithValue(ctx, ContextKeyMemberRole, claims.Role)
-			ctx = context.WithValue(ctx, ContextKeyClaims, claims)
-
-			// Continue with the request
+			ctx := addClaimsToContext(r.Context(), claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -115,6 +84,33 @@ func (m *AuthMiddleware) RequireRole(roles ...member.Role) func(http.Handler) ht
 // RequireAdmin is a convenience middleware that requires admin role
 func (m *AuthMiddleware) RequireAdmin(next http.Handler) http.Handler {
 	return m.RequireRole(member.RoleAdmin)(next)
+}
+
+// validateAndExtractClaims validates the JWT token and returns claims.
+// If validation fails, it writes an error response and returns nil.
+func (m *AuthMiddleware) validateAndExtractClaims(w http.ResponseWriter, r *http.Request) *auth.Claims {
+	token := m.extractToken(r)
+	if token == "" {
+		m.respondError(w, errors.ErrUnauthorized.WithDetails("reason", "missing or invalid authorization header"))
+		return nil
+	}
+
+	claims, err := m.jwtService.ValidateToken(token)
+	if err != nil {
+		m.respondError(w, errors.ErrUnauthorized.WithDetails("reason", err.Error()))
+		return nil
+	}
+
+	return claims
+}
+
+// addClaimsToContext adds JWT claims to the request context
+func addClaimsToContext(ctx context.Context, claims *auth.Claims) context.Context {
+	ctx = context.WithValue(ctx, ContextKeyMemberID, claims.MemberID)
+	ctx = context.WithValue(ctx, ContextKeyMemberEmail, claims.Email)
+	ctx = context.WithValue(ctx, ContextKeyMemberRole, claims.Role)
+	ctx = context.WithValue(ctx, ContextKeyClaims, claims)
+	return ctx
 }
 
 // extractToken extracts the JWT token from the Authorization header
@@ -135,7 +131,7 @@ func (m *AuthMiddleware) extractToken(r *http.Request) string {
 
 // respondError sends an error response
 func (m *AuthMiddleware) respondError(w http.ResponseWriter, err error) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(httputil.HeaderContentType, httputil.ContentTypeJSON)
 
 	status := errors.GetHTTPStatus(err)
 	w.WriteHeader(status)

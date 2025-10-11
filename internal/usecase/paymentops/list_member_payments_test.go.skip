@@ -1,0 +1,229 @@
+package paymentops
+
+import (
+	"library-service/test/helpers"
+	"library-service/test/builders"
+	"library-service/internal/adapters/repository/mocks"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+func TestListMemberPaymentsUseCase_Execute(t *testing.T) {
+	now := time.Now()
+	completedTime := now.Add(-1 * time.Hour)
+
+	tests := []struct {
+		name         string
+		request      ListMemberPaymentsRequest
+		setupMock    func(*mocks.MockPaymentRepository)
+		wantErr      bool
+		wantErrType  error
+		wantCount    int
+		validateFunc func(*testing.T, ListMemberPaymentsResponse)
+	}{
+		{
+			name: "successfully list multiple payments",
+			request: ListMemberPaymentsRequest{
+				MemberID: "member-1",
+			},
+			setupMock: func(repo *mocks.MockPaymentRepository) {
+				completedAtPtr := &completedTime
+				payment1 := payment.Payment{
+					ID:          "payment-1",
+					InvoiceID:   "inv-1",
+					MemberID:    "member-1",
+					Amount:      10000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: completedAtPtr,
+				}
+
+				payment2 := payment.Payment{
+					ID:          "payment-2",
+					InvoiceID:   "inv-2",
+					MemberID:    "member-1",
+					Amount:      5000,
+					Currency:    "KZT",
+					Status:      payment.StatusPending,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: nil, // Not completed yet
+				}
+
+				payment3 := payment.Payment{
+					ID:          "payment-3",
+					InvoiceID:   "inv-3",
+					MemberID:    "member-1",
+					Amount:      15000,
+					Currency:    "KZT",
+					Status:      payment.StatusFailed,
+					PaymentType: payment.PaymentTypeSubscription,
+					CreatedAt:   now,
+					CompletedAt: nil,
+				}
+
+				repo.On("ListByMemberID", mock.Anything, "member-1").
+					Return([]payment.Payment{payment1, payment2, payment3}, nil)
+			},
+			wantErr:   false,
+			wantCount: 3,
+			validateFunc: func(t *testing.T, resp ListMemberPaymentsResponse) {
+				assert.Len(t, resp.Payments, 3)
+
+				// Check payment 1 (completed)
+				assert.Equal(t, "payment-1", resp.Payments[0].ID)
+				assert.Equal(t, "inv-1", resp.Payments[0].InvoiceID)
+				assert.Equal(t, int64(10000), resp.Payments[0].Amount)
+				assert.Equal(t, payment.StatusCompleted, resp.Payments[0].Status)
+				assert.NotNil(t, resp.Payments[0].CompletedAt, "completed payment should have CompletedAt")
+
+				// Check payment 2 (pending)
+				assert.Equal(t, "payment-2", resp.Payments[1].ID)
+				assert.Equal(t, payment.StatusPending, resp.Payments[1].Status)
+				assert.Nil(t, resp.Payments[1].CompletedAt, "pending payment should not have CompletedAt")
+
+				// Check payment 3 (failed)
+				assert.Equal(t, "payment-3", resp.Payments[2].ID)
+				assert.Equal(t, payment.StatusFailed, resp.Payments[2].Status)
+				assert.Equal(t, payment.PaymentTypeSubscription, resp.Payments[2].PaymentType)
+			},
+		},
+		{
+			name: "successfully list single payment",
+			request: ListMemberPaymentsRequest{
+				MemberID: "member-2",
+			},
+			setupMock: func(repo *mocks.MockPaymentRepository) {
+				payment1 := payment.Payment{
+					ID:          "payment-1",
+					InvoiceID:   "inv-1",
+					MemberID:    "member-2",
+					Amount:      10000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: nil,
+				}
+
+				repo.On("ListByMemberID", mock.Anything, "member-2").
+					Return([]payment.Payment{payment1}, nil)
+			},
+			wantErr:   false,
+			wantCount: 1,
+			validateFunc: func(t *testing.T, resp ListMemberPaymentsResponse) {
+				assert.Len(t, resp.Payments, 1)
+				assert.Equal(t, "payment-1", resp.Payments[0].ID)
+			},
+		},
+		{
+			name: "successfully list no payments - empty list",
+			request: ListMemberPaymentsRequest{
+				MemberID: "member-3",
+			},
+			setupMock: func(repo *mocks.MockPaymentRepository) {
+				// Member has no payments
+				repo.On("ListByMemberID", mock.Anything, "member-3").
+					Return([]payment.Payment{}, nil)
+			},
+			wantErr:   false,
+			wantCount: 0,
+			validateFunc: func(t *testing.T, resp ListMemberPaymentsResponse) {
+				assert.Empty(t, resp.Payments)
+			},
+		},
+		{
+			name: "error from repository",
+			request: ListMemberPaymentsRequest{
+				MemberID: "member-4",
+			},
+			setupMock: func(repo *mocks.MockPaymentRepository) {
+				// Database error
+				repo.On("ListByMemberID", mock.Anything, "member-4").
+					Return([]payment.Payment{}, errors.ErrDatabase)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrDatabase,
+		},
+		{
+			name: "verify date formatting in summaries",
+			request: ListMemberPaymentsRequest{
+				MemberID: "member-5",
+			},
+			setupMock: func(repo *mocks.MockPaymentRepository) {
+				completedAtPtr := &completedTime
+				payment1 := payment.Payment{
+					ID:          "payment-1",
+					InvoiceID:   "inv-1",
+					MemberID:    "member-5",
+					Amount:      10000,
+					Currency:    "KZT",
+					Status:      payment.StatusCompleted,
+					PaymentType: payment.PaymentTypeFine,
+					CreatedAt:   now,
+					CompletedAt: completedAtPtr,
+				}
+
+				repo.On("ListByMemberID", mock.Anything, "member-5").
+					Return([]payment.Payment{payment1}, nil)
+			},
+			wantErr:   false,
+			wantCount: 1,
+			validateFunc: func(t *testing.T, resp ListMemberPaymentsResponse) {
+				assert.Len(t, resp.Payments, 1)
+
+				// Verify CreatedAt format (ISO 8601)
+				assert.NotEmpty(t, resp.Payments[0].CreatedAt)
+				assert.Contains(t, resp.Payments[0].CreatedAt, "T")
+				assert.Contains(t, resp.Payments[0].CreatedAt, "Z")
+
+				// Verify CompletedAt format (ISO 8601)
+				assert.NotNil(t, resp.Payments[0].CompletedAt)
+				assert.Contains(t, *resp.Payments[0].CompletedAt, "T")
+				assert.Contains(t, *resp.Payments[0].CompletedAt, "Z")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockRepo := new(mocks.MockPaymentRepository)
+			tt.setupMock(mockRepo)
+
+			uc := NewListMemberPaymentsUseCase(mockRepo)
+			ctx := helpers.TestContext(t)
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrType != nil {
+					assert.ErrorIs(t, err, tt.wantErrType)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Len(t, result.Payments, tt.wantCount)
+
+				// Run custom validation if provided
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Verify mock expectations
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

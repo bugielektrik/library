@@ -1,0 +1,167 @@
+package reservationops
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/reservation"
+	"library-service/pkg/errors"
+	"library-service/test/testutil"
+)
+
+func TestListMemberReservationsUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name         string
+		request      ListMemberReservationsRequest
+		setupMocks   func(*mockReservationRepository)
+		expectError  bool
+		errorCheck   func(*testing.T, error)
+		validateFunc func(*testing.T, ListMemberReservationsResponse)
+	}{
+		{
+			name: "successful list with multiple reservations",
+			request: ListMemberReservationsRequest{
+				MemberID: "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				res1 := validReservation()
+				res1.ID = "reservation-1"
+				res1.MemberID = "member-123"
+				res1.Status = reservation.StatusPending
+
+				res2 := validReservation()
+				res2.ID = "reservation-2"
+				res2.MemberID = "member-123"
+				res2.Status = reservation.StatusFulfilled
+
+				res3 := validReservation()
+				res3.ID = "reservation-3"
+				res3.MemberID = "member-123"
+				res3.Status = reservation.StatusCancelled
+
+				repo.On("GetByMemberID", mock.Anything, "member-123").
+					Return([]reservation.Reservation{res1, res2, res3}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListMemberReservationsResponse) {
+				testutil.AssertEqual(t, 3, len(resp.Reservations))
+				testutil.AssertEqual(t, "reservation-1", resp.Reservations[0].ID)
+				testutil.AssertEqual(t, "reservation-2", resp.Reservations[1].ID)
+				testutil.AssertEqual(t, "reservation-3", resp.Reservations[2].ID)
+				testutil.AssertEqual(t, reservation.StatusPending, resp.Reservations[0].Status)
+				testutil.AssertEqual(t, reservation.StatusFulfilled, resp.Reservations[1].Status)
+				testutil.AssertEqual(t, reservation.StatusCancelled, resp.Reservations[2].Status)
+			},
+		},
+		{
+			name: "empty list (member has no reservations)",
+			request: ListMemberReservationsRequest{
+				MemberID: "member-no-reservations",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				repo.On("GetByMemberID", mock.Anything, "member-no-reservations").
+					Return([]reservation.Reservation{}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListMemberReservationsResponse) {
+				testutil.AssertEqual(t, 0, len(resp.Reservations))
+			},
+		},
+		{
+			name: "repository error",
+			request: ListMemberReservationsRequest{
+				MemberID: "member-error",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				repo.On("GetByMemberID", mock.Anything, "member-error").
+					Return([]reservation.Reservation{}, errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+			},
+		},
+		{
+			name: "single reservation",
+			request: ListMemberReservationsRequest{
+				MemberID: "member-single",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				res1 := validReservation()
+				res1.ID = "reservation-only"
+				res1.MemberID = "member-single"
+				res1.Status = reservation.StatusPending
+
+				repo.On("GetByMemberID", mock.Anything, "member-single").
+					Return([]reservation.Reservation{res1}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListMemberReservationsResponse) {
+				testutil.AssertEqual(t, 1, len(resp.Reservations))
+				testutil.AssertEqual(t, "reservation-only", resp.Reservations[0].ID)
+			},
+		},
+		{
+			name: "only pending reservations",
+			request: ListMemberReservationsRequest{
+				MemberID: "member-pending-only",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				res1 := validReservation()
+				res1.ID = "reservation-p1"
+				res1.Status = reservation.StatusPending
+
+				res2 := validReservation()
+				res2.ID = "reservation-p2"
+				res2.Status = reservation.StatusPending
+
+				repo.On("GetByMemberID", mock.Anything, "member-pending-only").
+					Return([]reservation.Reservation{res1, res2}, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp ListMemberReservationsResponse) {
+				testutil.AssertEqual(t, 2, len(resp.Reservations))
+				testutil.AssertEqual(t, reservation.StatusPending, resp.Reservations[0].Status)
+				testutil.AssertEqual(t, reservation.StatusPending, resp.Reservations[1].Status)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := new(mockReservationRepository)
+			tt.setupMocks(mockRepo)
+
+			// Create use case
+			uc := NewListMemberReservationsUseCase(mockRepo)
+
+			// Execute
+			ctx := context.Background()
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				testutil.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				testutil.AssertNoError(t, err)
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Verify all expectations were met
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

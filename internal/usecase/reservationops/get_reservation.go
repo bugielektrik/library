@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/reservation"
-	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // GetReservationRequest represents the input for getting a reservation
@@ -34,9 +34,7 @@ func NewGetReservationUseCase(reservationRepo reservation.Repository) *GetReserv
 
 // Execute retrieves a reservation by ID
 func (uc *GetReservationUseCase) Execute(ctx context.Context, req GetReservationRequest) (GetReservationResponse, error) {
-	logger := log.FromContext(ctx).Named("get_reservation_usecase").With(
-		zap.String("reservation_id", req.ReservationID),
-	)
+	logger := logutil.UseCaseLogger(ctx, "reservation", "get")
 
 	// Get the reservation from repository
 	reservationEntity, err := uc.reservationRepo.GetByID(ctx, req.ReservationID)

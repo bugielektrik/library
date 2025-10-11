@@ -1,13 +1,22 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
 	_ "library-service/api/openapi" // swagger docs
-	v1 "library-service/internal/adapters/http/handlers"
+	"library-service/internal/adapters/http/handlers/auth"
+	"library-service/internal/adapters/http/handlers/author"
+	"library-service/internal/adapters/http/handlers/book"
+	"library-service/internal/adapters/http/handlers/member"
+	"library-service/internal/adapters/http/handlers/payment"
+	"library-service/internal/adapters/http/handlers/receipt"
+	"library-service/internal/adapters/http/handlers/reservation"
+	"library-service/internal/adapters/http/handlers/savedcard"
 	httpmiddleware "library-service/internal/adapters/http/middleware"
 	"library-service/internal/infrastructure/config"
 	"library-service/internal/usecase"
@@ -42,44 +51,61 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 	// Create auth middleware
 	authMiddleware := httpmiddleware.NewAuthMiddleware(cfg.AuthServices.JWTService)
 
+	// Create validator (shared across all handlers)
+	validator := httpmiddleware.NewValidator()
+
 	// Create handlers
-	authHandler := v1.NewAuthHandler(
-		cfg.Usecases.RegisterMember,
-		cfg.Usecases.LoginMember,
-		cfg.Usecases.RefreshToken,
-		cfg.Usecases.ValidateToken,
+	authHandler := auth.NewAuthHandler(
+		cfg.Usecases,
+		validator,
 	)
 
-	bookHandler := v1.NewBookHandler(
-		cfg.Usecases.CreateBook,
-		cfg.Usecases.GetBook,
-		cfg.Usecases.ListBooks,
-		cfg.Usecases.UpdateBook,
-		cfg.Usecases.DeleteBook,
-		cfg.Usecases.ListBookAuthors,
+	bookHandler := book.NewBookHandler(
+		cfg.Usecases,
+		validator,
 	)
 
-	reservationHandler := v1.NewReservationHandler(
-		cfg.Usecases.CreateReservation,
-		cfg.Usecases.CancelReservation,
-		cfg.Usecases.GetReservation,
-		cfg.Usecases.ListMemberReservations,
+	reservationHandler := reservation.NewReservationHandler(
+		cfg.Usecases,
+		validator,
 	)
+
+	paymentHandler := payment.NewPaymentHandler(
+		cfg.Usecases,
+		validator,
+	)
+
+	savedCardHandler := savedcard.NewSavedCardHandler(
+		cfg.Usecases,
+		validator,
+	)
+
+	authorHandler := author.NewAuthorHandler(
+		cfg.Usecases,
+	)
+
+	memberHandler := member.NewMemberHandler(
+		cfg.Usecases,
+	)
+
+	receiptHandler := receipt.NewReceiptHandler(
+		cfg.Usecases,
+		validator,
+	)
+
+	// Payment page handler
+	paymentPageHandler, err := payment.NewPaymentPageHandler()
+	if err != nil {
+		panic(err) // In production, handle this more gracefully
+	}
+
+	// Payment page route (public)
+	r.Get("/payment", paymentPageHandler.ServePaymentPage)
 
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
-		// Auth routes (public)
-		r.Route("/auth", func(r chi.Router) {
-			r.Post("/register", authHandler.Register)
-			r.Post("/login", authHandler.Login)
-			r.Post("/refresh", authHandler.RefreshToken)
-
-			// Protected auth routes
-			r.Group(func(r chi.Router) {
-				r.Use(authMiddleware.Authenticate)
-				r.Get("/me", authHandler.GetCurrentMember)
-			})
-		})
+		// Auth routes (handles public/protected internally)
+		r.Mount("/auth", authHandler.Routes(authMiddleware))
 
 		// Book routes (protected)
 		r.Group(func(r chi.Router) {
@@ -93,7 +119,43 @@ func NewRouter(cfg RouterConfig) *chi.Mux {
 			r.Mount("/reservations", reservationHandler.Routes())
 		})
 
-		// TODO: Add author and member handlers
+		// Payment routes
+		r.Route("/payments", func(r chi.Router) {
+			// Public callback endpoint (payment gateway calls this)
+			r.Post("/callback", func(w http.ResponseWriter, req *http.Request) {
+				paymentHandler.Routes().ServeHTTP(w, req)
+			})
+
+			// Protected payment routes
+			r.Group(func(r chi.Router) {
+				r.Use(authMiddleware.Authenticate)
+				r.Mount("/", paymentHandler.Routes())
+			})
+		})
+
+		// Saved card routes (protected)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Authenticate)
+			r.Mount("/saved-cards", savedCardHandler.Routes())
+		})
+
+		// Author routes (protected)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Authenticate)
+			r.Mount("/authors", authorHandler.Routes())
+		})
+
+		// Member routes (protected)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Authenticate)
+			r.Mount("/members", memberHandler.Routes())
+		})
+
+		// Receipt routes (protected)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Authenticate)
+			r.Mount("/receipts", receiptHandler.Routes())
+		})
 	})
 
 	return r

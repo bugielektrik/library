@@ -401,7 +401,7 @@ After 6 months:
 - [jwt.io - JWT Debugger](https://jwt.io/)
 - [OWASP JWT Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html)
 - [golang-jwt/jwt](https://github.com/golang-jwt/jwt)
-- `.claude/faq.md` - How to get JWT token for testing
+- `.claude/common-tasks.md` - JWT authentication examples
 - `.claude/recipes.md` - JWT testing recipes
 
 ## Related ADRs

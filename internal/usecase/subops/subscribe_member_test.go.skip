@@ -1,0 +1,355 @@
+package subops
+
+import (
+	"library-service/test/helpers"
+	"library-service/test/builders"
+	"library-service/internal/adapters/repository/mocks"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/member"
+	"library-service/internal/infrastructure/store"
+	"library-service/pkg/errors"
+)
+
+// mockMemberRepository is a mock implementation of member.Repository for testing
+// Note: Specific to subops package since it can't access memberops helpers
+type mockMemberRepository struct {
+	mock.Mock
+}
+
+func (m *mocks.MockMemberRepository) Add(ctx context.Context, data member.Member) (string, error) {
+	args := m.Called(ctx, data)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) Get(ctx context.Context, id string) (member.Member, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(member.Member), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) Update(ctx context.Context, id string, data member.Member) error {
+	args := m.Called(ctx, id, data)
+	return args.Error(0)
+}
+
+func (m *mocks.MockMemberRepository) Delete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *mocks.MockMemberRepository) List(ctx context.Context) ([]member.Member, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]member.Member), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) GetByEmail(ctx context.Context, email string) (member.Member, error) {
+	args := m.Called(ctx, email)
+	return args.Get(0).(member.Member), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) EmailExists(ctx context.Context, email string) (bool, error) {
+	args := m.Called(ctx, email)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *mocks.MockMemberRepository) UpdateLastLogin(ctx context.Context, id string, loginTime time.Time) error {
+	args := m.Called(ctx, id, loginTime)
+	return args.Error(0)
+}
+
+// Helper to create string pointers
+func strPtr(s string) *string {
+	return &s
+}
+
+// Helper to create a valid member entity for testing
+func validMember() member.Member {
+	now := time.Now()
+	return member.Member{
+		ID:           "member-123",
+		Email:        "john.doe@example.com",
+		PasswordHash: "$2a$10$hashedpassword",
+		FullName:     strPtr("John Doe"),
+		Role:         member.RoleUser,
+		Books:        []string{},
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+}
+
+func TestSubscribeMemberUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name         string
+		request      SubscribeMemberRequest
+		setupMocks   func(*mocks.MockMemberRepository)
+		expectError  bool
+		errorCheck   func(*testing.T, error)
+		validateFunc func(*testing.T, SubscribeMemberResponse)
+	}{
+		{
+			name: "successful subscription with basic plan",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-123",
+				SubscriptionType: "basic",
+				DurationMonths:   6,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				memberEntity := validMember()
+				memberEntity.ID = "member-123"
+
+				repo.On("Get", mock.Anything, "member-123").
+					Return(memberEntity, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp SubscribeMemberResponse) {
+				helpers.AssertEqual(t, "member-123", resp.MemberID)
+				helpers.AssertEqual(t, "active", resp.Status)
+				helpers.AssertEqual(t, "basic", resp.SubscriptionType)
+				// Verify expiration is 6 months from now (with small tolerance)
+				expectedExpiry := time.Now().AddDate(0, 6, 0)
+				timeDiff := resp.ExpiresAt.Sub(expectedExpiry).Abs()
+				if timeDiff > time.Second {
+					t.Errorf("ExpiresAt not as expected, diff: %v", timeDiff)
+				}
+			},
+		},
+		{
+			name: "successful subscription with premium plan for 12 months",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-456",
+				SubscriptionType: "premium",
+				DurationMonths:   12,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				memberEntity := validMember()
+				memberEntity.ID = "member-456"
+				memberEntity.Email = "premium@example.com"
+
+				repo.On("Get", mock.Anything, "member-456").
+					Return(memberEntity, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp SubscribeMemberResponse) {
+				helpers.AssertEqual(t, "member-456", resp.MemberID)
+				helpers.AssertEqual(t, "premium", resp.SubscriptionType)
+				helpers.AssertEqual(t, "active", resp.Status)
+			},
+		},
+		{
+			name: "invalid subscription type",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-123",
+				SubscriptionType: "invalid-type",
+				DurationMonths:   6,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				// No repo calls expected
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Invalid input")
+			},
+		},
+		{
+			name: "invalid subscription duration (too short)",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-123",
+				SubscriptionType: "basic",
+				DurationMonths:   0,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				// No repo calls expected
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Invalid input")
+			},
+		},
+		{
+			name: "invalid subscription duration (too long)",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-123",
+				SubscriptionType: "basic",
+				DurationMonths:   25,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				// No repo calls expected
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Invalid input")
+			},
+		},
+		{
+			name: "empty member ID",
+			request: SubscribeMemberRequest{
+				MemberID:         "",
+				SubscriptionType: "basic",
+				DurationMonths:   6,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				// No repo calls expected
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Invalid input")
+			},
+		},
+		{
+			name: "member not found",
+			request: SubscribeMemberRequest{
+				MemberID:         "non-existent-member",
+				SubscriptionType: "basic",
+				DurationMonths:   6,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				repo.On("Get", mock.Anything, "non-existent-member").
+					Return(member.Member{}, store.ErrorNotFound).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+				helpers.AssertErrorContains(t, err.Error(), "Member not found")
+			},
+		},
+		{
+			name: "repository error when fetching member",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-error",
+				SubscriptionType: "basic",
+				DurationMonths:   6,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				repo.On("Get", mock.Anything, "member-error").
+					Return(member.Member{}, errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				helpers.AssertError(t, err)
+			},
+		},
+		{
+			name: "successful subscription with annual plan",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-annual",
+				SubscriptionType: "annual",
+				DurationMonths:   12,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				memberEntity := validMember()
+				memberEntity.ID = "member-annual"
+				memberEntity.Email = "annual@example.com"
+
+				repo.On("Get", mock.Anything, "member-annual").
+					Return(memberEntity, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp SubscribeMemberResponse) {
+				helpers.AssertEqual(t, "member-annual", resp.MemberID)
+				helpers.AssertEqual(t, "annual", resp.SubscriptionType)
+				helpers.AssertEqual(t, "active", resp.Status)
+				// Verify it's 12 months subscription
+				expectedExpiry := time.Now().AddDate(0, 12, 0)
+				timeDiff := resp.ExpiresAt.Sub(expectedExpiry).Abs()
+				if timeDiff > time.Second {
+					t.Errorf("ExpiresAt not as expected for annual subscription, diff: %v", timeDiff)
+				}
+			},
+		},
+		{
+			name: "minimum valid duration (1 month)",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-min-duration",
+				SubscriptionType: "basic",
+				DurationMonths:   1,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				memberEntity := validMember()
+				memberEntity.ID = "member-min-duration"
+
+				repo.On("Get", mock.Anything, "member-min-duration").
+					Return(memberEntity, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp SubscribeMemberResponse) {
+				helpers.AssertEqual(t, "member-min-duration", resp.MemberID)
+				helpers.AssertEqual(t, "active", resp.Status)
+			},
+		},
+		{
+			name: "maximum valid duration (24 months)",
+			request: SubscribeMemberRequest{
+				MemberID:         "member-max-duration",
+				SubscriptionType: "premium",
+				DurationMonths:   24,
+			},
+			setupMocks: func(repo *mocks.MockMemberRepository) {
+				memberEntity := validMember()
+				memberEntity.ID = "member-max-duration"
+
+				repo.On("Get", mock.Anything, "member-max-duration").
+					Return(memberEntity, nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp SubscribeMemberResponse) {
+				helpers.AssertEqual(t, "member-max-duration", resp.MemberID)
+				helpers.AssertEqual(t, "active", resp.Status)
+				// Verify it's 24 months subscription
+				expectedExpiry := time.Now().AddDate(0, 24, 0)
+				timeDiff := resp.ExpiresAt.Sub(expectedExpiry).Abs()
+				if timeDiff > time.Second {
+					t.Errorf("ExpiresAt not as expected for 24 month subscription, diff: %v", timeDiff)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := new(mocks.MockMemberRepository)
+			tt.setupMocks(mockRepo)
+
+			// Create real domain service (no mocking needed for pure functions)
+			memberService := member.NewService()
+
+			// Create use case
+			uc := NewSubscribeMemberUseCase(mockRepo, memberService)
+
+			// Execute
+			ctx := helpers.TestContext(t)
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				helpers.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				helpers.AssertNoError(t, err)
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Verify mock expectations
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

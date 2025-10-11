@@ -6,8 +6,8 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/reservation"
-	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // CancelReservationRequest represents the input for cancelling a reservation
@@ -40,10 +40,7 @@ func NewCancelReservationUseCase(
 
 // Execute cancels a reservation
 func (uc *CancelReservationUseCase) Execute(ctx context.Context, req CancelReservationRequest) (CancelReservationResponse, error) {
-	logger := log.FromContext(ctx).Named("cancel_reservation_usecase").With(
-		zap.String("reservation_id", req.ReservationID),
-		zap.String("member_id", req.MemberID),
-	)
+	logger := logutil.UseCaseLogger(ctx, "reservation", "cancel")
 
 	// Get the reservation
 	reservationEntity, err := uc.reservationRepo.GetByID(ctx, req.ReservationID)
@@ -69,7 +66,7 @@ func (uc *CancelReservationUseCase) Execute(ctx context.Context, req CancelReser
 	// Update in repository
 	if err := uc.reservationRepo.Update(ctx, reservationEntity); err != nil {
 		logger.Error("failed to update reservation", zap.Error(err))
-		return CancelReservationResponse{}, errors.ErrDatabase.Wrap(err)
+		return CancelReservationResponse{}, errors.Database("database operation", err)
 	}
 
 	logger.Info("reservation cancelled successfully")

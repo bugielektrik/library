@@ -2,6 +2,8 @@ package dto
 
 import (
 	"library-service/internal/domain/book"
+	"library-service/internal/usecase/bookops"
+	"library-service/pkg/strutil"
 )
 
 // CreateBookRequest represents the request to create a new book
@@ -63,9 +65,9 @@ func (r UpdateBookRequest) ToBookRequest() book.Request {
 func FromBookEntity(entity book.Book) BookResponse {
 	return BookResponse{
 		ID:      entity.ID,
-		Name:    safeString(entity.Name),
-		Genre:   safeString(entity.Genre),
-		ISBN:    safeString(entity.ISBN),
+		Name:    strutil.SafeString(entity.Name),
+		Genre:   strutil.SafeString(entity.Genre),
+		ISBN:    strutil.SafeString(entity.ISBN),
 		Authors: entity.Authors,
 	}
 }
@@ -90,10 +92,33 @@ func FromBookResponses(responses []book.Response) []BookResponse {
 	return result
 }
 
-// safeString returns the value of a string pointer or empty string if nil
-func safeString(s *string) string {
-	if s == nil {
-		return ""
+// ToBookResponseFromGet converts use case GetBookResponse to DTO BookResponse
+func ToBookResponseFromGet(resp bookops.GetBookResponse) BookResponse {
+	return BookResponse{
+		ID:      resp.ID,
+		Name:    resp.Name,
+		Genre:   resp.Genre,
+		ISBN:    resp.ISBN,
+		Authors: resp.Authors,
 	}
-	return *s
+}
+
+// ToBookResponseFromCreate converts use case CreateBookResponse to DTO BookResponse
+func ToBookResponseFromCreate(resp bookops.CreateBookResponse) BookResponse {
+	return BookResponse{
+		ID:      resp.ID,
+		Name:    resp.Name,
+		Genre:   resp.Genre,
+		ISBN:    resp.ISBN,
+		Authors: resp.Authors,
+	}
+}
+
+// ToBookResponses converts slice of use case GetBookResponse to slice of DTO BookResponse
+func ToBookResponses(books []bookops.GetBookResponse) []BookResponse {
+	responses := make([]BookResponse, len(books))
+	for i, b := range books {
+		responses[i] = ToBookResponseFromGet(b)
+	}
+	return responses
 }

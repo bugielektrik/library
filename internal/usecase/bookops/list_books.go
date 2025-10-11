@@ -6,8 +6,9 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
-	"library-service/internal/infrastructure/log"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
+	"library-service/pkg/strutil"
 )
 
 // ListBooksRequest represents the input for listing books
@@ -37,13 +38,13 @@ func NewListBooksUseCase(bookRepo book.Repository) *ListBooksUseCase {
 
 // Execute retrieves all books from the repository
 func (uc *ListBooksUseCase) Execute(ctx context.Context, req ListBooksRequest) (ListBooksResponse, error) {
-	logger := log.FromContext(ctx).Named("list_books_usecase")
+	logger := logutil.UseCaseLogger(ctx, "book", "list")
 
 	// Get all books from repository
 	books, err := uc.bookRepo.List(ctx)
 	if err != nil {
 		logger.Error("failed to list books", zap.Error(err))
-		return ListBooksResponse{}, errors.ErrDatabase.Wrap(err)
+		return ListBooksResponse{}, errors.Database("database operation", err)
 	}
 
 	// Convert to response
@@ -55,9 +56,9 @@ func (uc *ListBooksUseCase) Execute(ctx context.Context, req ListBooksRequest) (
 	for i, b := range books {
 		response.Books[i] = GetBookResponse{
 			ID:      b.ID,
-			Name:    safeString(b.Name),
-			Genre:   safeString(b.Genre),
-			ISBN:    safeString(b.ISBN),
+			Name:    strutil.SafeString(b.Name),
+			Genre:   strutil.SafeString(b.Genre),
+			ISBN:    strutil.SafeString(b.ISBN),
 			Authors: b.Authors,
 		}
 	}

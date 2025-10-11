@@ -7,6 +7,7 @@ import (
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
+	"library-service/internal/domain/payment"
 	"library-service/internal/domain/reservation"
 	store "library-service/internal/infrastructure/store"
 )
@@ -23,6 +24,8 @@ type Repositories struct {
 	Book        book.Repository
 	Member      member.Repository
 	Reservation reservation.Repository
+	Payment     payment.Repository
+	SavedCard   payment.SavedCardRepository
 }
 
 // NewRepositories creates a new repository container
@@ -54,8 +57,9 @@ func WithMemoryStore() Configuration {
 		r.Author = memory.NewAuthorRepository()
 		r.Book = memory.NewBookRepository()
 		r.Member = memory.NewMemberRepository()
-		// Note: Reservation memory repository not yet implemented
+		// Note: Reservation and Payment memory repositories not yet implemented
 		r.Reservation = nil
+		r.Payment = nil
 		return nil
 	}
 }
@@ -77,6 +81,8 @@ func WithPostgresStore(dsn string) Configuration {
 		r.Book = postgres.NewBookRepository(db.Connection)
 		r.Member = postgres.NewMemberRepository(db.Connection)
 		r.Reservation = postgres.NewReservationRepository(db.Connection)
+		r.Payment = postgres.NewPaymentRepository(db.Connection)
+		r.SavedCard = postgres.NewSavedCardRepository(db.Connection)
 
 		return nil
 	}

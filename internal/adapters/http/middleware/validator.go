@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"library-service/internal/adapters/http/dto"
+	"library-service/pkg/httputil"
 )
 
 // Validator wraps the validator instance
@@ -31,7 +32,7 @@ func (v *Validator) ValidateStruct(w http.ResponseWriter, data interface{}) bool
 	if err := v.Validate(data); err != nil {
 		validationErrors := v.parseValidationErrors(err)
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(httputil.HeaderContentType, httputil.ContentTypeJSON)
 		w.WriteHeader(http.StatusBadRequest)
 
 		response := dto.NewValidationErrorResponse(validationErrors)

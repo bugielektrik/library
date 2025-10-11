@@ -311,8 +311,8 @@ After 6 months:
 
 - [Domain Services (Eric Evans - DDD)](https://www.domainlanguage.com/ddd/)
 - [Anemic Domain Model vs Rich Domain Model](https://martinfowler.com/bliki/AnemicDomainModel.html)
-- `.claude/examples/README.md` - Code examples of domain services
-- `.claude/faq.md` - Q&A about when to use services vs entities
+- `.claude/common-tasks.md` - Implementation guides for domain services
+- `.claude/common-tasks.md` - Examples of domain service usage
 
 ## Related ADRs
 

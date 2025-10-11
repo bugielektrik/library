@@ -1,0 +1,180 @@
+package paymentops
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/payment"
+	"library-service/pkg/errors"
+)
+
+// Mock for ReceiptRepository
+type mockReceiptRepository struct {
+	mock.Mock
+}
+
+func (m *mockReceiptRepository) Create(receipt payment.Receipt) (string, error) {
+	args := m.Called(receipt)
+	return args.String(0), args.Error(1)
+}
+
+func (m *mockReceiptRepository) GetByID(id string) (payment.Receipt, error) {
+	args := m.Called(id)
+	return args.Get(0).(payment.Receipt), args.Error(1)
+}
+
+func (m *mockReceiptRepository) GetByPaymentID(paymentID string) (payment.Receipt, error) {
+	args := m.Called(paymentID)
+	return args.Get(0).(payment.Receipt), args.Error(1)
+}
+
+func (m *mockReceiptRepository) ListByMemberID(memberID string) ([]payment.Receipt, error) {
+	args := m.Called(memberID)
+	return args.Get(0).([]payment.Receipt), args.Error(1)
+}
+
+func (m *mockReceiptRepository) GetByReceiptNumber(receiptNumber string) (payment.Receipt, error) {
+	args := m.Called(receiptNumber)
+	return args.Get(0).(payment.Receipt), args.Error(1)
+}
+
+func (m *mockReceiptRepository) Update(receipt payment.Receipt) error {
+	args := m.Called(receipt)
+	return args.Error(0)
+}
+
+func TestGetReceiptUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name        string
+		request     GetReceiptRequest
+		setupMock   func(*mockReceiptRepository)
+		wantErr     bool
+		wantErrType error
+		wantReceipt payment.Receipt
+	}{
+		{
+			name: "successfully get receipt - authorized",
+			request: GetReceiptRequest{
+				ReceiptID: "receipt-1",
+				MemberID:  "member-1",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				// Receipt exists and belongs to member
+				receipt := payment.Receipt{
+					ID:            "receipt-1",
+					ReceiptNumber: "REC-2025-001",
+					PaymentID:     "payment-1",
+					MemberID:      "member-1",
+					Amount:        10000,
+					Currency:      "KZT",
+					PaymentMethod: payment.PaymentMethodCard,
+					Status:        payment.StatusCompleted,
+					PaymentDate:   time.Now(),
+					ReceiptDate:   time.Now(),
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+
+				repo.On("GetByID", "receipt-1").
+					Return(receipt, nil)
+			},
+			wantErr: false,
+			wantReceipt: payment.Receipt{
+				ID:            "receipt-1",
+				ReceiptNumber: "REC-2025-001",
+				MemberID:      "member-1",
+			},
+		},
+		{
+			name: "receipt not found",
+			request: GetReceiptRequest{
+				ReceiptID: "receipt-999",
+				MemberID:  "member-1",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				// Receipt does not exist
+				repo.On("GetByID", "receipt-999").
+					Return(payment.Receipt{}, errors.ErrNotFound)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound,
+		},
+		{
+			name: "unauthorized access - receipt belongs to different member",
+			request: GetReceiptRequest{
+				ReceiptID: "receipt-1",
+				MemberID:  "member-2",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				// Receipt exists but belongs to member-1, not member-2
+				receipt := payment.Receipt{
+					ID:            "receipt-1",
+					ReceiptNumber: "REC-2025-001",
+					PaymentID:     "payment-1",
+					MemberID:      "member-1", // Belongs to member-1
+					Amount:        10000,
+					Currency:      "KZT",
+					PaymentMethod: payment.PaymentMethodCard,
+					Status:        payment.StatusCompleted,
+					PaymentDate:   time.Now(),
+					ReceiptDate:   time.Now(),
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+
+				repo.On("GetByID", "receipt-1").
+					Return(receipt, nil)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrUnauthorized,
+		},
+		{
+			name: "error retrieving receipt",
+			request: GetReceiptRequest{
+				ReceiptID: "receipt-1",
+				MemberID:  "member-1",
+			},
+			setupMock: func(repo *mockReceiptRepository) {
+				// Database error when retrieving receipt
+				repo.On("GetByID", "receipt-1").
+					Return(payment.Receipt{}, errors.ErrDatabase)
+			},
+			wantErr:     true,
+			wantErrType: errors.ErrNotFound, // Wrapped as ErrNotFound in the use case
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			mockRepo := new(mockReceiptRepository)
+			tt.setupMock(mockRepo)
+
+			uc := NewGetReceiptUseCase(mockRepo)
+			ctx := context.Background()
+
+			// Execute
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert error
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrType != nil {
+					assert.ErrorIs(t, err, tt.wantErrType)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantReceipt.ID, result.Receipt.ID)
+				assert.Equal(t, tt.wantReceipt.ReceiptNumber, result.Receipt.ReceiptNumber)
+				assert.Equal(t, tt.wantReceipt.MemberID, result.Receipt.MemberID)
+			}
+
+			// Verify mock expectations
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

@@ -85,7 +85,7 @@ func TestService_ValidateISBN(t *testing.T) {
 	}
 }
 
-func TestService_ValidateBook(t *testing.T) {
+func TestService_Validate(t *testing.T) {
 	service := NewService()
 
 	validName := "The Go Programming Language"
@@ -179,7 +179,7 @@ func TestService_ValidateBook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ValidateBook(tt.book)
+			err := service.Validate(tt.book)
 
 			if tt.wantError {
 				assert.Error(t, err)

@@ -1,0 +1,226 @@
+package reservationops
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"library-service/internal/domain/reservation"
+	"library-service/pkg/errors"
+	"library-service/test/testutil"
+)
+
+func TestCancelReservationUseCase_Execute(t *testing.T) {
+	tests := []struct {
+		name         string
+		request      CancelReservationRequest
+		setupMocks   func(*mockReservationRepository)
+		expectError  bool
+		errorCheck   func(*testing.T, error)
+		validateFunc func(*testing.T, CancelReservationResponse)
+	}{
+		{
+			name: "successful cancellation of pending reservation",
+			request: CancelReservationRequest{
+				ReservationID: "reservation-123",
+				MemberID:      "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				// Get returns pending reservation owned by member
+				reservationEntity := validReservation()
+				reservationEntity.ID = "reservation-123"
+				reservationEntity.MemberID = "member-123"
+				reservationEntity.Status = reservation.StatusPending
+
+				repo.On("GetByID", mock.Anything, "reservation-123").
+					Return(reservationEntity, nil).
+					Once()
+
+				// Update succeeds (status will be changed to cancelled)
+				repo.On("Update", mock.Anything, mock.MatchedBy(func(r reservation.Reservation) bool {
+					return r.ID == "reservation-123" &&
+						r.Status == reservation.StatusCancelled
+				})).
+					Return(nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp CancelReservationResponse) {
+				testutil.AssertEqual(t, "reservation-123", resp.ID)
+				testutil.AssertEqual(t, reservation.StatusCancelled, resp.Status)
+			},
+		},
+		{
+			name: "reservation not found",
+			request: CancelReservationRequest{
+				ReservationID: "non-existent",
+				MemberID:      "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				repo.On("GetByID", mock.Anything, "non-existent").
+					Return(reservation.Reservation{}, errors.ErrNotFound).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+				testutil.AssertStringContains(t, err.Error(), "not found")
+			},
+		},
+		{
+			name: "wrong member trying to cancel (not owner)",
+			request: CancelReservationRequest{
+				ReservationID: "reservation-123",
+				MemberID:      "wrong-member",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				// Get returns reservation owned by different member
+				reservationEntity := validReservation()
+				reservationEntity.ID = "reservation-123"
+				reservationEntity.MemberID = "member-123" // Different from request
+				reservationEntity.Status = reservation.StatusPending
+
+				repo.On("GetByID", mock.Anything, "reservation-123").
+					Return(reservationEntity, nil).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+				testutil.AssertStringContains(t, err.Error(), "forbidden")
+			},
+		},
+		{
+			name: "cannot cancel already cancelled reservation",
+			request: CancelReservationRequest{
+				ReservationID: "reservation-cancelled",
+				MemberID:      "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				// Get returns already cancelled reservation
+				reservationEntity := validReservation()
+				reservationEntity.ID = "reservation-cancelled"
+				reservationEntity.MemberID = "member-123"
+				reservationEntity.Status = reservation.StatusCancelled
+
+				repo.On("GetByID", mock.Anything, "reservation-cancelled").
+					Return(reservationEntity, nil).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+				// Domain service will return error for invalid state transition
+			},
+		},
+		{
+			name: "can cancel fulfilled reservation",
+			request: CancelReservationRequest{
+				ReservationID: "reservation-fulfilled",
+				MemberID:      "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				// Get returns fulfilled reservation
+				reservationEntity := validReservation()
+				reservationEntity.ID = "reservation-fulfilled"
+				reservationEntity.MemberID = "member-123"
+				reservationEntity.Status = reservation.StatusFulfilled
+
+				repo.On("GetByID", mock.Anything, "reservation-fulfilled").
+					Return(reservationEntity, nil).
+					Once()
+
+				// Update succeeds (fulfilled can be cancelled per business rules)
+				repo.On("Update", mock.Anything, mock.MatchedBy(func(r reservation.Reservation) bool {
+					return r.ID == "reservation-fulfilled" &&
+						r.Status == reservation.StatusCancelled
+				})).
+					Return(nil).
+					Once()
+			},
+			expectError: false,
+			validateFunc: func(t *testing.T, resp CancelReservationResponse) {
+				testutil.AssertEqual(t, "reservation-fulfilled", resp.ID)
+				testutil.AssertEqual(t, reservation.StatusCancelled, resp.Status)
+			},
+		},
+		{
+			name: "repository error during get",
+			request: CancelReservationRequest{
+				ReservationID: "reservation-error",
+				MemberID:      "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				repo.On("GetByID", mock.Anything, "reservation-error").
+					Return(reservation.Reservation{}, errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+			},
+		},
+		{
+			name: "repository error during update",
+			request: CancelReservationRequest{
+				ReservationID: "reservation-update-error",
+				MemberID:      "member-123",
+			},
+			setupMocks: func(repo *mockReservationRepository) {
+				// Get succeeds
+				reservationEntity := validReservation()
+				reservationEntity.ID = "reservation-update-error"
+				reservationEntity.MemberID = "member-123"
+				reservationEntity.Status = reservation.StatusPending
+
+				repo.On("GetByID", mock.Anything, "reservation-update-error").
+					Return(reservationEntity, nil).
+					Once()
+
+				// Update fails
+				repo.On("Update", mock.Anything, mock.Anything).
+					Return(errors.ErrDatabase).
+					Once()
+			},
+			expectError: true,
+			errorCheck: func(t *testing.T, err error) {
+				testutil.AssertError(t, err)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockRepo := new(mockReservationRepository)
+			tt.setupMocks(mockRepo)
+
+			// Create real service
+			reservationService := reservation.NewService()
+
+			// Create use case
+			uc := NewCancelReservationUseCase(mockRepo, reservationService)
+
+			// Execute
+			ctx := context.Background()
+			result, err := uc.Execute(ctx, tt.request)
+
+			// Assert
+			if tt.expectError {
+				testutil.AssertError(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				testutil.AssertNoError(t, err)
+				if tt.validateFunc != nil {
+					tt.validateFunc(t, result)
+				}
+			}
+
+			// Verify all expectations were met
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

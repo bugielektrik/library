@@ -23,20 +23,48 @@ Domain ← Use Case ← Adapters ← Infrastructure
 
 ### Layer Responsibilities
 
-```
-┌─────────────────────────────────────┐
-│      Infrastructure Layer           │  External frameworks, tools
-│  (Zap, PostgreSQL, Redis, Chi)     │
-├─────────────────────────────────────┤
-│        Adapters Layer               │  Interface implementations
-│  (HTTP handlers, Repositories)      │
-├─────────────────────────────────────┤
-│       Use Case Layer                │  Business orchestration
-│  (CreateBook, SubscribeMember)      │
-├─────────────────────────────────────┤
-│        Domain Layer                 │  Core business logic
-│  (Entities, Services, Interfaces)   │
-└─────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Infrastructure["🔧 Infrastructure Layer"]
+        direction LR
+        Zap[Zap Logger]
+        PG[(PostgreSQL)]
+        Redis[(Redis)]
+        Chi[Chi Router]
+    end
+
+    subgraph Adapters["🔌 Adapters Layer"]
+        direction LR
+        HTTP[HTTP Handlers]
+        Repo[Repositories]
+        Cache[Cache Impl]
+    end
+
+    subgraph UseCase["⚙️ Use Case Layer"]
+        direction LR
+        CreateBook[CreateBook]
+        Subscribe[SubscribeMember]
+        Login[Login]
+    end
+
+    subgraph Domain["💎 Domain Layer"]
+        direction LR
+        Entity[Entities]
+        Service[Domain Services]
+        Interface[Interfaces]
+    end
+
+    HTTP --> UseCase
+    Repo --> Domain
+    Cache --> Domain
+    UseCase --> Domain
+    HTTP -.uses.-> Infrastructure
+    Repo -.uses.-> Infrastructure
+
+    style Domain fill:#90EE90
+    style UseCase fill:#87CEEB
+    style Adapters fill:#FFB6C1
+    style Infrastructure fill:#DDA0DD
 ```
 
 ## Directory Structure
@@ -115,6 +143,60 @@ internal/
     └── app/
         └── app.go            # Application bootstrap
 ```
+
+## Request Flow
+
+Complete lifecycle of an HTTP request through Clean Architecture layers:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Router as Chi Router
+    participant MW as Middleware
+    participant Handler as HTTP Handler
+    participant UseCase as Use Case
+    participant Domain as Domain Service
+    participant Repo as Repository
+    participant DB as PostgreSQL
+
+    Client->>Router: POST /api/v1/books
+    Router->>MW: Route Match
+    MW->>MW: Auth Middleware<br/>(Validate JWT)
+    MW->>MW: Logger Middleware
+    MW->>Handler: BookHandler.Create()
+
+    Handler->>Handler: 1. Parse JSON<br/>2. Validate input
+    Handler->>UseCase: CreateBookUseCase.Execute(req)
+
+    UseCase->>Domain: bookService.ValidateISBN()
+    Domain-->>UseCase: ✓ Valid
+
+    UseCase->>Repo: bookRepo.ISBNExists()
+    Repo->>DB: SELECT * WHERE isbn=?
+    DB-->>Repo: Not Found
+    Repo-->>UseCase: false (ISBN available)
+
+    UseCase->>Repo: bookRepo.Add(book)
+    Repo->>DB: INSERT INTO books
+    DB-->>Repo: book_id
+    Repo-->>UseCase: book_id
+
+    UseCase->>Repo: bookCache.Set(book)
+    UseCase-->>Handler: CreateBookResponse
+
+    Handler->>Handler: Map to DTO
+    Handler-->>Client: 201 Created + JSON
+```
+
+### Request Flow Steps
+
+1. **Router** - Chi matches route `/api/v1/books` → `BookHandler`
+2. **Middleware Chain** - Auth → Logger → Error Handler
+3. **HTTP Handler** - Parse JSON, validate input
+4. **Use Case** - Orchestrates business logic
+5. **Domain Service** - Validates ISBN (business rules)
+6. **Repository** - Persistence operations
+7. **Response** - DTO mapping → JSON
 
 ## Key Architectural Patterns
 
@@ -450,6 +532,180 @@ To switch from PostgreSQL to MongoDB:
 - **Connection Pooling:** Configured in infrastructure layer
 - **N+1 Queries:** Use eager loading in repositories
 - **Indexes:** Defined in migrations
+
+## Dependency Flow
+
+Visual representation of allowed dependencies between layers:
+
+```mermaid
+graph LR
+    subgraph "❌ FORBIDDEN"
+        Domain_Bad[Domain] -.X.-> UseCase_Bad[Use Case]
+        Domain_Bad -.X.-> Adapter_Bad[Adapter]
+        UseCase_Bad -.X.-> Adapter_Bad2[Adapter]
+    end
+
+    subgraph "✅ ALLOWED"
+        Handler[HTTP Handler] --> UC[Use Case]
+        UC --> DS[Domain Service]
+        UC --> RI[Repository Interface]
+        Repo[PostgreSQL Repo] -.implements.-> RI
+        Repo --> DB[(Database)]
+    end
+
+    style Domain_Bad fill:#ffcccc
+    style UseCase_Bad fill:#ffcccc
+    style Adapter_Bad fill:#ffcccc
+    style Adapter_Bad2 fill:#ffcccc
+    style Handler fill:#ccffcc
+    style UC fill:#ccffcc
+    style DS fill:#ccffcc
+    style RI fill:#ccffcc
+    style Repo fill:#ccffcc
+```
+
+### Dependency Rules
+
+✅ **Allowed:**
+- Adapters → Use Cases
+- Use Cases → Domain
+- Infrastructure → Anything
+- Outer layers → Inner layers
+
+❌ **Forbidden:**
+- Domain → Use Cases
+- Domain → Adapters
+- Use Cases → Adapters
+- Inner layers → Outer layers
+
+## Entity Relationships
+
+Domain model showing relationships between core entities:
+
+```mermaid
+erDiagram
+    MEMBER ||--o{ SUBSCRIPTION : has
+    MEMBER ||--o{ RESERVATION : makes
+    MEMBER ||--o{ PAYMENT : pays
+    MEMBER ||--o{ SAVED_CARD : saves
+
+    BOOK ||--o{ BOOK_AUTHOR : has
+    AUTHOR ||--o{ BOOK_AUTHOR : writes
+    BOOK ||--o{ RESERVATION : reserved_by
+
+    SUBSCRIPTION ||--|| PAYMENT : requires
+    RESERVATION ||--o| PAYMENT : may_require
+
+    MEMBER {
+        uuid id PK
+        string email UK
+        string password_hash
+        string full_name
+        string role
+        timestamp created_at
+    }
+
+    BOOK {
+        uuid id PK
+        string title
+        string isbn UK
+        string genre
+        int quantity
+        timestamp created_at
+    }
+
+    AUTHOR {
+        uuid id PK
+        string name
+        string biography
+    }
+
+    RESERVATION {
+        uuid id PK
+        uuid member_id FK
+        uuid book_id FK
+        string status
+        timestamp reserved_at
+        timestamp expires_at
+    }
+
+    SUBSCRIPTION {
+        uuid id PK
+        uuid member_id FK
+        string type
+        timestamp subscribed_at
+        timestamp expires_at
+    }
+
+    PAYMENT {
+        uuid id PK
+        uuid member_id FK
+        int64 amount
+        string currency
+        string status
+        string payment_type
+        timestamp created_at
+    }
+
+    SAVED_CARD {
+        uuid id PK
+        uuid member_id FK
+        string card_mask
+        string gateway_card_id
+        boolean is_default
+    }
+```
+
+## Authentication Flow
+
+JWT-based authentication process:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant AuthUC as Auth UseCase
+    participant MemberRepo as Member Repository
+    participant JWT as JWT Service
+    participant DB as PostgreSQL
+
+    Note over Client,DB: Registration Flow
+    Client->>API: POST /auth/register<br/>{email, password, name}
+    API->>AuthUC: RegisterUseCase.Execute()
+    AuthUC->>MemberRepo: EmailExists(email)
+    MemberRepo->>DB: SELECT * WHERE email=?
+    DB-->>MemberRepo: Not Found
+    MemberRepo-->>AuthUC: false
+    AuthUC->>AuthUC: Hash Password (bcrypt)
+    AuthUC->>MemberRepo: Add(member)
+    MemberRepo->>DB: INSERT INTO members
+    DB-->>MemberRepo: member_id
+    AuthUC->>JWT: GenerateTokenPair(member_id)
+    JWT-->>AuthUC: {access_token, refresh_token}
+    AuthUC-->>API: RegisterResponse
+    API-->>Client: 201 Created + Tokens
+
+    Note over Client,DB: Login Flow
+    Client->>API: POST /auth/login<br/>{email, password}
+    API->>AuthUC: LoginUseCase.Execute()
+    AuthUC->>MemberRepo: GetByEmail(email)
+    MemberRepo->>DB: SELECT * WHERE email=?
+    DB-->>MemberRepo: member_data
+    AuthUC->>AuthUC: Verify Password (bcrypt)
+    AuthUC->>JWT: GenerateTokenPair(member_id)
+    JWT-->>AuthUC: {access_token, refresh_token}
+    AuthUC-->>API: LoginResponse
+    API-->>Client: 200 OK + Tokens
+
+    Note over Client,DB: Protected Request
+    Client->>API: GET /books<br/>Authorization: Bearer {token}
+    API->>API: Auth Middleware
+    API->>JWT: ValidateToken(access_token)
+    JWT-->>API: Claims {member_id, role}
+    API->>API: Attach to Context
+    API->>API: BookHandler.List()
+    API-->>Client: 200 OK + Books
+```
 
 ## References
 

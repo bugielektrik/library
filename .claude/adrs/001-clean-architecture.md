@@ -72,10 +72,10 @@ We adopted **Clean Architecture** (also known as Hexagonal Architecture or Onion
 ### Negative
 
 1. **More Files:** A simple CRUD operation requires files in 4 layers (domain, use case, adapter, infrastructure)
-   - Mitigation: Created `.claude/examples/` with templates for quick scaffolding
+   - Mitigation: Created `.claude/common-tasks.md` with step-by-step guides for quick scaffolding
 
 2. **Learning Curve:** New developers need to understand the pattern before contributing
-   - Mitigation: Created `.claude/onboarding.md` for 15-minute guided onboarding
+   - Mitigation: Created `.claude/README.md` for quick onboarding with task-specific guidance
 
 3. **Boilerplate:** Requires interfaces, DTOs, and mapping code
    - Mitigation: Worth it for long-term maintainability. Not actually that much code.
@@ -155,7 +155,7 @@ After 6 months of development:
 - [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture/)
 - [Clean Architecture in Go (Go Community)](https://medium.com/@hatajoe/clean-architecture-in-go-4030f11ec1b1)
 - `.claude/architecture.md` - Our specific implementation details
-- `.claude/flows.md` - Visual diagrams of our architecture in action
+- `.claude/architecture.md` - Architecture patterns and data flow
 
 ## Related ADRs
 

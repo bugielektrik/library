@@ -8,9 +8,10 @@ import (
 
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
-	"library-service/internal/infrastructure/log"
 	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
+	"library-service/pkg/strutil"
 )
 
 // ListBookAuthorsRequest represents the input for listing book authors
@@ -55,10 +56,10 @@ func NewListBookAuthorsUseCase(
 
 // Execute retrieves all authors for a given book
 func (uc *ListBookAuthorsUseCase) Execute(ctx context.Context, req ListBookAuthorsRequest) (ListBookAuthorsResponse, error) {
-	logger := log.FromContext(ctx).Named("list_book_authors_usecase").With(zap.String("book_id", req.BookID))
+	logger := logutil.UseCaseLogger(ctx, "book", "list_authors")
 
 	if req.BookID == "" {
-		return ListBookAuthorsResponse{}, errors.ErrInvalidInput.WithDetails("field", "book_id")
+		return ListBookAuthorsResponse{}, errors.ValidationRequired("book_id")
 	}
 
 	// Get the book
@@ -66,10 +67,10 @@ func (uc *ListBookAuthorsUseCase) Execute(ctx context.Context, req ListBookAutho
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
 			logger.Warn("book not found")
-			return ListBookAuthorsResponse{}, errors.ErrBookNotFound.WithDetails("id", req.BookID)
+			return ListBookAuthorsResponse{}, errors.NotFoundWithID("book", req.BookID)
 		}
 		logger.Error("failed to get book", zap.Error(err))
-		return ListBookAuthorsResponse{}, errors.ErrDatabase.Wrap(err)
+		return ListBookAuthorsResponse{}, errors.Database("database operation", err)
 	}
 
 	if len(bookEntity.Authors) == 0 {
@@ -127,16 +128,16 @@ func (uc *ListBookAuthorsUseCase) fetchAuthorsConcurrently(ctx context.Context, 
 				// Update cache
 				if cacheErr := uc.authorCache.Set(ctx, id, authorEntity); cacheErr != nil {
 					// Log but don't fail
-					log.FromContext(ctx).Warn("failed to cache author", zap.Error(cacheErr))
+					logutil.UseCaseLogger(ctx, "book", "list_authors").Warn("failed to cache author", zap.Error(cacheErr))
 				}
 			}
 
 			mu.Lock()
 			authors = append(authors, AuthorResponse{
 				ID:        authorEntity.ID,
-				FullName:  safeString(authorEntity.FullName),
-				Pseudonym: safeString(authorEntity.Pseudonym),
-				Specialty: safeString(authorEntity.Specialty),
+				FullName:  strutil.SafeString(authorEntity.FullName),
+				Pseudonym: strutil.SafeString(authorEntity.Pseudonym),
+				Specialty: strutil.SafeString(authorEntity.Specialty),
 			})
 			mu.Unlock()
 		}(authorID)
@@ -145,7 +146,7 @@ func (uc *ListBookAuthorsUseCase) fetchAuthorsConcurrently(ctx context.Context, 
 	wg.Wait()
 
 	if len(errs) > 0 {
-		return nil, errors.ErrDatabase.Wrap(errs[0])
+		return nil, errors.Database("database operation", errs[0])
 	}
 
 	return authors, nil

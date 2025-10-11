@@ -2,11 +2,14 @@ package authops
 
 import (
 	"context"
-	"fmt"
+
+	"go.uber.org/zap"
 
 	"library-service/internal/domain/member"
 	"library-service/internal/infrastructure/auth"
+	"library-service/pkg/constants"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // RefreshTokenUseCase handles token refresh
@@ -38,17 +41,24 @@ type RefreshTokenResponse struct {
 }
 
 // Execute performs token refresh
-func (uc *RefreshTokenUseCase) Execute(ctx context.Context, req RefreshTokenRequest) (*RefreshTokenResponse, error) {
+func (uc *RefreshTokenUseCase) Execute(ctx context.Context, req RefreshTokenRequest) (RefreshTokenResponse, error) {
+	logger := logutil.UseCaseLogger(ctx, "auth", "refresh")
+
 	// Validate refresh token
 	refreshClaims, err := uc.jwtService.ValidateRefreshToken(req.RefreshToken)
 	if err != nil {
-		return nil, errors.ErrInvalidToken.WithDetails("error", err.Error())
+		logger.Warn("token validation failed", zap.Error(err))
+		return RefreshTokenResponse{}, errors.ErrInvalidToken.WithDetails("error", err.Error())
 	}
+
+	// Add member ID to logger after successful validation
+	logger = logger.With(zap.String("member_id", refreshClaims.MemberID))
 
 	// Get member from repository to ensure they still exist and get current data
 	memberEntity, err := uc.memberRepo.Get(ctx, refreshClaims.MemberID)
 	if err != nil {
-		return nil, errors.ErrNotFound.WithDetails("entity", "member")
+		logger.Warn("member not found for token refresh", zap.Error(err))
+		return RefreshTokenResponse{}, errors.NotFound("member")
 	}
 
 	// Generate new access token with current member data
@@ -58,13 +68,19 @@ func (uc *RefreshTokenUseCase) Execute(ctx context.Context, req RefreshTokenRequ
 		memberEntity.Role,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate new access token: %w", err)
+		logger.Error("failed to generate new access token", zap.Error(err))
+		return RefreshTokenResponse{}, errors.ErrInternal.
+			WithDetails("operation", "generate_access_token").
+			WithDetails("member_id", memberEntity.ID).
+			Wrap(err)
 	}
 
 	// Calculate expiry time in seconds
-	expiresIn := int64(86400) // 24 hours default, should come from config
+	expiresIn := int64(constants.SecondsPerDay) // Using centralized constant
 
-	return &RefreshTokenResponse{
+	logger.Info("token refreshed successfully")
+
+	return RefreshTokenResponse{
 		AccessToken: accessToken,
 		ExpiresIn:   expiresIn,
 	}, nil

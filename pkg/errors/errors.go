@@ -136,7 +136,6 @@ var (
 		Message:    "Invalid or expired token",
 		HTTPStatus: http.StatusUnauthorized,
 	}
-
 )
 
 // New creates a new domain error

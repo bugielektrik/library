@@ -1,0 +1,48 @@
+# Test configuration overrides
+# This file overrides settings from config.yaml for testing environment
+
+app:
+  env: test
+  debug: false
+
+server:
+  port: 0  # Use random port for parallel tests
+  read_timeout: 5s
+  write_timeout: 5s
+  idle_timeout: 10s
+  shutdown_timeout: 1s
+  enable_rate_limit: false  # Disable rate limiting in tests
+
+database:
+  database: library_test
+  enable_migration: true  # Auto-migrate for tests
+
+redis:
+  enabled: false  # Use memory cache for tests
+  database: 1  # Use different database for tests if enabled
+
+jwt:
+  secret: "test-secret-key-for-testing-purposes-only-32ch"
+  access_token_ttl: 1h
+  refresh_token_ttl: 2h
+
+payment:
+  provider: mock
+  sandbox: true
+
+logging:
+  level: error  # Only log errors during tests
+  format: console
+  output: stderr
+  enable_caller: false
+  enable_stacktrace: false
+
+metrics:
+  enabled: false  # Disable metrics in tests
+
+features:
+  enable_swagger: false
+  enable_graphql: false
+  enable_websocket: false
+  enable_notifications: false
+  maintenance_mode: false

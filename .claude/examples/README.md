@@ -1,606 +1,345 @@
-# Code Examples
+# Code Examples - Library Management System
 
-> **Quick copy-paste examples for common tasks in this codebase**
+Practical, step-by-step guides for common development tasks in this Clean Architecture project.
 
-## Quick Navigation
+**Target Audience:** Developers working with this Go-based library management system
 
-- [Adding a New Domain](#adding-a-new-domain)
-- [Adding a New Use Case](#adding-a-new-use-case)
-- [Adding a New API Endpoint](#adding-a-new-api-endpoint)
-- [Writing Tests](#writing-tests)
-- [Common Patterns](#common-patterns)
+**Philosophy:** Learn by doing - each guide provides complete, working examples you can follow immediately.
 
-## Adding a New Domain
+---
 
-### 1. Domain Entity
+## 📚 Available Guides
 
-```go
-// internal/domain/loan/entity.go
-package loan
+### 1. [Adding a Domain Entity](./adding-domain-entity.md)
 
-import (
-    "time"
-    "github.com/google/uuid"
-)
+**What you'll learn:** How to add a complete new domain entity from scratch
 
-type Entity struct {
-    ID         string
-    BookID     string
-    MemberID   string
-    LoanDate   time.Time
-    DueDate    time.Time
-    ReturnDate *time.Time
-    Status     Status
-    CreatedAt  time.Time
-    UpdatedAt  time.Time
-}
+**Example:** Adding a "Review" domain (book reviews with ratings)
 
-type Status string
+**Covers:**
+- Domain layer: Entity, service, repository interface
+- Use case layer: CRUD operations with business logic
+- Adapter layer: PostgreSQL repository, HTTP handlers, DTOs
+- Database migrations
+- Dependency injection wiring
+- Unit tests with mocks
+- Integration tests
 
-const (
-    StatusActive   Status = "active"
-    StatusReturned Status = "returned"
-    StatusOverdue  Status = "overdue"
-)
+**Time Estimate:** 2-3 hours
 
-func NewEntity(bookID, memberID string, loanDuration time.Duration) Entity {
-    now := time.Now()
-    return Entity{
-        ID:        uuid.New().String(),
-        BookID:    bookID,
-        MemberID:  memberID,
-        LoanDate:  now,
-        DueDate:   now.Add(loanDuration),
-        Status:    StatusActive,
-        CreatedAt: now,
-        UpdatedAt: now,
-    }
-}
+**Skill Level:** ⭐⭐ Intermediate
 
-func (e *Entity) IsOverdue() bool {
-    return e.Status == StatusActive && time.Now().After(e.DueDate)
-}
+**When to use:**
+- Adding a new core business concept (e.g., Loan, Fine, Notification)
+- Need full CRUD + custom business logic
+- Want to understand the complete Clean Architecture flow
 
-func (e *Entity) Return() error {
-    if e.Status == StatusReturned {
-        return ErrAlreadyReturned
-    }
-    now := time.Now()
-    e.ReturnDate = &now
-    e.Status = StatusReturned
-    e.UpdatedAt = now
-    return nil
-}
+---
+
+### 2. [Adding an API Endpoint](./adding-api-endpoint.md)
+
+**What you'll learn:** How to quickly add a new endpoint to an existing domain
+
+**Example:** Adding `GET /books/{id}/availability` to check book availability
+
+**Covers:**
+- Creating a use case for the endpoint
+- Adding DTO for HTTP response
+- Implementing HTTP handler with Swagger annotations
+- Registering route in router
+- Wiring use case in container
+- Testing with curl
+- Common endpoint patterns (query params, path params, authentication)
+
+**Time Estimate:** 30-45 minutes
+
+**Skill Level:** ⭐ Beginner/Intermediate
+
+**When to use:**
+- Adding functionality to existing domains
+- Quick API additions
+- Learning handler patterns
+
+---
+
+### 3. [Integration Testing](./integration-testing.md)
+
+**What you'll learn:** How to write integration tests with real PostgreSQL database
+
+**Covers:**
+- Test database setup and configuration
+- Reusable test fixtures
+- Repository integration tests
+- Use case integration tests
+- HTTP handler integration tests
+- Test isolation strategies (truncate tables, transactions)
+- Running tests in parallel
+- CI/CD integration with GitHub Actions
+
+**Time Estimate:** 30 minutes setup + 15 minutes per test suite
+
+**Skill Level:** ⭐⭐ Intermediate
+
+**When to use:**
+- Testing complex SQL queries
+- Verifying multi-table operations
+- Testing transaction handling
+- Ensuring repository implementations work correctly
+
+---
+
+### 4. [Common Tasks - Quick Reference](./common-tasks.md)
+
+**What you'll learn:** Quick answers to frequently asked questions
+
+**Format:** FAQ-style with immediate answers and commands
+
+**Covers:**
+- Database & migrations
+- Testing (unit, integration, coverage)
+- Code quality (formatting, linting, CI)
+- Building & running
+- API development
+- Error handling
+- Logging
+- Dependency injection
+- Architecture questions
+- Docker & deployment
+- Git & version control
+- Troubleshooting
+- Performance
+
+**Time Estimate:** 2-5 minutes per task
+
+**Skill Level:** ⭐ All levels
+
+**When to use:**
+- Need a quick command or solution
+- First time setting up project
+- Debugging common issues
+- Can't remember exact syntax
+
+---
+
+## 🎯 Quick Navigation
+
+**I want to...**
+
+- **Add a new domain concept (e.g., Loan, Fine)** → [Adding a Domain Entity](./adding-domain-entity.md)
+- **Add an endpoint to existing domain** → [Adding an API Endpoint](./adding-api-endpoint.md)
+- **Write tests with real database** → [Integration Testing](./integration-testing.md)
+- **Find a specific command** → [Common Tasks](./common-tasks.md)
+- **Understand the architecture** → [.claude/architecture.md](../.claude/architecture.md)
+- **Set up the project** → [.claude/setup.md](../.claude/setup.md)
+
+---
+
+## 📖 Learning Path
+
+### Beginner (New to this codebase)
+
+1. **Setup:** Read [.claude/setup.md](../.claude/setup.md) - Set up development environment
+2. **Quick Reference:** Skim [Common Tasks](./common-tasks.md) - Familiarize with commands
+3. **First Feature:** Follow [Adding an API Endpoint](./adding-api-endpoint.md) - Learn basic flow
+4. **Architecture:** Read [.claude/architecture.md](../.claude/architecture.md) - Understand structure
+
+### Intermediate (Comfortable with basics)
+
+1. **Full Feature:** Follow [Adding a Domain Entity](./adding-domain-entity.md) - Complete workflow
+2. **Testing:** Follow [Integration Testing](./integration-testing.md) - Write integration tests
+3. **Standards:** Read [.claude/standards.md](../.claude/standards.md) - Code quality practices
+4. **Workflows:** Read [.claude/development-workflows.md](../.claude/development-workflows.md) - Advanced patterns
+
+### Advanced (Contributing significant features)
+
+1. **Architecture Deep Dive:** Study [.claude/architecture.md](../.claude/architecture.md) + [.claude/development.md](../.claude/development.md)
+2. **All Examples:** Work through all examples in this directory
+3. **Testing Strategy:** Read [.claude/testing.md](../.claude/testing.md) - Comprehensive testing
+4. **Debugging:** Read [.claude/debugging-guide.md](../.claude/debugging-guide.md) - Advanced techniques
+
+---
+
+## 🛠️ Example Code Quality
+
+All code examples in these guides:
+
+- ✅ Follow project coding standards
+- ✅ Use consistent naming conventions
+- ✅ Include error handling
+- ✅ Have logging instrumentation
+- ✅ Include Swagger annotations
+- ✅ Follow Clean Architecture principles
+- ✅ Are production-ready (with minor customization)
+
+**Note:** Examples use placeholder names (e.g., "Review", "Availability"). Replace with your actual feature names.
+
+---
+
+## 📋 Quick Command Cheatsheet
+
+```bash
+# Start developing
+make dev                           # Full stack (Docker + migrations + API)
+
+# Testing
+make test                          # All tests with coverage
+make test-unit                     # Unit tests only (fast)
+make test-integration              # Integration tests (requires DB)
+
+# Code quality
+make ci                            # Full CI pipeline locally
+make lint                          # Run linter
+make fmt                           # Format code
+
+# Database
+make migrate-up                    # Apply migrations
+make migrate-down                  # Rollback last migration
+make migrate-create name=my_migration  # Create new migration
+
+# API
+make run                           # Run API server
+make gen-docs                      # Regenerate Swagger docs
+
+# Building
+make build                         # Build all binaries
+make build-api                     # Build API server only
 ```
 
-### 2. Domain Service
+---
 
-```go
-// internal/domain/loan/service.go
-package loan
+## 🎓 Additional Resources
 
-import (
-    "time"
-)
+### Project Documentation (`.claude/` directory)
 
-var (
-    ErrAlreadyReturned = errors.New("loan already returned")
-    ErrInvalidDuration = errors.New("invalid loan duration")
-)
+**Essential:**
+- [CLAUDE-START.md](../.claude/CLAUDE-START.md) - 60-second quickstart
+- [README.md](../.claude/README.md) - Quick navigation
+- [architecture.md](../.claude/architecture.md) - Clean Architecture patterns
+- [standards.md](../.claude/standards.md) - Code standards
 
-type Service struct {
-    maxLoanDuration time.Duration
-}
+**Development:**
+- [development.md](../.claude/development.md) - Development practices
+- [development-workflows.md](../.claude/development-workflows.md) - Complete workflows
+- [testing.md](../.claude/testing.md) - Testing strategies
+- [debugging-guide.md](../.claude/debugging-guide.md) - Debugging techniques
 
-func NewService() *Service {
-    return &Service{
-        maxLoanDuration: 14 * 24 * time.Hour, // 14 days
-    }
-}
+**Reference:**
+- [api.md](../.claude/api.md) - API documentation
+- [commands.md](../.claude/commands.md) - Command reference
+- [cheatsheet.md](../.claude/cheatsheet.md) - Single-page reference
+- [faq.md](../.claude/faq.md) - Frequently asked questions
 
-func (s *Service) ValidateLoanDuration(duration time.Duration) error {
-    if duration <= 0 {
-        return ErrInvalidDuration
-    }
-    if duration > s.maxLoanDuration {
-        return ErrInvalidDuration
-    }
-    return nil
-}
+**Problem Solving:**
+- [troubleshooting.md](../.claude/troubleshooting.md) - Common issues
+- [gotchas.md](../.claude/gotchas.md) - Common mistakes
+- [quick-wins.md](../.claude/quick-wins.md) - Easy improvements
 
-func (s *Service) CalculateLateFee(loan Entity) float64 {
-    if loan.ReturnDate == nil {
-        return 0
-    }
-    if loan.ReturnDate.Before(loan.DueDate) {
-        return 0
-    }
-    daysLate := int(loan.ReturnDate.Sub(loan.DueDate).Hours() / 24)
-    return float64(daysLate) * 0.50 // $0.50 per day
-}
+### External Resources
+
+- [Clean Architecture (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Go Documentation](https://go.dev/doc/)
+- [Chi Router](https://go-chi.io/)
+- [Swagger/OpenAPI](https://swagger.io/specification/)
+- [Go Validator](https://pkg.go.dev/github.com/go-playground/validator/v10)
+
+---
+
+## 💡 Tips for Using Examples
+
+1. **Don't blindly copy-paste** - Understand each step and adapt to your needs
+2. **Follow the order** - Examples build on each other (domain → use case → handler)
+3. **Run tests frequently** - Verify each step works before moving forward
+4. **Use version control** - Commit after each major step
+5. **Read comments** - Code examples include explanatory comments
+6. **Check time estimates** - Plan your work session accordingly
+7. **Refer to Common Tasks** - Quick answers while following examples
+
+---
+
+## 🤝 Contributing Examples
+
+Have an example that would help other developers? Consider adding it!
+
+**Good example topics:**
+- Adding middleware
+- Implementing caching
+- Adding background jobs
+- Working with transactions
+- Error handling patterns
+- Authentication flows
+- File uploads
+- WebSocket endpoints
+- Rate limiting
+
+**Example structure:**
+```markdown
+# Title - Quick Guide
+
+Brief description
+
+**Scenario:** Specific example
+**Time Estimate:** X minutes
+
+## Step 1: ...
+## Step 2: ...
+## Summary Checklist
 ```
 
-### 3. Repository Interface
+---
 
-```go
-// internal/domain/loan/repository.go
-package loan
+## 📞 Getting Help
 
-import "context"
+**Stuck? Try these:**
 
-type Repository interface {
-    Create(ctx context.Context, loan Entity) error
-    GetByID(ctx context.Context, id string) (Entity, error)
-    GetByMemberID(ctx context.Context, memberID string) ([]Entity, error)
-    Update(ctx context.Context, loan Entity) error
-    Delete(ctx context.Context, id string) error
-}
+1. Check [Common Tasks](./common-tasks.md) - Covers 90% of questions
+2. Review [Troubleshooting](../.claude/troubleshooting.md) - Common issues
+3. Read [FAQ](../.claude/faq.md) - Frequently asked questions
+4. Check [Gotchas](../.claude/gotchas.md) - Common mistakes
+5. Review example code in `internal/` - Working examples
+6. Run `make ci` - Verify your changes compile
+
+**Still stuck?**
+- Verify Docker containers are running: `docker ps`
+- Check logs: `make logs`
+- Reset database: `make migrate-down && make migrate-up`
+- Clear test cache: `go clean -testcache`
+
+---
+
+## 📊 Progress Tracking
+
+Use this checklist when following examples:
+
+```
+Adding a Domain Entity:
+□ Step 1: Domain layer (entity, service, repository)
+□ Step 2: Use case layer (CRUD operations)
+□ Step 3: Repository implementation
+□ Step 4: Database migration
+□ Step 5: HTTP layer (handlers, DTOs)
+□ Step 6: Dependency wiring
+□ Step 7: Testing
+
+Adding an API Endpoint:
+□ Step 1: Create use case
+□ Step 2: Create DTO
+□ Step 3: Add HTTP handler
+□ Step 4: Add route
+□ Step 5: Wire in container
+□ Step 6: Test endpoint
+□ Step 7: Add tests (optional)
+
+Integration Testing:
+□ Step 1: Database setup (one-time)
+□ Step 2: Test fixtures (one-time)
+□ Step 3: Write repository tests
+□ Step 4: Write use case tests
+□ Step 5: Write handler tests
+□ Step 6: Run integration tests
 ```
 
-### 4. Domain Tests
+---
 
-```go
-// internal/domain/loan/service_test.go
-package loan
+**Happy Coding! 🚀**
 
-import (
-    "testing"
-    "time"
-)
-
-func TestService_ValidateLoanDuration(t *testing.T) {
-    svc := NewService()
-
-    tests := []struct {
-        name     string
-        duration time.Duration
-        wantErr  bool
-    }{
-        {"valid 7 days", 7 * 24 * time.Hour, false},
-        {"valid 14 days", 14 * 24 * time.Hour, false},
-        {"invalid zero", 0, true},
-        {"invalid negative", -1 * time.Hour, true},
-        {"invalid too long", 15 * 24 * time.Hour, true},
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            err := svc.ValidateLoanDuration(tt.duration)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("ValidateLoanDuration() error = %v, wantErr %v", err, tt.wantErr)
-            }
-        })
-    }
-}
-
-func TestEntity_IsOverdue(t *testing.T) {
-    pastDue := time.Now().Add(-24 * time.Hour)
-    futureDue := time.Now().Add(24 * time.Hour)
-
-    tests := []struct {
-        name   string
-        entity Entity
-        want   bool
-    }{
-        {
-            name: "overdue loan",
-            entity: Entity{
-                Status:  StatusActive,
-                DueDate: pastDue,
-            },
-            want: true,
-        },
-        {
-            name: "not overdue",
-            entity: Entity{
-                Status:  StatusActive,
-                DueDate: futureDue,
-            },
-            want: false,
-        },
-        {
-            name: "returned loan",
-            entity: Entity{
-                Status:  StatusReturned,
-                DueDate: pastDue,
-            },
-            want: false,
-        },
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            if got := tt.entity.IsOverdue(); got != tt.want {
-                t.Errorf("IsOverdue() = %v, want %v", got, tt.want)
-            }
-        })
-    }
-}
-```
-
-## Adding a New Use Case
-
-```go
-// internal/usecase/loanops/create_loan.go
-package loanops
-
-import (
-    "context"
-    "fmt"
-    "time"
-
-    "library-service/internal/domain/loan"
-    "library-service/internal/infrastructure/log"
-    "library-service/pkg/errors"
-)
-
-type CreateLoanRequest struct {
-    BookID       string
-    MemberID     string
-    LoanDuration time.Duration
-}
-
-type CreateLoanUseCase struct {
-    loanRepo    loan.Repository
-    loanService *loan.Service
-}
-
-func NewCreateLoanUseCase(repo loan.Repository, svc *loan.Service) *CreateLoanUseCase {
-    return &CreateLoanUseCase{
-        loanRepo:    repo,
-        loanService: svc,
-    }
-}
-
-func (uc *CreateLoanUseCase) Execute(ctx context.Context, req CreateLoanRequest) (*loan.Entity, error) {
-    // Validate loan duration using domain service
-    if err := uc.loanService.ValidateLoanDuration(req.LoanDuration); err != nil {
-        log.Warn("Invalid loan duration", "duration", req.LoanDuration, "error", err)
-        return nil, errors.ErrValidation
-    }
-
-    // Create loan entity
-    newLoan := loan.NewEntity(req.BookID, req.MemberID, req.LoanDuration)
-
-    // Persist to repository
-    if err := uc.loanRepo.Create(ctx, newLoan); err != nil {
-        log.Error("Failed to create loan", "error", err)
-        return nil, fmt.Errorf("creating loan: %w", err)
-    }
-
-    log.Info("Loan created successfully", "loan_id", newLoan.ID, "member_id", req.MemberID)
-    return &newLoan, nil
-}
-```
-
-## Adding a New API Endpoint
-
-### 1. DTO (Data Transfer Object)
-
-```go
-// internal/adapters/http/dto/loan.go
-package dto
-
-import "time"
-
-type CreateLoanRequest struct {
-    BookID       string `json:"book_id" validate:"required,uuid"`
-    MemberID     string `json:"member_id" validate:"required,uuid"`
-    LoanDuration int    `json:"loan_duration_days" validate:"required,min=1,max=14"`
-}
-
-type LoanResponse struct {
-    ID         string     `json:"id"`
-    BookID     string     `json:"book_id"`
-    MemberID   string     `json:"member_id"`
-    LoanDate   time.Time  `json:"loan_date"`
-    DueDate    time.Time  `json:"due_date"`
-    ReturnDate *time.Time `json:"return_date,omitempty"`
-    Status     string     `json:"status"`
-}
-```
-
-### 2. HTTP Handler
-
-```go
-// internal/adapters/http/handlers/loan.go
-package handlers
-
-import (
-    "encoding/json"
-    "net/http"
-    "time"
-
-    "library-service/internal/adapters/http/dto"
-    "library-service/internal/usecase/loanops"
-    "library-service/pkg/errors"
-)
-
-type LoanHandler struct {
-    createLoanUC *loanops.CreateLoanUseCase
-}
-
-func NewLoanHandler(createLoanUC *loanops.CreateLoanUseCase) *LoanHandler {
-    return &LoanHandler{
-        createLoanUC: createLoanUC,
-    }
-}
-
-// CreateLoan creates a new book loan
-// @Summary Create a new loan
-// @Description Create a new book loan for a member
-// @Tags loans
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param request body dto.CreateLoanRequest true "Loan details"
-// @Success 201 {object} dto.LoanResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /loans [post]
-func (h *LoanHandler) CreateLoan(w http.ResponseWriter, r *http.Request) {
-    var req dto.CreateLoanRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        respondError(w, errors.ErrValidation, http.StatusBadRequest)
-        return
-    }
-
-    // Validate request
-    if err := validate.Struct(req); err != nil {
-        respondError(w, err, http.StatusBadRequest)
-        return
-    }
-
-    // Convert days to duration
-    loanDuration := time.Duration(req.LoanDuration) * 24 * time.Hour
-
-    // Execute use case
-    loan, err := h.createLoanUC.Execute(r.Context(), loanops.CreateLoanRequest{
-        BookID:       req.BookID,
-        MemberID:     req.MemberID,
-        LoanDuration: loanDuration,
-    })
-    if err != nil {
-        respondError(w, err, http.StatusInternalServerError)
-        return
-    }
-
-    // Map to response DTO
-    response := dto.LoanResponse{
-        ID:         loan.ID,
-        BookID:     loan.BookID,
-        MemberID:   loan.MemberID,
-        LoanDate:   loan.LoanDate,
-        DueDate:    loan.DueDate,
-        ReturnDate: loan.ReturnDate,
-        Status:     string(loan.Status),
-    }
-
-    respondJSON(w, response, http.StatusCreated)
-}
-```
-
-### 3. Wire in Container
-
-```go
-// internal/usecase/container.go
-// Add to Repositories struct:
-type Repositories struct {
-    // ... existing repos
-    Loan loan.Repository  // ADD THIS
-}
-
-// Add to Container struct:
-type Container struct {
-    // ... existing use cases
-    CreateLoan *loanops.CreateLoanUseCase  // ADD THIS
-}
-
-// Add to NewContainer function:
-func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices) *Container {
-    // ... existing services
-    loanService := loan.NewService()  // ADD THIS
-
-    return &Container{
-        // ... existing use cases
-        CreateLoan: loanops.NewCreateLoanUseCase(repos.Loan, loanService),  // ADD THIS
-    }
-}
-```
-
-### 4. Add Routes
-
-```go
-// internal/adapters/http/router.go
-// In setupRoutes function:
-func setupRoutes(r *chi.Mux, handlers *Handlers) {
-    // ... existing routes
-
-    // Loan routes
-    r.Route("/loans", func(r chi.Router) {
-        r.Use(authMiddleware)  // Protected routes
-        r.Post("/", handlers.Loan.CreateLoan)
-        r.Get("/{id}", handlers.Loan.GetLoan)
-        r.Post("/{id}/return", handlers.Loan.ReturnLoan)
-    })
-}
-```
-
-## Writing Tests
-
-### Mock Repository (for use case tests)
-
-```go
-// internal/domain/loan/mocks/repository.go
-package mocks
-
-import (
-    "context"
-    "library-service/internal/domain/loan"
-)
-
-type MockLoanRepository struct {
-    CreateFunc func(ctx context.Context, loan loan.Entity) error
-    GetByIDFunc func(ctx context.Context, id string) (loan.Entity, error)
-}
-
-func (m *MockLoanRepository) Create(ctx context.Context, loan loan.Entity) error {
-    if m.CreateFunc != nil {
-        return m.CreateFunc(ctx, loan)
-    }
-    return nil
-}
-
-func (m *MockLoanRepository) GetByID(ctx context.Context, id string) (loan.Entity, error) {
-    if m.GetByIDFunc != nil {
-        return m.GetByIDFunc(ctx, id)
-    }
-    return loan.Entity{}, nil
-}
-```
-
-### Use Case Test with Mocks
-
-```go
-// internal/usecase/loanops/create_loan_test.go
-package loanops
-
-import (
-    "context"
-    "testing"
-    "time"
-
-    "library-service/internal/domain/loan"
-    "library-service/internal/domain/loan/mocks"
-)
-
-func TestCreateLoanUseCase_Execute(t *testing.T) {
-    ctx := context.Background()
-
-    tests := []struct {
-        name    string
-        req     CreateLoanRequest
-        setup   func(*mocks.MockLoanRepository)
-        wantErr bool
-    }{
-        {
-            name: "successful loan creation",
-            req: CreateLoanRequest{
-                BookID:       "book-123",
-                MemberID:     "member-456",
-                LoanDuration: 7 * 24 * time.Hour,
-            },
-            setup: func(repo *mocks.MockLoanRepository) {
-                repo.CreateFunc = func(ctx context.Context, l loan.Entity) error {
-                    return nil
-                }
-            },
-            wantErr: false,
-        },
-        {
-            name: "invalid duration",
-            req: CreateLoanRequest{
-                BookID:       "book-123",
-                MemberID:     "member-456",
-                LoanDuration: 0,
-            },
-            setup:   func(repo *mocks.MockLoanRepository) {},
-            wantErr: true,
-        },
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            mockRepo := &mocks.MockLoanRepository{}
-            tt.setup(mockRepo)
-
-            svc := loan.NewService()
-            uc := NewCreateLoanUseCase(mockRepo, svc)
-
-            _, err := uc.Execute(ctx, tt.req)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("Execute() error = %v, wantErr %v", err, tt.wantErr)
-            }
-        })
-    }
-}
-```
-
-## Common Patterns
-
-### Error Handling Pattern
-
-```go
-// Always wrap errors with context
-if err := repo.Create(ctx, entity); err != nil {
-    log.Error("Failed to create entity", "error", err)
-    return fmt.Errorf("creating entity: %w", err)  // Use %w for wrapping
-}
-
-// Use domain errors for known cases
-if entity.ID == "" {
-    return errors.ErrValidation
-}
-
-// Check wrapped errors
-if errors.Is(err, errors.ErrNotFound) {
-    // Handle not found
-}
-```
-
-### Logging Pattern
-
-```go
-import "library-service/internal/infrastructure/log"
-
-// Info logging with structured fields
-log.Info("Operation successful", "entity_id", id, "user_id", userID)
-
-// Warning for expected errors
-log.Warn("Invalid input", "field", "email", "value", email)
-
-// Error for unexpected errors
-log.Error("Database operation failed", "error", err, "query", query)
-
-// Debug for development
-log.Debug("Processing item", "item", item)
-```
-
-### Context Usage Pattern
-
-```go
-// Always pass context as first parameter
-func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
-    // Check for cancellation
-    select {
-    case <-ctx.Done():
-        return nil, ctx.Err()
-    default:
-    }
-
-    // Pass context to all downstream calls
-    result, err := uc.repo.GetByID(ctx, req.ID)
-    if err != nil {
-        return nil, err
-    }
-
-    return &Response{Data: result}, nil
-}
-```
-
-### Validation Pattern
-
-```go
-// Use validator tags in DTOs
-type CreateRequest struct {
-    Email    string `json:"email" validate:"required,email"`
-    Password string `json:"password" validate:"required,min=8"`
-    Name     string `json:"name" validate:"required,max=100"`
-}
-
-// Validate in handler
-if err := validate.Struct(req); err != nil {
-    respondError(w, err, http.StatusBadRequest)
-    return
-}
-```
+These examples are designed to get you productive quickly. Start with [Common Tasks](./common-tasks.md) for quick wins, then dive into [Adding an API Endpoint](./adding-api-endpoint.md) for your first feature.

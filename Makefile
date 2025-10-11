@@ -98,7 +98,7 @@ test-unit:
 .PHONY: test-integration
 test-integration:
 	@echo "$(YELLOW)Running integration tests...$(NC)"
-	$(GO) test -v -run Integration ./test/integration/...
+	$(GO) test -v -tags=integration ./test/integration/...
 	@echo "$(GREEN)Integration tests completed!$(NC)"
 
 ## test-coverage: Run tests with coverage report
@@ -140,6 +140,13 @@ clean:
 	@rm -rf bin/
 	@rm -f coverage.out coverage.html
 	@echo "$(GREEN)Cleaned!$(NC)"
+
+## clean-logs: Remove all log files from source code
+.PHONY: clean-logs
+clean-logs:
+	@echo "$(YELLOW)Removing log files from source code...$(NC)"
+	@find . -name "*.log" -type f -not -path "./vendor/*" -not -path "./node_modules/*" -not -path "./logs/*" -delete
+	@echo "$(GREEN)Log files cleaned!$(NC)"
 
 ## migrate-up: Run store migrations
 .PHONY: migrate-up
@@ -201,6 +208,14 @@ install-tools:
 	$(GO) install github.com/golang/mock/mockgen@latest
 	$(GO) install github.com/swaggo/swag/cmd/swag@latest
 	@echo "$(GREEN)Tools installed!$(NC)"
+
+## install-hooks: Install git hooks
+.PHONY: install-hooks
+install-hooks:
+	@echo "$(YELLOW)Installing git hooks...$(NC)"
+	@chmod +x .githooks/pre-commit
+	@git config core.hooksPath .githooks
+	@echo "$(GREEN)Git hooks installed! Pre-commit checks will now run automatically.$(NC)"
 
 ## gen-mocks: Generate mocks for testing
 .PHONY: gen-mocks

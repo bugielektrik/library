@@ -30,22 +30,36 @@ pkg/ (this directory)
 
 ```
 pkg/
+├── crypto/           # Password hashing and cryptographic utilities
+│   └── crypto.go
+│
 ├── errors/           # Error handling
 │   ├── errors.go     # Custom error types
 │   └── domain.go     # Domain-specific errors
 │
-├── validator/        # Validation utilities
-│   ├── validator.go  # Common validators
-│   └── isbn.go       # ISBN validation
+├── httputil/         # HTTP utilities
+│   ├── status.go     # HTTP status code constants and helpers
+│   ├── status_test.go
+│   └── doc.go
 │
-├── logger/           # Logging utilities
-│   └── logger.go     # Structured logging
+├── logutil/          # Logger utilities
+│   ├── logger.go     # Logger initialization helpers
+│   ├── logger_test.go
+│   └── doc.go
 │
-├── config/           # Configuration
-│   └── config.go     # Config loading
+├── pagination/       # Pagination utilities
+│   └── pagination.go
 │
-└── types/            # Shared types
-    └── pagination.go # Pagination types
+├── strutil/          # String utilities
+│   ├── string.go     # Safe string pointer helpers
+│   ├── string_test.go
+│   └── doc.go
+│
+├── timeutil/         # Time-related utilities
+│   └── time.go
+│
+└── validator/        # Validation utilities
+    └── validator.go
 ```
 
 ## Error Package
@@ -242,6 +256,98 @@ logger.Info("Book created",
     logger.Field{Key: "title", Value: "Clean Code"},
 )
 ```
+
+## Logger Utilities Package
+
+### Simplified Logger Initialization
+
+The `logutil` package provides helper functions to reduce boilerplate when initializing loggers across different architectural layers:
+
+```go
+// pkg/logutil/logger.go
+
+// Use Case Logger - for orchestration layer
+func UseCaseLogger(ctx context.Context, useCaseName string, fields ...zap.Field) *zap.Logger
+
+// Handler Logger - for HTTP handlers
+func HandlerLogger(ctx context.Context, handlerName, methodName string) *zap.Logger
+
+// Repository Logger - for data access layer
+func RepositoryLogger(ctx context.Context, repositoryName, operation string) *zap.Logger
+
+// Gateway Logger - for external service integrations
+func GatewayLogger(ctx context.Context, gatewayName, operation string) *zap.Logger
+```
+
+### Usage Examples
+
+**Before (3 lines):**
+```go
+logger := log.FromContext(ctx).Named("create_book_usecase").With(
+    zap.String("isbn", req.ISBN),
+)
+```
+
+**After (1 line):**
+```go
+logger := logutil.UseCaseLogger(ctx, "create_book", zap.String("isbn", req.ISBN))
+```
+
+**Use Case Layer:**
+```go
+import "library-service/pkg/logutil"
+
+func (uc *CreateBookUseCase) Execute(ctx context.Context, req Request) (Response, error) {
+    logger := logutil.UseCaseLogger(ctx, "create_book",
+        zap.String("isbn", req.ISBN),
+        zap.String("title", req.Title),
+    )
+    logger.Info("creating book")
+    // ...
+}
+```
+
+**HTTP Handler Layer:**
+```go
+import "library-service/pkg/logutil"
+
+func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()
+    logger := logutil.HandlerLogger(ctx, "book_handler", "create")
+    logger.Info("handling create book request")
+    // ...
+}
+```
+
+**Repository Layer:**
+```go
+import "library-service/pkg/logutil"
+
+func (r *BookRepository) Create(ctx context.Context, book Book) error {
+    logger := logutil.RepositoryLogger(ctx, "book", "create")
+    logger.Info("creating book in database", zap.String("id", book.ID))
+    // ...
+}
+```
+
+**Gateway Layer:**
+```go
+import "library-service/pkg/logutil"
+
+func (g *PaymentGateway) InitiatePayment(ctx context.Context, req PaymentRequest) error {
+    logger := logutil.GatewayLogger(ctx, "epayment", "initiate_payment")
+    logger.Info("initiating payment", zap.Int64("amount", req.Amount))
+    // ...
+}
+```
+
+### Benefits
+
+- **Reduces Boilerplate**: 3-line logger initialization reduced to 1 line
+- **Consistent Naming**: Automatic naming convention (e.g., "create_book_usecase")
+- **Context Propagation**: Automatically extracts logger from context
+- **Layer Clarity**: Different helpers for different architectural layers
+- **Easy Refactoring**: Change logging strategy in one place
 
 ## Config Package
 

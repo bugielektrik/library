@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestService_ValidateReservation(t *testing.T) {
+func TestService_Validate(t *testing.T) {
 	service := NewService()
 
 	now := time.Now()
@@ -70,7 +70,7 @@ func TestService_ValidateReservation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ValidateReservation(tt.reservation)
+			err := service.Validate(tt.reservation)
 
 			if tt.wantError {
 				assert.Error(t, err)
@@ -88,13 +88,13 @@ func TestService_CanMemberReserveBook(t *testing.T) {
 	service := NewService()
 
 	tests := []struct {
-		name                  string
-		memberID              string
-		bookID                string
-		existingReservations  []Reservation
-		memberBorrowedBooks   []string
-		wantError             bool
-		errorType             *errors.Error
+		name                 string
+		memberID             string
+		bookID               string
+		existingReservations []Reservation
+		memberBorrowedBooks  []string
+		wantError            bool
+		errorType            *errors.Error
 	}{
 		{
 			name:                 "can reserve book",

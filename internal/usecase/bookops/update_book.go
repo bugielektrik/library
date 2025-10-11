@@ -6,9 +6,9 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/book"
-	"library-service/internal/infrastructure/log"
 	"library-service/internal/infrastructure/store"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
 // UpdateBookRequest represents the input for updating a book
@@ -18,6 +18,12 @@ type UpdateBookRequest struct {
 	Genre   *string
 	ISBN    *string
 	Authors []string
+}
+
+// UpdateBookResponse represents the output of updating a book
+type UpdateBookResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 // UpdateBookUseCase handles updating an existing book
@@ -35,11 +41,11 @@ func NewUpdateBookUseCase(bookRepo book.Repository, bookCache book.Cache) *Updat
 }
 
 // Execute updates an existing book
-func (uc *UpdateBookUseCase) Execute(ctx context.Context, req UpdateBookRequest) error {
-	logger := log.FromContext(ctx).Named("update_book_usecase").With(zap.String("id", req.ID))
+func (uc *UpdateBookUseCase) Execute(ctx context.Context, req UpdateBookRequest) (UpdateBookResponse, error) {
+	logger := logutil.UseCaseLogger(ctx, "book", "update")
 
 	if req.ID == "" {
-		return errors.ErrInvalidInput.WithDetails("field", "id")
+		return UpdateBookResponse{}, errors.ValidationRequired("id")
 	}
 
 	// Build the update request
@@ -65,10 +71,10 @@ func (uc *UpdateBookUseCase) Execute(ctx context.Context, req UpdateBookRequest)
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
 			logger.Warn("book not found")
-			return errors.ErrBookNotFound.WithDetails("id", req.ID)
+			return UpdateBookResponse{}, errors.NotFoundWithID("book", req.ID)
 		}
 		logger.Error("failed to update book", zap.Error(err))
-		return errors.ErrDatabase.Wrap(err)
+		return UpdateBookResponse{}, errors.Database("database operation", err)
 	}
 
 	// Update cache
@@ -78,6 +84,10 @@ func (uc *UpdateBookUseCase) Execute(ctx context.Context, req UpdateBookRequest)
 		// Non-critical, continue
 	}
 
-	logger.Info("book updated successfully")
-	return nil
+	logger.Info("book updated successfully", zap.String("id", req.ID))
+
+	return UpdateBookResponse{
+		Success: true,
+		Message: "book updated successfully",
+	}, nil
 }

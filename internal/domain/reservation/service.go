@@ -8,6 +8,19 @@ import (
 
 // Service encapsulates business logic for reservations that doesn't naturally
 // belong to a single entity. This is a domain service in DDD terms.
+//
+// Key Responsibilities:
+//   - Reservation eligibility (can member reserve book?)
+//   - Status transitions (pending → fulfilled/cancelled/expired)
+//   - Cross-entity validation (checking member's borrowed books)
+//   - Expiration date calculation
+//
+// See Also:
+//   - Use case example: internal/usecase/reservationops/create_reservation.go (demonstrates cross-domain validation)
+//   - Similar services: internal/domain/book/service.go (comprehensive example), internal/domain/payment/service.go
+//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (pure business logic pattern)
+//   - ADR: .claude/adr/002-clean-architecture-boundaries.md (domain layer rules)
+//   - Test: internal/usecase/reservationops/create_reservation_test.go
 type Service struct {
 	// Domain services are typically stateless
 	// If state is needed, it should be passed as parameters
@@ -19,7 +32,7 @@ func NewService() *Service {
 }
 
 // ValidateReservation validates reservation entity according to business rules
-func (s *Service) ValidateReservation(reservation Reservation) error {
+func (s *Service) Validate(reservation Reservation) error {
 	if reservation.BookID == "" {
 		return errors.ErrValidation.WithDetails("field", "book_id").WithDetails("reason", "book_id is required")
 	}

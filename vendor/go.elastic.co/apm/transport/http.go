@@ -92,25 +92,24 @@ type HTTPTransport struct {
 // streaming data to the APM Server. The returned HTTPTransport will be
 // initialized using the following environment variables:
 //
-// - ELASTIC_APM_SERVER_URL: the APM Server URL used for sending
-//   requests. If no URL is specified, then the transport will use the
-//   default URL "http://localhost:8200".
+//   - ELASTIC_APM_SERVER_URL: the APM Server URL used for sending
+//     requests. If no URL is specified, then the transport will use the
+//     default URL "http://localhost:8200".
 //
-// - ELASTIC_APM_SERVER_TIMEOUT: timeout for requests to the APM Server.
-//   If not specified, defaults to 30 seconds.
+//   - ELASTIC_APM_SERVER_TIMEOUT: timeout for requests to the APM Server.
+//     If not specified, defaults to 30 seconds.
 //
 // - ELASTIC_APM_SECRET_TOKEN: used to authenticate the agent.
 //
-// - ELASTIC_APM_SERVER_CERT: path to a PEM-encoded certificate that
-//   must match the APM Server-supplied certificate. This can be used
-//   to pin a self signed certificate. If this is set, then
-//   ELASTIC_APM_VERIFY_SERVER_CERT is ignored.
+//   - ELASTIC_APM_SERVER_CERT: path to a PEM-encoded certificate that
+//     must match the APM Server-supplied certificate. This can be used
+//     to pin a self signed certificate. If this is set, then
+//     ELASTIC_APM_VERIFY_SERVER_CERT is ignored.
 //
-// - ELASTIC_APM_VERIFY_SERVER_CERT: if set to "false", the transport
-//   will not verify the APM Server's TLS certificate. Only relevant
-//   when using HTTPS. By default, the transport will verify server
-//   certificates.
-//
+//   - ELASTIC_APM_VERIFY_SERVER_CERT: if set to "false", the transport
+//     will not verify the APM Server's TLS certificate. Only relevant
+//     when using HTTPS. By default, the transport will verify server
+//     certificates.
 func NewHTTPTransport() (*HTTPTransport, error) {
 	verifyServerCert, err := configutil.ParseBoolEnv(envVerifyServerCert, true)
 	if err != nil {

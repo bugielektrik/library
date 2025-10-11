@@ -2,15 +2,29 @@ package authops
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"go.uber.org/zap"
 
 	"library-service/internal/domain/member"
 	"library-service/internal/infrastructure/auth"
 	"library-service/pkg/errors"
+	"library-service/pkg/logutil"
 )
 
-// RegisterUseCase handles member registration
+// RegisterUseCase handles member registration.
+//
+// Architecture Pattern: Authentication use case with infrastructure services.
+// Demonstrates usage of JWTService and PasswordService (external dependencies).
+//
+// See Also:
+//   - Similar pattern: internal/usecase/authops/login.go (authentication flow)
+//   - Infrastructure: internal/infrastructure/auth/jwt.go (token generation)
+//   - Infrastructure: internal/infrastructure/auth/password.go (hashing)
+//   - Domain service: internal/domain/member/service.go (validation)
+//   - HTTP handler: internal/adapters/http/handlers/auth/register.go
+//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (JWT is infrastructure)
+//   - Test: internal/usecase/authops/register_test.go
 type RegisterUseCase struct {
 	memberRepo      member.Repository
 	passwordService *auth.PasswordService
@@ -42,36 +56,48 @@ type RegisterRequest struct {
 
 // RegisterResponse represents the registration response
 type RegisterResponse struct {
-	Member       member.Response    `json:"member"`
-	TokenPair    *auth.TokenPair    `json:"tokens"`
+	Member    member.Response `json:"member"`
+	TokenPair *auth.TokenPair `json:"tokens"`
 }
 
 // Execute performs the member registration
-func (uc *RegisterUseCase) Execute(ctx context.Context, req RegisterRequest) (*RegisterResponse, error) {
+func (uc *RegisterUseCase) Execute(ctx context.Context, req RegisterRequest) (RegisterResponse, error) {
+	logger := logutil.UseCaseLogger(ctx, "auth", "register")
+
 	// Validate email format
 	if err := auth.ValidateEmail(req.Email); err != nil {
-		return nil, errors.ErrInvalidInput.WithDetails("email", err.Error())
+		logger.Warn("email validation failed", zap.Error(err))
+		return RegisterResponse{}, errors.NewError(errors.CodeValidation).WithField("email", "invalid format").WithDetail("details", err.Error()).Build()
 	}
 
 	// Validate password strength
 	if err := uc.passwordService.ValidatePassword(req.Password); err != nil {
-		return nil, errors.ErrInvalidInput.WithDetails("password", err.Error())
+		logger.Warn("password validation failed", zap.Error(err))
+		return RegisterResponse{}, errors.NewError(errors.CodeValidation).WithField("password", "invalid format").WithDetail("details", err.Error()).Build()
 	}
 
 	// Check if email already exists
 	exists, err := uc.memberRepo.EmailExists(ctx, req.Email)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check email existence: %w", err)
+		logger.Error("failed to check email existence", zap.Error(err))
+		return RegisterResponse{}, errors.ErrDatabase.
+			WithDetails("operation", "email_exists_check").
+			WithDetails("email", req.Email).
+			Wrap(err)
 	}
 	if exists {
-		return nil, errors.ErrAlreadyExists.WithDetails("field", "email").
+		logger.Warn("email already exists", zap.String("email", req.Email))
+		return RegisterResponse{}, errors.ErrAlreadyExists.WithDetails("field", "email").
 			WithDetails("value", req.Email)
 	}
 
 	// Hash the password
 	passwordHash, err := uc.passwordService.HashPassword(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		logger.Error("failed to hash password", zap.Error(err))
+		return RegisterResponse{}, errors.ErrInternal.
+			WithDetails("operation", "hash_password").
+			Wrap(err)
 	}
 
 	// Create new member
@@ -87,28 +113,36 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, req RegisterRequest) (*R
 	}
 
 	// Validate member using domain service
-	if err := uc.memberService.ValidateMember(newMember); err != nil {
-		return nil, err
+	if err := uc.memberService.Validate(newMember); err != nil {
+		logger.Warn("member validation failed", zap.Error(err))
+		return RegisterResponse{}, err
 	}
 
 	// Save member to repository
 	memberID, err := uc.memberRepo.Add(ctx, newMember)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create member: %w", err)
+		logger.Error("failed to create member in repository", zap.Error(err))
+		return RegisterResponse{}, errors.ErrDatabase.
+			WithDetails("operation", "create_member").
+			WithDetails("email", req.Email).
+			Wrap(err)
 	}
 	newMember.ID = memberID
 
 	// Generate JWT tokens
 	tokenPair, err := uc.jwtService.GenerateTokenPair(memberID, req.Email, member.RoleUser)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		logger.Error("failed to generate JWT tokens", zap.Error(err))
+		return RegisterResponse{}, errors.ErrInternal.
+			WithDetails("operation", "generate_tokens").
+			WithDetails("member_id", memberID).
+			Wrap(err)
 	}
 
-	// Prepare response
-	response := &RegisterResponse{
+	logger.Info("member registered successfully", zap.String("member_id", memberID))
+
+	return RegisterResponse{
 		Member:    member.ParseFromMember(newMember),
 		TokenPair: tokenPair,
-	}
-
-	return response, nil
+	}, nil
 }

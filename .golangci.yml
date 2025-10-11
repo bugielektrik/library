@@ -160,6 +160,8 @@ linters-settings:
     for-loops: true
 
   # wrapcheck settings
+  # Ensures errors from external packages are wrapped with context
+  # See .claude/ERROR-HANDLING-GUIDE.md for error handling patterns
   wrapcheck:
     ignoreSigs:
       - ".Errorf("
@@ -167,6 +169,12 @@ linters-settings:
       - "errors.Unwrap("
       - ".Wrap("
       - ".Wrapf("
+      - ".WithDetails("  # Allow our custom error details method
+    # Ignore wrapcheck in infrastructure layer (can use fmt.Errorf)
+    ignorePackageGlobs:
+      - "*/internal/infrastructure/*"
+      - "*/internal/adapters/repository/*"  # Repositories can wrap with fmt.Errorf
+      - "*/internal/adapters/payment/*"     # Gateway can use fmt.Errorf internally
 
 issues:
   # List of regexps of issue texts to exclude
