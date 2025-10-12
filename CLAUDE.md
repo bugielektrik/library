@@ -50,18 +50,18 @@ internal/
 │   │   └── profile/
 │   └── repository/    # Member PostgreSQL implementation + memory (tests)
 │       └── mocks/     # Auto-generated test mocks (✅ Phase 2.1)
-├── payments/           # Payments bounded context (✅ Phase 2.3 Complete + Phase 1.1 DTO Split)
+├── payments/           # Payments bounded context (✅ Token-Optimized Oct 2025)
 │   ├── domain/        # Payment, SavedCard, Receipt entities, service
-│   ├── service/    # Payment use cases organized by subdomain
-│   │   ├── payment/   # Initiate, verify, cancel, refund, callbacks, expiry
-│   │   ├── savedcard/ # Save, list, delete, set default, pay with saved card
-│   │   └── receipt/   # Generate, get, list receipts
-│   ├── handler/       # Payment HTTP handlers + DTOs (colocated per subdomain)
-│   │   ├── payment/   # Handlers + dto.go (payment-specific DTOs)
-│   │   ├── savedcard/ # Handlers + dto.go (card-specific DTOs)
-│   │   └── receipt/   # Handlers + dto.go (receipt-specific DTOs)
-│   ├── repository/    # Payment PostgreSQL implementations (4 repos)
-│   │   └── postgres/  # PostgreSQL implementations
+│   ├── service/    # Consolidated service files (20 → 4 files, 50-60% token reduction)
+│   │   ├── payment/   # payment_operations.go (818 lines), payment_callbacks.go (449 lines)
+│   │   ├── savedcard/ # saved_card.go (342 lines - delete, list, pay with card)
+│   │   └── receipt/   # receipt.go (284 lines - generate, get, list)
+│   ├── handler/       # HTTP handlers (token-efficient organization)
+│   │   ├── payment/   # 5 handler files (73-129 lines each) + 3 DTO files (split by feature)
+│   │   ├── savedcard/ # handler.go (270 lines consolidated) + dto.go
+│   │   └── receipt/   # handler.go (192 lines) + dto.go (101 lines)
+│   ├── repository/    # Payment PostgreSQL implementations
+│   │   └── postgres/  # 4 repositories (payment, receipt, saved_card, callback_retry)
 │   └── provider/      # Payment gateway integrations
 │       └── epayment/  # epayment.kz adapter
 ├── reservations/       # Reservations bounded context (✅ Phase 2.4 Complete)
