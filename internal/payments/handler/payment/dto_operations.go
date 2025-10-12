@@ -171,7 +171,7 @@ func ToCancelPaymentResponse(resp paymentops.CancelPaymentResponse) CancelPaymen
 	return CancelPaymentResponse{
 		PaymentID:   resp.PaymentID,
 		Status:      resp.Status,
-		CancelledAt: resp.CancelledAt.Format("2006-01-02T15:04:05Z07:00"),
+		CancelledAt: resp.CancelledAt,
 	}
 }
 
@@ -188,7 +188,7 @@ func ToRefundPaymentResponse(resp paymentops.RefundPaymentResponse) RefundPaymen
 	return RefundPaymentResponse{
 		PaymentID:  resp.PaymentID,
 		Status:     resp.Status,
-		RefundedAt: resp.RefundedAt.Format("2006-01-02T15:04:05Z07:00"),
+		RefundedAt: resp.RefundedAt,
 		Amount:     resp.Amount,
 		Currency:   resp.Currency,
 	}

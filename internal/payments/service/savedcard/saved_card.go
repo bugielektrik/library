@@ -2,15 +2,118 @@ package savedcard
 
 import (
 	"context"
-	errors2 "library-service/internal/pkg/errors"
-	"library-service/internal/pkg/logutil"
 	"time"
 
 	"go.uber.org/zap"
 
 	"library-service/internal/payments/domain"
 	paymentops "library-service/internal/payments/service/payment"
+	errors2 "library-service/internal/pkg/errors"
+	"library-service/internal/pkg/logutil"
 )
+
+// ================================================================================
+// Delete Saved Card Use Case
+// ================================================================================
+
+// DeleteSavedCardRequest represents the input for deleting a saved card.
+type DeleteSavedCardRequest struct {
+	CardID   string
+	MemberID string
+}
+
+// DeleteSavedCardResponse represents the output of deleting a saved card.
+type DeleteSavedCardResponse struct {
+	Success bool
+}
+
+// DeleteSavedCardUseCase handles deleting a saved card.
+type DeleteSavedCardUseCase struct {
+	savedCardRepo domain.SavedCardRepository
+}
+
+// NewDeleteSavedCardUseCase creates a new instance of DeleteSavedCardUseCase.
+func NewDeleteSavedCardUseCase(savedCardRepo domain.SavedCardRepository) *DeleteSavedCardUseCase {
+	return &DeleteSavedCardUseCase{
+		savedCardRepo: savedCardRepo,
+	}
+}
+
+// Execute deletes a saved card if it belongs to the member.
+func (uc *DeleteSavedCardUseCase) Execute(ctx context.Context, req DeleteSavedCardRequest) (DeleteSavedCardResponse, error) {
+	logger := logutil.UseCaseLogger(ctx, "payment", "delete_saved_card")
+
+	// Verify card belongs to member
+	card, err := uc.savedCardRepo.GetByID(ctx, req.CardID)
+	if err != nil {
+		logger.Error("failed to retrieve card", zap.Error(err))
+		return DeleteSavedCardResponse{}, errors2.NotFoundWithID("card", req.CardID)
+	}
+
+	if card.MemberID != req.MemberID {
+		logger.Warn("unauthorized delete attempt")
+		return DeleteSavedCardResponse{}, errors2.NotFoundWithID("card", req.CardID)
+	}
+
+	// Delete card
+	if err := uc.savedCardRepo.Delete(ctx, req.CardID); err != nil {
+		logger.Error("failed to delete card", zap.Error(err))
+		return DeleteSavedCardResponse{}, errors2.Database("database operation", err)
+	}
+
+	logger.Info("card deleted successfully")
+
+	return DeleteSavedCardResponse{
+		Success: true,
+	}, nil
+}
+
+// ================================================================================
+// List Saved Cards Use Case
+// ================================================================================
+
+// ListSavedCardsRequest represents the input for listing saved cards.
+type ListSavedCardsRequest struct {
+	MemberID string
+}
+
+// ListSavedCardsResponse represents the output of listing saved cards.
+type ListSavedCardsResponse struct {
+	Cards []domain.SavedCard
+}
+
+// ListSavedCardsUseCase handles listing all saved cards for a member.
+type ListSavedCardsUseCase struct {
+	savedCardRepo domain.SavedCardRepository
+}
+
+// NewListSavedCardsUseCase creates a new instance of ListSavedCardsUseCase.
+func NewListSavedCardsUseCase(savedCardRepo domain.SavedCardRepository) *ListSavedCardsUseCase {
+	return &ListSavedCardsUseCase{
+		savedCardRepo: savedCardRepo,
+	}
+}
+
+// Execute lists all saved cards for a member.
+func (uc *ListSavedCardsUseCase) Execute(ctx context.Context, req ListSavedCardsRequest) (ListSavedCardsResponse, error) {
+	logger := logutil.UseCaseLogger(ctx, "payment", "list_saved_cards")
+
+	cards, err := uc.savedCardRepo.ListByMemberID(ctx, req.MemberID)
+	if err != nil {
+		logger.Error("failed to list saved cards", zap.Error(err))
+		return ListSavedCardsResponse{}, errors2.Database("database operation", err)
+	}
+
+	logger.Info("saved cards listed", zap.Int("count", len(cards)))
+
+	return ListSavedCardsResponse{
+		Cards: cards,
+	}, nil
+}
+
+// ================================================================================
+// Pay with Saved Card Use Case
+// ================================================================================
 
 // PayWithSavedCardRequest represents the input for paying with a saved card.
 type PayWithSavedCardRequest struct {
@@ -55,7 +158,7 @@ func NewPayWithSavedCardUseCase(
 	}
 }
 
-// validateSavedCard retrieves and validates a saved card for domain.
+// validateSavedCard retrieves and validates a saved card for payment.
 // Returns the card if valid, or an error if not found, unauthorized, or unusable.
 func (uc *PayWithSavedCardUseCase) validateSavedCard(
 	ctx context.Context,
@@ -137,7 +240,7 @@ func (uc *PayWithSavedCardUseCase) createPaymentRecord(
 	return paymentEntity, nil
 }
 
-// chargeCardViaGateway processes the payment through the provider and updates the payment entity.
+// chargeCardViaGateway processes the payment through the gateway and updates the payment entity.
 // Returns the updated payment entity or an error if the charge fails.
 func (uc *PayWithSavedCardUseCase) chargeCardViaGateway(
 	ctx context.Context,
@@ -157,19 +260,19 @@ func (uc *PayWithSavedCardUseCase) chargeCardViaGateway(
 		Description: string(req.PaymentType),
 	}
 
-	// Call provider
+	// Call gateway
 	gatewayResp, err := uc.paymentGateway.ChargeCard(ctx, chargeReq)
 	if err != nil {
-		logger.Error("failed to charge card via provider", zap.Error(err))
+		logger.Error("failed to charge card via gateway", zap.Error(err))
 		// Update payment status to failed
 		_ = uc.paymentRepo.UpdateStatus(ctx, paymentEntity.ID, domain.StatusFailed)
 		return domain.Payment{}, errors2.External("payment provider", err)
 	}
 
-	// Update payment with provider response
+	// Update payment with gateway response
 	paymentops.UpdatePaymentFromCardCharge(&paymentEntity, gatewayResp, uc.paymentService)
 
-	logger.Info("card charged successfully via provider",
+	logger.Info("card charged successfully via gateway",
 		zap.String("payment_id", paymentEntity.ID),
 		zap.String("status", string(paymentEntity.Status)),
 	)
@@ -184,7 +287,7 @@ func (uc *PayWithSavedCardUseCase) chargeCardViaGateway(
 }
 
 // updateCardLastUsed updates the last used timestamp for the saved card.
-// This is a best-effort operation - failures are logged but don't affect the domain.
+// This is a best-effort operation - failures are logged but don't affect the payment.
 func (uc *PayWithSavedCardUseCase) updateCardLastUsed(
 	ctx context.Context,
 	card domain.SavedCard,
@@ -214,7 +317,7 @@ func (uc *PayWithSavedCardUseCase) Execute(ctx context.Context, req PayWithSaved
 		return PayWithSavedCardResponse{}, err
 	}
 
-	// Step 3: Charge card via provider
+	// Step 3: Charge card via gateway
 	paymentEntity, err = uc.chargeCardViaGateway(ctx, paymentEntity, req, savedCard.CardToken, logger)
 	if err != nil {
 		return PayWithSavedCardResponse{}, err
