@@ -242,3 +242,80 @@ type ShutdownableServer interface {
 type ShutdownableRepos interface {
 	Close()
 }
+
+// ================================================================================
+// Simple Shutdown - For Typical Use Cases
+// ================================================================================
+
+// SimpleShutdown provides a straightforward shutdown process for typical services.
+// This covers 90% of use cases without the complexity of phased hooks.
+//
+// It performs shutdown in this order:
+// 1. Stops accepting new requests (server.Shutdown with drain)
+// 2. Closes repository connections (database, cache)
+// 3. Flushes logs
+//
+// For advanced scenarios requiring phased shutdown, custom hooks, or parallel execution,
+// use the full Manager with RegisterHook and Shutdown methods.
+//
+// Example usage:
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+//	defer cancel()
+//
+//	if err := shutdown.SimpleShutdown(ctx, httpServer, repositories, logger); err != nil {
+//	    logger.Error("shutdown failed", zap.Error(err))
+//	    os.Exit(1)
+//	}
+func SimpleShutdown(ctx context.Context, server ShutdownableServer, repos ShutdownableRepos, logger *zap.Logger) error {
+	if logger != nil {
+		logger.Info("starting simple graceful shutdown")
+	}
+	startTime := time.Now()
+
+	// Step 1: Stop accepting new requests and drain existing connections
+	if server != nil {
+		if logger != nil {
+			logger.Info("stopping HTTP server")
+		}
+
+		if err := server.Shutdown(ctx); err != nil {
+			if logger != nil {
+				logger.Error("failed to shutdown HTTP server", zap.Error(err))
+			}
+			return fmt.Errorf("server shutdown failed: %w", err)
+		}
+
+		if logger != nil {
+			logger.Info("HTTP server stopped successfully")
+		}
+	}
+
+	// Step 2: Close repository connections (database, cache, etc.)
+	if repos != nil {
+		if logger != nil {
+			logger.Info("closing repository connections")
+		}
+
+		repos.Close()
+
+		if logger != nil {
+			logger.Info("repository connections closed")
+		}
+	}
+
+	// Step 3: Flush logs
+	if logger != nil {
+		logger.Info("flushing logs")
+		_ = logger.Sync() // Ignore error as it's common on stdout/stderr
+	}
+
+	duration := time.Since(startTime)
+	if logger != nil {
+		logger.Info("simple graceful shutdown completed",
+			zap.Duration("duration", duration),
+		)
+	}
+
+	return nil
+}

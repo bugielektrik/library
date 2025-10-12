@@ -565,9 +565,35 @@ go run cmd/api/main.go --print-config  # If supported
 ```
 
 **Graceful shutdown issues:**
-- Check logs for shutdown phase timeouts (default: 30s total)
-- Phases: pre_shutdown (2s), stop_accepting (1s), drain (10s), cleanup (5s), post_shutdown (2s)
-- Increase timeout in `internal/app/app.go` if needed
+- **Two Options Available:**
+  1. **SimpleShutdown (90% of use cases)** - Straightforward shutdown without hooks:
+     ```go
+     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+     defer cancel()
+
+     if err := shutdown.SimpleShutdown(ctx, httpServer, repositories, logger); err != nil {
+         logger.Error("shutdown failed", zap.Error(err))
+         os.Exit(1)
+     }
+     ```
+  2. **Full Manager (advanced scenarios)** - Phased shutdown with custom hooks:
+     ```go
+     shutdownMgr := shutdown.NewManager(logger)
+     shutdownMgr.RegisterHook(shutdown.PhaseCleanup, "custom", func(ctx context.Context) error {
+         // Custom cleanup logic
+         return nil
+     })
+     shutdownMgr.Shutdown(ctx)
+     ```
+
+- **When to use each:**
+  - **SimpleShutdown**: Most services (stop server → close repos → flush logs)
+  - **Full Manager**: Distributed systems, coordinated shutdown, custom cleanup phases
+
+- **Troubleshooting phased shutdown:**
+  - Check logs for shutdown phase timeouts (default: 30s total)
+  - Phases: pre_shutdown (2s), stop_accepting (1s), drain (10s), cleanup (5s), post_shutdown (2s)
+  - Increase timeout in `internal/app/app.go` if needed
 
 **Full Troubleshooting Guide:** See `.claude/guides/development.md`
 
