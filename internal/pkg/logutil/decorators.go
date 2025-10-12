@@ -3,88 +3,10 @@ package logutil
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"runtime"
 	"time"
 
 	"go.uber.org/zap"
 )
-
-// Decorator wraps a function with automatic logging
-type Decorator struct {
-	logger    *zap.Logger
-	threshold time.Duration // Log warning if execution takes longer
-}
-
-// NewDecorator creates a new logging decorator
-func NewDecorator(logger *zap.Logger) *Decorator {
-	return &Decorator{
-		logger:    logger,
-		threshold: time.Second, // Default 1 second threshold
-	}
-}
-
-// WithThreshold sets the performance warning threshold
-func (d *Decorator) WithThreshold(threshold time.Duration) *Decorator {
-	d.threshold = threshold
-	return d
-}
-
-// LogExecution wraps a function with execution logging
-func (d *Decorator) LogExecution(fn interface{}) interface{} {
-	fnValue := reflect.ValueOf(fn)
-	fnType := fnValue.Type()
-
-	if fnType.Kind() != reflect.Func {
-		panic("LogExecution: argument must be a function")
-	}
-
-	// Get function name for logging
-	fnName := runtime.FuncForPC(fnValue.Pointer()).Name()
-
-	// Create wrapper function
-	wrapper := reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
-		start := time.Now()
-
-		// Extract context if present
-		ctx := extractContext(args)
-		logger := d.enrichLogger(ctx)
-
-		// Log entry
-		logger.Debug("function entry",
-			zap.String("function", fnName),
-			zap.Int("args_count", len(args)),
-		)
-
-		// Call original function
-		results := fnValue.Call(args)
-
-		// Check for errors
-		duration := time.Since(start)
-		if err := extractError(results); err != nil {
-			logger.Error("function failed",
-				zap.String("function", fnName),
-				zap.Error(err),
-				zap.Duration("duration", duration),
-			)
-		} else if duration > d.threshold {
-			logger.Warn("slow function execution",
-				zap.String("function", fnName),
-				zap.Duration("duration", duration),
-				zap.Duration("threshold", d.threshold),
-			)
-		} else {
-			logger.Debug("function exit",
-				zap.String("function", fnName),
-				zap.Duration("duration", duration),
-			)
-		}
-
-		return results
-	})
-
-	return wrapper.Interface()
-}
 
 // LogMethod wraps a method with automatic logging and error handling
 func LogMethod(ctx context.Context, operation string, fn func() error) error {
@@ -237,45 +159,6 @@ func ServiceLogger(ctx context.Context, service, operation string) *zap.Logger {
 	// Add request ID if available
 	if requestID := GetRequestID(ctx); requestID != "" {
 		logger = logger.With(zap.String("request_id", requestID))
-	}
-
-	return logger
-}
-
-// extractContext finds and returns context from function arguments
-func extractContext(args []reflect.Value) context.Context {
-	for _, arg := range args {
-		if ctx, ok := arg.Interface().(context.Context); ok {
-			return ctx
-		}
-	}
-	return context.Background()
-}
-
-// extractError finds and returns error from function results
-func extractError(results []reflect.Value) error {
-	for _, result := range results {
-		if result.Type().Implements(reflect.TypeOf((*error)(nil)).Elem()) {
-			if !result.IsNil() {
-				return result.Interface().(error)
-			}
-		}
-	}
-	return nil
-}
-
-// enrichLogger adds context information to logger
-func (d *Decorator) enrichLogger(ctx context.Context) *zap.Logger {
-	logger := d.logger
-
-	// Add request ID if available
-	if requestID := GetRequestID(ctx); requestID != "" {
-		logger = logger.With(zap.String("request_id", requestID))
-	}
-
-	// Add member ID if available
-	if memberID, ok := ctx.Value("member_id").(string); ok && memberID != "" {
-		logger = logger.With(zap.String("member_id", memberID))
 	}
 
 	return logger
