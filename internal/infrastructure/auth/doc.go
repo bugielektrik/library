@@ -1,6 +1,6 @@
-// Package auth provides authentication and authorization services.
+// Package auth provides authentication and authorization service.
 //
-// This package contains infrastructure services for:
+// This package contains infrastructure service for:
 //   - JWT token generation and validation
 //   - Password hashing and verification (bcrypt)
 //   - Email validation
@@ -11,6 +11,6 @@
 //   - PasswordService: Securely hashes and verifies passwords
 //   - Claims: JWT token payload structure
 //
-// These services are used by authentication use cases but are independent
-// of business logic, focusing on security and cryptographic operations.
+// These service are used by authentication use cases but are independent
+// of business logic, focusing on security and cryptographic service.
 package auth

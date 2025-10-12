@@ -12,7 +12,7 @@ package operations
 import (
     "context"
     "library-service/internal/books/domain/book"
-    "library-service/pkg/logutil"
+    "library-service/internal/infrastructure/pkg/logutil"
 )
 
 // CreateBookUseCase handles book creation with business rules
@@ -164,7 +164,7 @@ func (uc *GetBookUseCase) Execute(ctx context.Context, req GetBookRequest) (dto.
 Use cases receive dependencies via constructor:
 
 ```go
-// Domain services created in container.go
+// Domain service created in container.go
 bookService := book.NewService()
 
 // Use case receives all dependencies

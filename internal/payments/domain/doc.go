@@ -1,6 +1,6 @@
 // Package payment provides domain entities and business logic for payment transactions.
 //
-// This package implements payment processing for library services including:
+// This package implements payment processing for library service including:
 //   - Fine payments
 //   - Subscription payments
 //   - Deposit payments

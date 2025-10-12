@@ -16,8 +16,8 @@ find internal/usecase/paymentops -name "*.go" -type f ! -name "*_test.go" | whil
 
     # Fix payment-specific errors
     sed -i '' 's/errors\.ErrPaymentNotFound/errors.NotFound("payment")/g' "$file"
-    sed -i '' 's/errors\.ErrPaymentGateway\.Wrap(\([^)]*\))/errors.External("payment gateway", \1)/g' "$file"
-    sed -i '' 's/errors\.ErrPaymentGateway/errors.External("payment gateway", nil)/g' "$file"
+    sed -i '' 's/errors\.ErrPaymentGateway\.Wrap(\([^)]*\))/errors.External("payment provider", \1)/g' "$file"
+    sed -i '' 's/errors\.ErrPaymentGateway/errors.External("payment provider", nil)/g' "$file"
     sed -i '' 's/errors\.ErrDatabase\./errors.Database("database operation", nil)./g' "$file"
 
     # Fix validation errors

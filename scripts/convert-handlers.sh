@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to convert handlers to use the generic wrapper pattern
+# Script to convert handler to use the generic wrapper pattern
 
 echo "Converting handlers to use generic wrapper pattern..."
 
@@ -66,14 +66,14 @@ EOF
 }
 
 # Handler directories to convert
-handlers=(
+handler=(
     "book:Book"
     "payment:Payment"
     "reservation:Reservation"
     "savedcard:SavedCard"
 )
 
-for handler_info in "${handlers[@]}"; do
+for handler_info in "${handler[@]}"; do
     IFS=':' read -r package name <<< "$handler_info"
 
     output_file="internal/adapters/http/handlers/$package/handler_optimized.go"

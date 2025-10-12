@@ -2,66 +2,162 @@
 
 **Purpose:** Quick reference for active code patterns. Claude Code should check this file first before searching codebase for pattern examples.
 
-**Last Updated:** October 11, 2025
+**Last Updated:** October 11, 2025 (Post Phase 1-2 Refactoring)
 
 ---
 
 ## File Organization
 
-### Directory Structure
+### Directory Structure (Bounded Contexts)
+
+All domains now use **bounded context** (vertical slice) organization:
+
 ```
 internal/
-├── domain/              # Business logic (zero dependencies)
-│   ├── book/
-│   ├── member/
-│   ├── payment/
-│   └── reservation/
-├── usecase/             # Application logic
-│   ├── authops/        # Note: "ops" suffix
-│   ├── bookops/
-│   ├── paymentops/
-│   └── reservationops/
-├── adapters/            # External interfaces
+├── books/                    # Bounded context
+│   ├── domain/              # Business logic (zero deps)
+│   │   ├── book/           # Book subdomain
+│   │   └── author/         # Author subdomain
+│   ├── service/         # Use cases
+│   │   └── author/         # Author operations subdomain
+│   ├── http/               # HTTP handlers + DTOs
+│   │   ├── dto.go
+│   │   └── author/
+│   └── repository/         # Data layer
+│       ├── memory/         # Test repositories
+│       └── mocks/          # Auto-generated mocks (Phase 2.1)
+├── members/                 # Bounded context
+│   ├── domain/
+│   ├── service/
+│   │   ├── auth/           # Auth subdomain
+│   │   ├── profile/        # Profile subdomain
+│   │   └── subscription/   # Subscription subdomain
 │   ├── http/
-│   │   ├── handlers/
-│   │   │   ├── book/   # Organized by domain
-│   │   │   ├── auth/
-│   │   │   └── payment/
-│   │   ├── dto/
-│   │   └── middleware/
+│   │   ├── dto.go
+│   │   ├── auth/
+│   │   └── profile/
 │   └── repository/
-│       ├── postgres/
-│       ├── mongo/
-│       └── mocks/
-└── infrastructure/      # Technical concerns
-    ├── auth/
-    ├── config/
-    └── log/
+│       ├── memory/
+│       └── mocks/          # Auto-generated mocks (Phase 2.1)
+├── payments/                # Bounded context
+│   ├── domain/
+│   ├── service/
+│   │   ├── payment/        # Payment subdomain
+│   │   ├── savedcard/      # Card subdomain
+│   │   └── receipt/        # Receipt subdomain
+│   ├── http/               # DTOs split by subdomain (Phase 1.1)
+│   │   ├── payment/
+│   │   │   └── dto.go     # Payment DTOs (626 lines)
+│   │   ├── savedcard/
+│   │   │   └── dto.go     # Card DTOs (29 lines)
+│   │   └── receipt/
+│   │       └── dto.go     # Receipt DTOs (101 lines)
+│   ├── repository/
+│   │   └── mocks/          # Auto-generated mocks (Phase 2.1)
+│   └── gateway/
+│       └── epayment/
+└── reservations/            # Bounded context
+    ├── domain/
+    ├── service/
+    ├── http/
+    │   └── dto.go
+    └── repository/
+        └── mocks/           # Auto-generated mocks (Phase 2.1)
+
+# Shared layers
+├── adapters/                # Shared adapters
+│   ├── http/
+│   │   ├── handlers/       # Base handler utilities
+│   │   ├── middleware/     # Auth, logging, validation
+│   │   └── dto/            # Shared error DTOs only
+│   └── repository/
+│       ├── repository.go   # Repository container
+│       └── postgres/       # Shared PostgreSQL utilities
+├── usecase/                 # Use case container + factories
+│   ├── container.go
+│   ├── book_factory.go
+│   ├── auth_factory.go
+│   ├── payment_factory.go
+│   └── reservation_factory.go
+└── infrastructure/          # Technical infrastructure
+    ├── auth/               # JWT, password
+    ├── store/              # DB connections
+    └── app/                # Bootstrap
 ```
 
 ### Naming Conventions
 
-**Use case packages:** Add "ops" suffix
-- ✅ `internal/usecase/bookops`
-- ✅ `internal/usecase/authops`
-- ❌ `internal/usecase/book` (conflicts with domain)
+**Package names within bounded contexts:** Use generic names
+- ✅ `package domain` (in internal/books/domain/book/)
+- ✅ `package service` (in internal/books/service/)
+- ✅ `package http` (in internal/books/http/)
+- ✅ `package repository` (in internal/books/repository/)
+
+**Import aliases for cross-context imports (Phase 2.2):**
+```go
+// Pattern: {context}{layer}
+import (
+    bookdomain "library-service/internal/books/domain/book"
+    memberdomain "library-service/internal/members/domain"
+
+    bookservice "library-service/internal/books/service"
+    paymentservice "library-service/internal/payments/service/payment"
+
+    bookhttp "library-service/internal/books/http"
+
+    bookrepo "library-service/internal/books/repository"
+
+    bookmocks "library-service/internal/books/repository/mocks"
+    membermocks "library-service/internal/members/repository/mocks"
+)
+```
 
 **Handler files:** Organized by operation type
 - `handler.go` - struct and Routes()
 - `crud.go` - create, update, delete
 - `query.go` - get, list
 - `manage.go` - specialized operations
+- `dto.go` - HTTP DTOs (colocated)
+
+**DTO organization (Phase 1.1):**
+- Small contexts: Single `dto.go` in http package
+- Large contexts with subdomains: Split into subdomain-specific DTOs
+- Example: `internal/payments/http/payment/dto.go`, `savedcard/dto.go`, `receipt/dto.go`
 
 **Test files:** Same directory as code
 - ✅ `book_test.go` next to `book.go`
 - ❌ Separate `tests/` directory
 
+**Mock files (Phase 2.1):** Auto-generated in bounded contexts
+- Location: `internal/{context}/repository/mocks/`
+- Generated via: `make gen-mocks` (uses `.mockery.yaml`)
+- Naming: `mock_{interface}_repository.go`
+
 ---
 
 ## Code Templates
 
-### 1. Handler Template
+### 1. Handler Template (Bounded Context)
+
+**Location:** `internal/{context}/http/handler.go`
+
 ```go
+package http  // Generic package name within bounded context
+
+import (
+    "net/http"
+
+    "github.com/go-chi/chi/v5"
+    "go.uber.org/zap"
+
+    "library-service/internal/infrastructure/pkg/handlers"
+    "library-service/internal/infrastructure/pkg/middleware"
+    bookservice "library-service/internal/books/service"  // Import alias for cross-context
+    "library-service/internal/usecase"
+    "library-service/internal/infrastructure/pkg/httputil"
+    "library-service/internal/infrastructure/pkg/logutil"
+)
+
 type BookHandler struct {
     handlers.BaseHandler
     useCases  *usecase.Container  // Grouped container
@@ -87,14 +183,15 @@ func (h *BookHandler) Routes() chi.Router {
 
 func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
-    logger := logutil.HandlerLogger(ctx, "book", "create")
+    logger := logutil.HandlerLogger(ctx, "book_handler", "create")
 
     memberID, ok := h.GetMemberID(w, r)
     if !ok {
         return
     }
 
-    var req dto.CreateBookRequest
+    // DTOs are in same package (internal/books/http/dto.go)
+    var req CreateBookRequest
     if err := httputil.DecodeJSON(r, &req); err != nil {
         h.RespondError(w, r, err)
         return
@@ -104,7 +201,7 @@ func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    result, err := h.useCases.Book.CreateBook.Execute(ctx, bookops.CreateBookRequest{
+    result, err := h.useCases.Book.CreateBook.Execute(ctx, bookservice.CreateBookRequest{
         Name: req.Name,
     })
 
@@ -299,10 +396,10 @@ func TestCreateBookUseCase_Execute(t *testing.T) {
 
 **3. Adapter Layer** (`internal/adapters/`)
 ```bash
-# HTTP handlers
-- http/handlers/{entity}/handler.go
-- http/handlers/{entity}/crud.go
-- http/handlers/{entity}/query.go
+# HTTP handler
+- http/handler/{entity}/handler.go
+- http/handler/{entity}/crud.go
+- http/handler/{entity}/query.go
 
 # DTOs
 - http/dto/{entity}.go
@@ -323,7 +420,7 @@ type Container struct {
 entityUseCases := newEntityUseCases(repos.Entity)
 ```
 
-**5. Add Router** (`internal/adapters/http/router.go`)
+**5. Add Router** (`internal/infrastructure/server/router.go`)
 ```go
 entityHandler := entity.NewEntityHandler(cfg.Usecases, validator)
 
@@ -482,14 +579,14 @@ _, err := r.db.NamedExecContext(ctx, query, params)
 ```go
 // Logging
 "go.uber.org/zap"
-"library-service/pkg/logutil"
+"library-service/internal/infrastructure/pkg/logutil"
 
 // Errors
-"library-service/pkg/errors"
+"library-service/internal/infrastructure/pkg/errors"
 
 // HTTP
 "github.com/go-chi/chi/v5"
-"library-service/pkg/httputil"
+"library-service/internal/infrastructure/pkg/httputil"
 
 // Database
 "github.com/jmoiron/sqlx"

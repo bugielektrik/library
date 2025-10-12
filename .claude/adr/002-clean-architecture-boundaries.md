@@ -186,12 +186,12 @@ func (uc *CreateBookUseCase) Execute(ctx context.Context, req CreateBookRequest)
 - ✅ Can import: External libraries (database drivers, HTTP frameworks)
 
 ```go
-// internal/adapters/http/handlers/book/crud.go
+// internal/infrastructure/pkg/handler/book/crud.go
 package book
 
 import (
     "library-service/internal/usecase/bookops"
-    "library-service/internal/adapters/http/dto"
+    "library-service/internal/infrastructure/pkg/dto"
 )
 
 type BookHandler struct {
@@ -216,7 +216,7 @@ func (h *BookHandler) Create(w http.ResponseWriter, r *http.Request) {
 ```
 
 ```go
-// internal/adapters/repository/postgres/book.go
+// internal/infrastructure/pkg/repository/postgres/book.go
 package postgres
 
 import (
@@ -249,7 +249,7 @@ func (r *BookRepository) Create(ctx context.Context, book book.Book) (string, er
 - Server setup
 
 ```go
-// internal/infrastructure/app/app.go
+// internal/app/app.go
 package app
 
 func NewApp() *App {
@@ -361,7 +361,7 @@ type Repository interface {
     Create(ctx context.Context, book Book) (string, error)
 }
 
-// internal/adapters/repository/postgres/book.go
+// internal/infrastructure/pkg/repository/postgres/book.go
 package postgres
 
 type BookRepository struct {

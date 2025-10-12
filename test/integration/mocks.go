@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// MockPaymentGateway provides a test implementation of the payment gateway
+// MockPaymentGateway provides a test implementation of the payment provider
 type MockPaymentGateway struct {
 	terminal             string
 	backLink             string

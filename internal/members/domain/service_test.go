@@ -1,10 +1,9 @@
 package domain
 
 import (
+	errors2 "library-service/internal/pkg/errors"
 	"testing"
 	"time"
-
-	"library-service/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -50,7 +49,7 @@ func TestService_ValidateSubscriptionType(t *testing.T) {
 
 			if tt.wantError {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, errors.ErrInvalidInput)
+				assert.ErrorIs(t, err, errors2.ErrInvalidInput)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -104,7 +103,7 @@ func TestService_ValidateSubscriptionDuration(t *testing.T) {
 
 			if tt.wantError {
 				assert.Error(t, err)
-				assert.ErrorIs(t, err, errors.ErrInvalidInput)
+				assert.ErrorIs(t, err, errors2.ErrInvalidInput)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -333,7 +332,7 @@ func TestService_Validate(t *testing.T) {
 		name      string
 		member    Member
 		wantError bool
-		errorType *errors.Error
+		errorType *errors2.Error
 	}{
 		{
 			name: "valid member",
@@ -348,7 +347,7 @@ func TestService_Validate(t *testing.T) {
 				FullName: nil,
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidMemberData,
+			errorType: errors2.ErrInvalidMemberData,
 		},
 		{
 			name: "empty full name",
@@ -356,7 +355,7 @@ func TestService_Validate(t *testing.T) {
 				FullName: &emptyString,
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidMemberData,
+			errorType: errors2.ErrInvalidMemberData,
 		},
 	}
 

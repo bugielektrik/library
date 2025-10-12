@@ -96,7 +96,7 @@ go test ./internal/usecase/bookops/ -v -run TestDebug_GetBookUseCase
 
 **Add logging to handler:**
 ```go
-// internal/adapters/http/handlers/book.go
+// internal/infrastructure/pkg/handler/book.go
 func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
     id := chi.URLParam(r, "id")
 
@@ -149,7 +149,7 @@ func (uc *GetBookUseCase) Execute(ctx context.Context, id string) (*book.Entity,
 
 **Add logging to repository:**
 ```go
-// internal/adapters/repository/postgres/book.go
+// internal/infrastructure/pkg/repository/postgres/book.go
 func (r *BookRepository) GetByID(ctx context.Context, id string) (book.Entity, error) {
     query := "SELECT id, title, isbn FROM books WHERE id = $1"
 
@@ -264,7 +264,7 @@ curl -v http://localhost:8080/api/v1/books
 
 **Create integration test:**
 ```go
-// internal/adapters/http/handlers/book_integration_test.go
+// internal/infrastructure/pkg/handler/book_integration_test.go
 //go:build integration
 
 func TestIntegration_BookHandler_GetBook(t *testing.T) {
@@ -298,7 +298,7 @@ func TestIntegration_BookHandler_GetBook(t *testing.T) {
 make up
 
 # Run integration test
-go test ./internal/adapters/http/handlers/ -tags=integration -v
+go test ./internal/infrastructure/pkg/handler/ -tags=integration -v
 ```
 
 **If test FAILS:** Check error message carefully
@@ -331,7 +331,7 @@ Read at 0x00c000124080 by goroutine 23:
       /path/to/create_book.go:45 +0x123
 
 Previous write at 0x00c000124080 by goroutine 19:
-  library-service/internal/adapters/repository/postgres.(*BookRepository).Create()
+  library-service/internal/infrastructure/pkg/repository/postgres.(*BookRepository).Create()
       /path/to/book.go:67 +0x456
 ```
 
@@ -565,7 +565,7 @@ echo $TOKEN | cut -d'.' -f2 | base64 -d | jq '.'
 
 **Add logging to auth middleware:**
 ```go
-// internal/adapters/http/middleware/auth.go
+// internal/infrastructure/pkg/middleware/auth.go
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         authHeader := r.Header.Get("Authorization")

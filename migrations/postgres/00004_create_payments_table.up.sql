@@ -33,7 +33,7 @@ CREATE INDEX idx_payments_invoice_id ON payments(invoice_id);
 -- Index for faster queries by status
 CREATE INDEX idx_payments_status ON payments(status);
 
--- Index for faster queries by gateway transaction ID
+-- Index for faster queries by provider transaction ID
 CREATE INDEX idx_payments_gateway_transaction_id ON payments(gateway_transaction_id) WHERE gateway_transaction_id IS NOT NULL;
 
 -- Index for faster queries by payment type

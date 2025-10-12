@@ -2,7 +2,7 @@ package domain
 
 import "context"
 
-// Repository defines the interface for reservation repository operations.
+// Repository defines the interface for reservation repository service.
 type Repository interface {
 	// Create inserts a new reservation and returns its ID.
 	Create(ctx context.Context, reservation Reservation) (string, error)

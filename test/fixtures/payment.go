@@ -44,7 +44,7 @@ func PendingPayment() domain.Payment {
 	}
 }
 
-// ProcessingPayment returns a payment in processing status (gateway is processing)
+// ProcessingPayment returns a payment in processing status (provider is processing)
 func ProcessingPayment() domain.Payment {
 	now := time.Now()
 	createdAt := now.Add(-5 * time.Minute)

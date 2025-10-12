@@ -148,7 +148,7 @@ export APP_MODE="test"
 export JWT_SECRET="test-secret-key-for-integration-tests"
 export JWT_EXPIRY="1h"
 
-# Optional: Payment gateway test config (set automatically)
+# Optional: Payment provider test config (set automatically)
 export EPAYMENT_BASE_URL="https://test-api.epayment.kz"
 export EPAYMENT_CLIENT_ID="test-client-id"
 export EPAYMENT_CLIENT_SECRET="test-client-secret"

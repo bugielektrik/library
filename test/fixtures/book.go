@@ -2,8 +2,8 @@ package fixtures
 
 import (
 	"library-service/internal/books/domain/book"
-	"library-service/internal/books/operations"
-	"library-service/pkg/strutil"
+	bookservice "library-service/internal/books/service"
+	"library-service/internal/pkg/strutil"
 )
 
 // ValidBook returns a valid book entity for testing
@@ -55,8 +55,8 @@ func BookWithInvalidISBN() book.Book {
 }
 
 // CreateBookRequest returns a valid create book request
-func CreateBookRequest() operations.CreateBookRequest {
-	return operations.CreateBookRequest{
+func CreateBookRequest() bookservice.CreateBookRequest {
+	return bookservice.CreateBookRequest{
 		Name:    "The Pragmatic Programmer",
 		Genre:   "Software Engineering",
 		ISBN:    "978-0135957059",
@@ -65,8 +65,8 @@ func CreateBookRequest() operations.CreateBookRequest {
 }
 
 // UpdateBookRequest returns a valid update book request
-func UpdateBookRequest() operations.UpdateBookRequest {
-	return operations.UpdateBookRequest{
+func UpdateBookRequest() bookservice.UpdateBookRequest {
+	return bookservice.UpdateBookRequest{
 		ID:      "550e8400-e29b-41d4-a716-446655440000",
 		Name:    strutil.SafeStringPtr("Clean Code: Updated Edition"),
 		Genre:   strutil.SafeStringPtr("Software Engineering"),

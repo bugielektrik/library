@@ -2,7 +2,7 @@ package book
 
 import "context"
 
-// Repository defines the interface for book repository operations.
+// Repository defines the interface for book repository service.
 type Repository interface {
 	// List retrieves all books.
 	List(ctx context.Context) ([]Book, error)

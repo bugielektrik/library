@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Repository defines the interface for member repository operations.
+// Repository defines the interface for member repository service.
 type Repository interface {
 	// List retrieves all members.
 	List(ctx context.Context) ([]Member, error)

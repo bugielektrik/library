@@ -30,7 +30,7 @@ package repository
 
 import (
     "github.com/jmoiron/sqlx"
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     bookdomain "library-service/internal/books/domain/book"
 )
 
@@ -204,7 +204,7 @@ internal/payments/repository/
 
 ## Generic Helpers
 
-Use generic helpers from `internal/adapters/repository/postgres/`:
+Use generic helpers from `internal/infrastructure/pkg/repository/postgres/`:
 
 ```go
 // Generic get with custom query
@@ -256,7 +256,7 @@ func TestBookRepository_Create(t *testing.T) {
 You can have multiple implementations of the same interface:
 
 ```
-internal/adapters/repository/
+internal/infrastructure/pkg/repository/
 ├── postgres/      # PostgreSQL implementations
 ├── mongo/         # MongoDB implementations
 ├── memory/        # In-memory implementations (testing)
@@ -276,7 +276,7 @@ type Cache interface {
 }
 
 // Implementations in adapters
-internal/adapters/cache/
+internal/infrastructure/pkg/cache/
 ├── redis/book.go    # Redis implementation
 └── memory/book.go   # In-memory implementation
 ```

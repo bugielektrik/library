@@ -1,306 +1,142 @@
-# .claude - Go Clean Architecture Project Documentation
+# .claude - Library Management System Documentation
 
-> **⚡ Fast-track guide for Claude Code instances working with Go Clean Architecture projects**
-
----
-
-## 🚀 Start Here (15 Minutes to Productivity)
-
-### For New Claude Code Instances
-
-**Step 1: Universal Go Patterns (10 min)**
-→ Read **[GO-ONBOARDING.md](./GO-ONBOARDING.md)** first
-- Works for ANY Go Clean Architecture project
-- Essential patterns, conventions, and pitfalls
-- Quick command reference
-
-**Step 2: This Project Specifics (5 min)**
-→ Continue below ↓
-
-**Total time: 15 minutes → Fully productive** ✅
+> **⚡ Quick navigation for Claude Code instances**
 
 ---
 
-## 📋 Project: Library Management System
+## 🚀 Start Here
 
-**What:** REST API for library operations (books, members, reservations, payments)
-**Stack:** Go 1.25, PostgreSQL, Redis, Chi router, JWT auth
-**Architecture:** Clean Architecture (Hexagonal/Onion pattern)
+**For New Claude Code Instances:**
 
-**3 Critical Architectural Rules (Never Break!):**
+1. **Read CLAUDE.md** (root) - 2 minutes
+   - Project overview and quick commands
+   - Entry point with links to everything
 
-1. **Dependencies flow inward only:** `Domain ← Use Case ← Adapters ← Infrastructure`
-2. **Business logic in domain services** (NOT in use cases or handlers)
-3. **Use case packages use "ops" suffix** (`bookops`, `authops`, not `book`, `auth`)
+2. **Read `.claude-context/SESSION_MEMORY.md`** - 3 minutes
+   - Essential architecture context
+   - Current implementation state
 
----
+3. **Read `.claude-context/CURRENT_PATTERNS.md`** - 3 minutes
+   - Code patterns and conventions
+   - Import aliases and naming
 
-## 📖 Documentation Structure
-
-### 🎯 Essential Reading (Core Guides)
-
-Start with these for daily development:
-
-| File | Purpose | Read When |
-|------|---------|-----------|
-| **[architecture.md](./architecture.md)** | Clean Architecture principles & structure | Before making changes |
-| **[development-guide.md](./development-guide.md)** | Setup, environment, daily commands | Setting up / daily work |
-| **[common-tasks.md](./common-tasks.md)** | Step-by-step implementation guides | Adding features |
-| **[coding-standards.md](./coding-standards.md)** | Go conventions & best practices | Writing code |
-| **[testing.md](./testing.md)** | Testing strategy & patterns | Writing tests |
-| **[security.md](./security.md)** | Security best practices | Auth, validation, sensitive data |
-
-### 🏛️ Architecture Decision Records (ADRs)
-
-Understand the "why" behind key decisions:
-
-| ADR | Decision | Status |
-|-----|----------|--------|
-| [001](./adrs/001-clean-architecture.md) | Clean Architecture pattern | ✅ Active |
-| [002](./adrs/002-domain-services.md) | Domain service pattern | ✅ Active |
-| [003](./adrs/003-two-step-di.md) | Two-step dependency injection | ✅ Active |
-| [004](./adrs/004-ops-suffix-convention.md) | "ops" suffix for use case packages | ✅ Active |
-| [005](./adrs/005-repository-interfaces.md) | Repository pattern | ✅ Active |
-| [006](./adrs/006-postgresql.md) | PostgreSQL as database | ✅ Active |
-| [007](./adrs/007-jwt-authentication.md) | JWT authentication | ✅ Active |
-
-Read these to understand architectural constraints.
-
-### 🔧 Advanced Reference
-
-For complex scenarios:
-
-| File | Purpose | Read When |
-|------|---------|-----------|
-| [reference/debugging-guide.md](./reference/debugging-guide.md) | Advanced debugging techniques | Complex bugs |
-| [reference/performance.md](./reference/performance.md) | Profiling & optimization | Performance issues |
-| [reference/refactoring.md](./reference/refactoring.md) | Safe refactoring patterns | Large refactorings |
-| [reference/checklist.md](./reference/checklist.md) | Pre-commit review checklist | Before PR |
-
-### 🛠️ Scripts
-
-| Script | Purpose | Usage |
-|--------|---------|-------|
-| [scripts/review.sh](./scripts/review.sh) | Pre-commit checks | `./scripts/review.sh` |
+**Total time: 8 minutes → Fully productive** ✅
 
 ---
 
-## 🎯 Quick Decision Tree
+## 📁 Documentation Structure
 
-**"I'm new to this codebase"**
-→ Read: GO-ONBOARDING.md → architecture.md → development-guide.md
+### 📖 [guides/](./guides/) - Core Guides (7 files)
 
-**"I need to add a feature"**
-→ Read: architecture.md (structure) → common-tasks.md (step-by-step)
+Daily development documentation:
 
-**"I need to fix a bug"**
-→ Read: reference/debugging-guide.md
+- **[architecture.md](./guides/architecture.md)** - Clean Architecture principles & bounded contexts
+- **[development.md](./guides/development.md)** - Setup, environment, daily commands
+- **[common-tasks.md](./guides/common-tasks.md)** - Step-by-step implementation guides
+- **[coding-standards.md](./guides/coding-standards.md)** - Go conventions & best practices
+- **[testing.md](./guides/testing.md)** - Testing strategy & patterns
+- **[security.md](./guides/security.md)** - Security best practices & JWT
+- **[cache-warming.md](./guides/cache-warming.md)** - Cache warming implementation
 
-**"I'm writing tests"**
-→ Read: testing.md → reference/checklist.md
+### 📋 [adr/](./adr/) - Architecture Decision Records (13 files)
 
-**"I need to optimize performance"**
-→ Read: reference/performance.md
+Why decisions were made:
 
-**"I need to refactor code"**
-→ Read: reference/refactoring.md + relevant ADRs
+1. **001-use-case-ops-suffix.md** - Use case package naming convention
+2. **002-clean-architecture-boundaries.md** - Layer dependency rules
+3. **003-domain-services-vs-infrastructure.md** - Service placement
+4. **004-handler-subdirectories.md** - HTTP handler organization
+5. **005-payment-gateway-interface.md** - Payment gateway abstraction
+6. **006-postgresql.md** - Database choice
+7. **007-jwt-authentication.md** - Auth strategy
+8. **008-generic-repository-helpers.md** - Repository patterns
+9. **009-payment-gateway-modularization.md** - Payment architecture
+10. **010-domain-service-payment-status.md** - Payment domain logic
+11. **011-base-repository-pattern.md** - Generic repository implementation
+12. **012-bounded-context-organization.md** - Vertical slice architecture
+13. **013-dto-colocation-and-token-optimization.md** - DTO organization
+
+### 📚 [reference/](./reference/) - Reference Materials (4 files)
+
+Quick lookup information:
+
+- **[common-mistakes.md](./reference/common-mistakes.md)** - Gotchas and anti-patterns
+- **[error-handling.md](./reference/error-handling.md)** - Error handling patterns
+- **[migration-guide.md](./reference/migration-guide.md)** - Repository migration guide
+- **[go-onboarding.md](./reference/go-onboarding.md)** - Universal Go patterns
+
+### 📦 [archive/](./archive/) - Historical Documents
+
+Completed refactoring documentation (for reference only).
 
 ---
 
-## 🏗️ Project Structure Quick Reference
+## 🎯 Quick Navigation by Task
+
+### I want to...
+
+**Understand the project**
+→ Read [guides/architecture.md](./guides/architecture.md)
+
+**Set up my environment**
+→ Read [guides/development.md](./guides/development.md)
+
+**Add a new feature**
+→ Read [guides/common-tasks.md](./guides/common-tasks.md)
+
+**Write tests**
+→ Read [guides/testing.md](./guides/testing.md)
+
+**Understand why something was done this way**
+→ Browse [adr/](./adr/)
+
+**Avoid common pitfalls**
+→ Read [reference/common-mistakes.md](./reference/common-mistakes.md)
+
+**Learn Go patterns**
+→ Read [reference/go-onboarding.md](./reference/go-onboarding.md)
+
+---
+
+## 📝 Related Documentation
+
+- **[/examples/](../../examples/)** - Code pattern examples (handler, usecase, repository, testing)
+- **[/docs/payments/](../../docs/payments/)** - Payment integration documentation
+- **[/.claude-context/](../.claude-context/)** - Session context files (essential!)
+- **[/CLAUDE.md](../../CLAUDE.md)** - Main entry point (start here!)
+
+---
+
+## 🏗️ Project Structure
 
 ```
-internal/
-├── domain/              # 🎯 Business entities & rules (ZERO external dependencies)
-│   ├── book/           # Entity, Service, Repository interface
-│   ├── member/
-│   ├── author/
-│   ├── reservation/
-│   └── payment/
+.claude/
+├── README.md                  # You are here
 │
-├── usecase/            # 🔄 Application orchestration
-│   ├── bookops/        # Note: "ops" suffix to avoid conflicts
-│   ├── authops/
-│   ├── reservationops/
-│   └── paymentops/
+├── guides/                    # How to work with the project
+│   ├── architecture.md
+│   ├── development.md
+│   ├── common-tasks.md
+│   ├── coding-standards.md
+│   ├── testing.md
+│   ├── security.md
+│   └── cache-warming.md
 │
-├── adapters/           # 🔌 External interfaces
-│   ├── http/           # HTTP handlers (Chi router)
-│   ├── repository/     # DB implementations (PostgreSQL)
-│   └── cache/          # Cache implementations (Redis)
+├── adr/                       # Why decisions were made
+│   ├── 001-*.md through 013-*.md
+│   └── README.md
 │
-└── infrastructure/     # ⚙️ Technical concerns
-    ├── auth/           # JWT, password hashing
-    ├── store/          # DB connections
-    └── server/         # HTTP server
-
-cmd/
-├── api/               # API server entry point
-├── worker/            # Background worker
-└── migrate/           # Database migrations
-
-pkg/                   # Shared packages
-├── errors/            # Standard error types
-├── httputil/          # HTTP helpers
-└── logutil/           # Logging utilities
-```
-
-**Dependency Rule:** Inner layers NEVER import outer layers
-- ✅ `usecase` imports `domain`
-- ✅ `adapters` imports `usecase` and `domain`
-- ❌ `domain` imports `adapters` (NEVER!)
-
----
-
-## ⚡ Quick Start Commands
-
-```bash
-# Setup (first time)
-make init && make up && make migrate-up
-
-# Daily development
-make dev              # Start everything (Docker + API)
-
-# Testing
-make test             # All tests with coverage
-make test-unit        # Unit tests only (fast)
-
-# Code quality
-make ci               # Full CI: fmt + vet + lint + test + build
-
-# Before commit
-./scripts/review.sh   # Pre-commit checks
-```
-
-See [development-guide.md](./development-guide.md) for complete command reference.
-
----
-
-## 📊 Current Implementation Status
-
-**✅ Implemented Features:**
-- Books management (CRUD)
-- Authors management
-- Members & authentication (JWT)
-- Subscriptions
-- Reservations (with domain service)
-- Payments (integration with gateway)
-
-**📈 Test Coverage:**
-- Overall use case coverage: **45.6%**
-- Domain services: **100%** (critical business logic)
-- Individual packages: bookops (91%), authops (91%), reservationops (93%)
-
-**🔍 Check Current Status:**
-```bash
-git status              # Current changes
-git log --oneline -5   # Recent commits
-go test ./... -cover   # Test coverage
+├── reference/                 # Quick lookup info
+│   ├── common-mistakes.md
+│   ├── error-handling.md
+│   ├── migration-guide.md
+│   └── go-onboarding.md
+│
+└── archive/                   # Historical documents
+    └── [refactoring history]
 ```
 
 ---
 
-## 🚨 Common Pitfalls (Avoid These!)
-
-### 1. Import Cycle Violations
-```go
-// ❌ NEVER: Domain imports adapters
-package book
-import "myproject/internal/adapters/repository"  // WRONG!
-
-// ✅ CORRECT: Domain defines interface, adapters import domain
-package book
-type Repository interface {
-    Create(ctx context.Context, book Book) error
-}
-```
-
-### 2. Business Logic in Wrong Layer
-```go
-// ❌ WRONG: Business validation in HTTP handler
-func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
-    if book.Price < 0 {  // Business rule in handler!
-        // ...
-    }
-}
-
-// ✅ CORRECT: Business logic in domain service
-func (s *Service) ValidateBook(book Book) error {
-    if book.Price < 0 {
-        return ErrInvalidPrice
-    }
-    return nil
-}
-```
-
-### 3. Missing Context Parameter
-```go
-// ❌ BAD: No context
-func (r *Repo) GetUser(id string) (User, error)
-
-// ✅ GOOD: Context as first parameter
-func (r *Repo) GetUser(ctx context.Context, id string) (User, error)
-```
-
-### 4. Package Naming Conflicts
-```go
-// ❌ PROBLEMATIC: Domain and use case both called "book"
-internal/domain/book/       # package book
-internal/usecase/book/      # package book (conflict!)
-
-// ✅ CORRECT: Use "ops" suffix for use cases
-internal/domain/book/       # package book
-internal/usecase/bookops/   # package bookops (no conflict)
-```
-
----
-
-## 📚 Learning Resources
-
-**For Claude Code instances:**
-1. Start with GO-ONBOARDING.md (universal Go patterns)
-2. Skim architecture.md (this project's structure)
-3. Reference common-tasks.md as needed (how-to guides)
-4. Check ADRs for architectural context
-
-**For humans:**
-1. Read GO-ONBOARDING.md (Go architecture overview)
-2. Read development-guide.md (setup environment)
-3. Read architecture.md (understand structure)
-4. Use common-tasks.md during development
-
----
-
-## 🔍 Finding Documentation
-
-**Search all docs:**
-```bash
-grep -r "search term" .claude/
-```
-
-**Search excluding reference:**
-```bash
-grep -r "search term" .claude/ --exclude-dir=reference --exclude-dir=adrs
-```
-
-**Search ADRs only:**
-```bash
-grep -r "search term" .claude/adrs/
-```
-
----
-
-## ✅ You're Ready When You Can Answer:
-
-1. ✓ **Where do I add business logic?** → Domain services (`internal/domain/*/service.go`)
-2. ✓ **Where do I add API endpoints?** → HTTP handlers (`internal/adapters/http/handlers/`)
-3. ✓ **Where do I orchestrate operations?** → Use cases (`internal/usecase/*ops/`)
-4. ✓ **How do I test my code?** → Table-driven tests, mock repositories
-5. ✓ **What's the dependency rule?** → Inner layers never import outer layers
-6. ✓ **Why "ops" suffix?** → Avoids naming conflicts (ADR-004)
-
-If you can answer these, you're ready to be productive! 🚀
-
----
-
-**Next:** Check [CLAUDE.md](../CLAUDE.md) in project root for any custom instructions.
+**Last Updated:** October 11, 2025
+**Documentation Files:** 25 active + archive

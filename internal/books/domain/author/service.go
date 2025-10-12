@@ -1,15 +1,14 @@
 package author
 
 import (
+	errors2 "library-service/internal/pkg/errors"
 	"strings"
-
-	"library-service/pkg/errors"
 )
 
 // Service provides business logic for author domain.
 // For the Author domain, business logic is minimal as it's primarily a data entity.
 type Service struct {
-	// Domain services are typically stateless
+	// Domain service are typically stateless
 }
 
 // NewService creates a new author domain service.
@@ -23,7 +22,7 @@ func (s *Service) Validate(a Author) error {
 	// At least one name field must be provided
 	if (a.FullName == nil || strings.TrimSpace(*a.FullName) == "") &&
 		(a.Pseudonym == nil || strings.TrimSpace(*a.Pseudonym) == "") {
-		return errors.NewError(errors.CodeValidation).
+		return errors2.NewError(errors2.CodeValidation).
 			WithDetail("field", "author_name").
 			WithDetail("reason", "either full_name or pseudonym must be provided").
 			Build()
@@ -33,7 +32,7 @@ func (s *Service) Validate(a Author) error {
 	if a.FullName != nil {
 		fullName := strings.TrimSpace(*a.FullName)
 		if len(fullName) > 200 {
-			return errors.NewError(errors.CodeValidation).
+			return errors2.NewError(errors2.CodeValidation).
 				WithDetail("field", "full_name").
 				WithDetail("reason", "full name cannot exceed 200 characters").
 				WithDetail("length", len(fullName)).
@@ -45,7 +44,7 @@ func (s *Service) Validate(a Author) error {
 	if a.Pseudonym != nil {
 		pseudonym := strings.TrimSpace(*a.Pseudonym)
 		if len(pseudonym) > 100 {
-			return errors.NewError(errors.CodeValidation).
+			return errors2.NewError(errors2.CodeValidation).
 				WithDetail("field", "pseudonym").
 				WithDetail("reason", "pseudonym cannot exceed 100 characters").
 				WithDetail("length", len(pseudonym)).
@@ -57,7 +56,7 @@ func (s *Service) Validate(a Author) error {
 	if a.Specialty != nil {
 		specialty := strings.TrimSpace(*a.Specialty)
 		if len(specialty) > 100 {
-			return errors.NewError(errors.CodeValidation).
+			return errors2.NewError(errors2.CodeValidation).
 				WithDetail("field", "specialty").
 				WithDetail("reason", "specialty cannot exceed 100 characters").
 				WithDetail("length", len(specialty)).
@@ -97,7 +96,7 @@ func (s *Service) GetDisplayName(a Author) string {
 }
 
 // GetSearchTerms returns all searchable terms for an author.
-// Useful for search and filtering operations.
+// Useful for search and filtering service.
 func (s *Service) GetSearchTerms(a Author) []string {
 	terms := make([]string, 0, 3)
 

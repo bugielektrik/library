@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// Request represents the request payload for author operations.
+// Request represents the request payload for author service.
 type Request struct {
 	FullName  string `json:"fullName"`
 	Pseudonym string `json:"pseudonym"`
@@ -29,7 +29,7 @@ func (s *Request) Bind(r *http.Request) error {
 	return nil
 }
 
-// Response represents the response payload for author operations.
+// Response represents the response payload for author service.
 type Response struct {
 	ID        string `json:"id"`
 	FullName  string `json:"fullName"`

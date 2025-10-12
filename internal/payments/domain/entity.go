@@ -31,14 +31,14 @@ const (
 )
 
 // Payment represents a payment transaction entity.
-// Integrates with epayment.kz gateway via webhooks.
+// Integrates with epayment.kz provider via webhooks.
 // Amount stored in smallest currency unit (tenge for KZT).
 // State transitions managed by payment.Service.
 type Payment struct {
 	// ID is the unique identifier for the payment.
 	ID string `db:"id" bson:"_id"`
 
-	// InvoiceID is the unique invoice identifier used with the payment gateway.
+	// InvoiceID is the unique invoice identifier used with the payment provider.
 	InvoiceID string `db:"invoice_id" bson:"invoice_id"`
 
 	// MemberID is the ID of the member making the payment.
@@ -62,16 +62,16 @@ type Payment struct {
 	// RelatedEntityID is the ID of the related entity (e.g., fine ID, subscription ID).
 	RelatedEntityID *string `db:"related_entity_id" bson:"related_entity_id"`
 
-	// GatewayTransactionID is the transaction ID from the payment gateway.
+	// GatewayTransactionID is the transaction ID from the payment provider.
 	GatewayTransactionID *string `db:"gateway_transaction_id" bson:"gateway_transaction_id"`
 
-	// GatewayResponse is the full response from the payment gateway (JSON).
+	// GatewayResponse is the full response from the payment provider (JSON).
 	GatewayResponse *string `db:"gateway_response" bson:"gateway_response"`
 
 	// CardMask is the masked card number (e.g., "****1234").
 	CardMask *string `db:"card_mask" bson:"card_mask"`
 
-	// ApprovalCode is the approval code from the payment gateway.
+	// ApprovalCode is the approval code from the payment provider.
 	ApprovalCode *string `db:"approval_code" bson:"approval_code"`
 
 	// ErrorCode is the error code if payment failed.

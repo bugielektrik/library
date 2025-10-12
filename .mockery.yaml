@@ -1,5 +1,45 @@
 with-expecter: true
-dir: "{{.InterfaceDir}}"
 outpkg: mocks
 filename: "mock_{{.InterfaceName | snakecase}}.go"
 mockname: "Mock{{.InterfaceName}}"
+
+packages:
+  # Books bounded context
+  library-service/internal/books/domain:
+    interfaces:
+      BookRepository:
+        config:
+          dir: "internal/books/repository/mocks"
+      AuthorRepository:
+        config:
+          dir: "internal/books/repository/mocks"
+
+  # Members bounded context
+  library-service/internal/members/domain:
+    interfaces:
+      MemberRepository:
+        config:
+          dir: "internal/members/repository/mocks"
+
+  # Payments bounded context
+  library-service/internal/payments/domain:
+    interfaces:
+      SavedCardRepository:
+        config:
+          dir: "internal/payments/repository/mocks"
+      PaymentRepository:
+        config:
+          dir: "internal/payments/repository/mocks"
+      ReceiptRepository:
+        config:
+          dir: "internal/payments/repository/mocks"
+      CallbackRetryRepository:
+        config:
+          dir: "internal/payments/repository/mocks"
+
+  # Reservations bounded context
+  library-service/internal/reservations/domain:
+    interfaces:
+      ReservationRepository:
+        config:
+          dir: "internal/reservations/repository/mocks"

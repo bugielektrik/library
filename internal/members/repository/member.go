@@ -3,19 +3,22 @@ package repository
 import (
 	"context"
 	"fmt"
+	"library-service/internal/pkg/repository/postgres"
 	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
-	"library-service/internal/adapters/repository/postgres"
 	"library-service/internal/members/domain"
 )
 
 type MemberRepository struct {
 	postgres.BaseRepository[domain.Member]
 }
+
+// Compile-time check that MemberRepository implements domain.Repository
+var _ domain.Repository = (*MemberRepository)(nil)
 
 // NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository(db *sqlx.DB) *MemberRepository {

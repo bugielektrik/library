@@ -53,7 +53,7 @@ func TestService_Validate(t *testing.T) {
 				MemberID:    "member-123",
 				InvoiceID:   "invoice-123",
 				Amount:      10000,
-				Currency:    "XXX",
+				Currency:    "TTT",
 				PaymentType: PaymentTypeFine,
 			},
 			wantErr: true,
@@ -128,7 +128,7 @@ func TestService_isValidCurrency(t *testing.T) {
 		{"valid USD", "USD", true},
 		{"valid EUR", "EUR", true},
 		{"valid RUB", "RUB", true},
-		{"invalid XXX", "XXX", false},
+		{"invalid TTT", "TTT", false},
 		{"invalid ABC", "ABC", false},
 	}
 
@@ -554,7 +554,7 @@ func TestService_FormatAmount(t *testing.T) {
 		{"USD formatting", 25000, "USD", "250.00 USD"},
 		{"EUR formatting", 15000, "EUR", "150.00 EUR"},
 		{"RUB formatting", 50000, "RUB", "500.00 RUB"},
-		{"Unknown currency", 10000, "XXX", "10000 XXX"},
+		{"Unknown currency", 10000, "TTT", "10000 TTT"},
 		{"Large amount KZT", 1000000, "KZT", "10000.00 KZT"},
 	}
 

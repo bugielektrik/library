@@ -13,7 +13,7 @@ Mocks allow you to test code in isolation by replacing real dependencies with co
 
 ### Repository & Cache Mocks (Auto-generated)
 
-**Location**: `internal/adapters/repository/mocks/`
+**Location**: `internal/infrastructure/pkg/repository/mocks/`
 
 **Generated via**: [mockery](https://github.com/vektra/mockery)
 
@@ -26,7 +26,7 @@ Mocks allow you to test code in isolation by replacing real dependencies with co
 import (
     "testing"
     "github.com/stretchr/testify/mock"
-    "library-service/internal/adapters/repository/mocks"
+    "library-service/internal/infrastructure/pkg/repository/mocks"
     "library-service/internal/domain/book"
 )
 
@@ -67,7 +67,7 @@ import (
 )
 
 func TestPaymentIntegration(t *testing.T) {
-    // Create mock gateway
+    // Create mock provider
     gateway := mocks.NewPaymentGateway()
 
     // Customize behavior
@@ -94,7 +94,7 @@ go install github.com/vektra/mockery/v2@latest
 Mock generation is configured in `.mockery.yaml` at the project root.
 
 **Current configuration**:
-- Output directory: `internal/adapters/repository/mocks/`
+- Output directory: `internal/infrastructure/pkg/repository/mocks/`
 - Naming pattern: `Mock{InterfaceName}`
 - Expecter pattern enabled for better API
 
@@ -135,7 +135,7 @@ make gen-mocks
 
 3. **Use in tests**:
 ```go
-import "library-service/internal/adapters/repository/mocks"
+import "library-service/internal/infrastructure/pkg/repository/mocks"
 
 mockRepo := mocks.NewMockRepository(t)
 ```
@@ -378,6 +378,6 @@ mockery --config .mockery.yaml --verbose
 - No centralized location for manual mocks
 
 **Current Structure** (After Phase 7.3.3):
-- Auto-generated mocks: `internal/adapters/repository/mocks/`
+- Auto-generated mocks: `internal/infrastructure/pkg/repository/mocks/`
 - Manual mocks: `test/mocks/`
 - Clear separation and documentation

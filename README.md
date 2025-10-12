@@ -69,7 +69,7 @@ Get your development environment ready in minutes:
 git clone <repository-url>
 cd library
 
-# Run automated setup (checks prerequisites, installs deps, starts services, seeds data)
+# Run automated setup (checks prerequisites, installs deps, starts service, seeds data)
 ./scripts/dev-setup.sh
 
 # Start developing!

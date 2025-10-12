@@ -7,15 +7,14 @@ Domain service contains pure business rules without external dependencies:
 - Business constraints and rules
 
 This keeps entities simple and business logic centralized and testable.
-See .claude/adr/003-domain-services-vs-infrastructure.md for design rationale.
+See .claude/adr/003-domain-service-vs-infrastructure.md for design rationale.
 */
 package book
 
 import (
+	"library-service/internal/pkg/errors"
 	"regexp"
 	"strings"
-
-	"library-service/pkg/errors"
 )
 
 // ISBN prefix constants for standardization
@@ -36,10 +35,10 @@ const (
 // belong to a single entity.
 //
 // See Also:
-//   - Use case example: internal/books/operations/create_book.go (uses this service)
-//   - Similar services: internal/domain/payment/service.go, internal/domain/reservation/service.go
-//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (when to use domain services)
-//   - Infrastructure services: internal/infrastructure/auth/jwt.go (contrast: external dependencies)
+//   - Use case example: internal/books/service/create_book.go (uses this service)
+//   - Similar service: internal/domain/payment/service.go, internal/domain/reservation/service.go
+//   - ADR: .claude/adr/003-domain-service-vs-infrastructure.md (when to use domain service)
+//   - Infrastructure service: internal/infrastructure/auth/jwt.go (contrast: external dependencies)
 //   - Test: internal/books/domain/book/service_test.go (100% coverage)
 //
 // DESIGN DECISIONS:
@@ -59,7 +58,7 @@ const (
 //   - Orchestration (use BookUseCase)
 //   - HTTP concerns (use BookHandler)
 type Service struct {
-	// Domain services are typically stateless.
+	// Domain service are typically stateless.
 	// If state is needed, it should be passed as parameters.
 	// This follows the Stateless Service pattern for better testability.
 }

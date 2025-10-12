@@ -51,8 +51,8 @@ internal/
 - Move `internal/domain/book/` → `internal/books/domain/book/`
 - Move `internal/domain/author/` → `internal/books/domain/author/`
 - Move `internal/usecase/bookops/` → `internal/books/operations/`
-- Move `internal/adapters/http/handlers/book/` → `internal/books/http/`
-- Move `internal/adapters/repository/postgres/{book,author}.go` → `internal/books/repository/`
+- Move `internal/infrastructure/pkg/handlers/book/` → `internal/books/http/`
+- Move `internal/infrastructure/pkg/repository/postgres/{book,author}.go` → `internal/books/repository/`
 
 **Phase 2.2: Members Domain**
 - Move member domain → `internal/members/domain/`

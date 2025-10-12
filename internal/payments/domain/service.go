@@ -2,10 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"library-service/internal/pkg/errors"
 	"strings"
 	"time"
 
-	"library-service/pkg/errors"
+	"github.com/shopspring/decimal"
 )
 
 // Service encapsulates business logic for payments that doesn't naturally
@@ -21,12 +22,12 @@ import (
 // See Also:
 //   - Use case example: internal/usecase/paymentops/initiate_payment.go (orchestrates this service)
 //   - Gateway interface: internal/usecase/paymentops/initiate_payment.go:35 (PaymentGateway)
-//   - Similar services: internal/books/domain/book/service.go (comprehensive domain service example)
-//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (domain vs infrastructure services)
-//   - ADR: .claude/adr/005-payment-gateway-interface.md (gateway abstraction)
+//   - Similar service: internal/books/domain/book/service.go (comprehensive domain service example)
+//   - ADR: .claude/adr/003-domain-service-vs-infrastructure.md (domain vs infrastructure service)
+//   - ADR: .claude/adr/005-payment-provider-interface.md (provider abstraction)
 //   - Test: internal/usecase/paymentops/initiate_payment_test.go
 type Service struct {
-	// Domain services are typically stateless
+	// Domain service are typically stateless
 	// If state is needed, it should be passed as parameters
 }
 
@@ -179,20 +180,26 @@ func (s *Service) isValidCurrency(currency string) bool {
 }
 
 // FormatAmount formats an amount for display (converts from smallest unit).
+// Uses decimal.Decimal to avoid floating-point precision errors.
 func (s *Service) FormatAmount(amount int64, currency string) string {
+	// Convert from smallest unit (cents/tenge) to decimal amount
+	amountDecimal := decimal.NewFromInt(amount).Div(decimal.NewFromInt(100))
+	formatted := amountDecimal.StringFixed(2) // Always 2 decimal places
+
 	switch currency {
 	case "KZT":
-		return fmt.Sprintf("%.2f KZT", float64(amount)/100)
+		return fmt.Sprintf("%s KZT", formatted)
 	case "USD", "EUR":
-		return fmt.Sprintf("%.2f %s", float64(amount)/100, currency)
+		return fmt.Sprintf("%s %s", formatted, currency)
 	case "RUB":
-		return fmt.Sprintf("%.2f RUB", float64(amount)/100)
+		return fmt.Sprintf("%s RUB", formatted)
 	default:
+		// For unknown currencies, show raw amount (might not have subunits)
 		return fmt.Sprintf("%d %s", amount, currency)
 	}
 }
 
-// CallbackData represents callback data from payment gateway.
+// CallbackData represents callback data from payment provider.
 type CallbackData struct {
 	TransactionID   string
 	CardMask        *string
@@ -207,7 +214,7 @@ type CallbackData struct {
 //
 // This method encapsulates the business rules for status transitions:
 //   - Sets the new status
-//   - Updates gateway-provided fields
+//   - Updates provider-provided fields
 //   - Sets CompletedAt timestamp for completed payments
 //   - Updates the UpdatedAt timestamp
 //
@@ -216,7 +223,7 @@ func (s *Service) UpdateStatusFromCallback(payment *Payment, data CallbackData) 
 	// Update status
 	payment.Status = data.NewStatus
 
-	// Update gateway fields
+	// Update provider fields
 	payment.GatewayTransactionID = &data.TransactionID
 	payment.CardMask = data.CardMask
 	payment.ApprovalCode = data.ApprovalCode
@@ -234,9 +241,9 @@ func (s *Service) UpdateStatusFromCallback(payment *Payment, data CallbackData) 
 	}
 }
 
-// MapGatewayStatus maps gateway status strings to internal payment status.
+// MapGatewayStatus maps provider status strings to internal payment status.
 //
-// This method encodes the business rules for interpreting payment gateway responses:
+// This method encodes the business rules for interpreting payment provider responses:
 //   - "success", "approved" → StatusCompleted
 //   - "failed", "declined" → StatusFailed
 //   - "cancelled" → StatusCancelled

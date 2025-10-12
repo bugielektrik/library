@@ -1,9 +1,8 @@
 package book
 
 import (
+	errors2 "library-service/internal/pkg/errors"
 	"testing"
-
-	"library-service/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +14,7 @@ func TestService_ValidateISBN(t *testing.T) {
 		name      string
 		isbn      string
 		wantError bool
-		errorType *errors.Error
+		errorType *errors2.Error
 	}{
 		{
 			name:      "valid ISBN-13",
@@ -41,31 +40,31 @@ func TestService_ValidateISBN(t *testing.T) {
 			name:      "empty ISBN",
 			isbn:      "",
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 		{
 			name:      "too short",
 			isbn:      "123",
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 		{
 			name:      "invalid characters",
 			isbn:      "ABC-DEF-GHIJ",
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 		{
 			name:      "invalid ISBN-13 prefix",
 			isbn:      "1234567890123",
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 		{
 			name:      "ISBN-13 with invalid checksum",
 			isbn:      "9780134190441", // Last digit should be 0
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 	}
 
@@ -97,7 +96,7 @@ func TestService_Validate(t *testing.T) {
 		name      string
 		book      Book
 		wantError bool
-		errorType *errors.Error
+		errorType *errors2.Error
 	}{
 		{
 			name: "valid book",
@@ -118,7 +117,7 @@ func TestService_Validate(t *testing.T) {
 				Authors: []string{"author-1"},
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidBookData,
+			errorType: errors2.ErrInvalidBookData,
 		},
 		{
 			name: "empty name",
@@ -129,7 +128,7 @@ func TestService_Validate(t *testing.T) {
 				Authors: []string{"author-1"},
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidBookData,
+			errorType: errors2.ErrInvalidBookData,
 		},
 		{
 			name: "missing genre",
@@ -140,7 +139,7 @@ func TestService_Validate(t *testing.T) {
 				Authors: []string{"author-1"},
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidBookData,
+			errorType: errors2.ErrInvalidBookData,
 		},
 		{
 			name: "missing ISBN",
@@ -151,7 +150,7 @@ func TestService_Validate(t *testing.T) {
 				Authors: []string{"author-1"},
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 		{
 			name: "invalid ISBN format",
@@ -162,7 +161,7 @@ func TestService_Validate(t *testing.T) {
 				Authors: []string{"author-1"},
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidISBN,
+			errorType: errors2.ErrInvalidISBN,
 		},
 		{
 			name: "no authors",
@@ -173,7 +172,7 @@ func TestService_Validate(t *testing.T) {
 				Authors: []string{},
 			},
 			wantError: true,
-			errorType: errors.ErrInvalidBookData,
+			errorType: errors2.ErrInvalidBookData,
 		},
 	}
 

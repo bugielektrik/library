@@ -7,7 +7,7 @@
 //   - Repository and cache interfaces for book persistence
 //
 // The book entity represents physical or digital books in the library system,
-// with strict validation rules enforced through domain services.
+// with strict validation rules enforced through domain service.
 //
 // Example usage:
 //

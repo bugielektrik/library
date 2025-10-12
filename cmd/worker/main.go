@@ -3,30 +3,43 @@ package main
 import (
 	"context"
 	"fmt"
+	config3 "library-service/internal/infrastructure/config"
+	"library-service/internal/payments/provider/epayment"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 
-	"library-service/internal/adapters/cache"
-	"library-service/internal/adapters/repository"
+	"library-service/internal/container"
+	domainapp "library-service/internal/domain/app"
 	"library-service/internal/infrastructure/auth"
-	"library-service/internal/infrastructure/config"
 	"library-service/internal/infrastructure/log"
-	"library-service/internal/payments/gateway/epayment"
-	paymentops "library-service/internal/payments/operations/payment"
-	"library-service/internal/usecase"
+	paymentops "library-service/internal/payments/service/payment"
 )
 
 // Worker handles background jobs and tasks
 type Worker struct {
 	logger                   *zap.Logger
-	config                   *config.Config
-	usecases                 *usecase.Container
+	config                   *config3.Config
+	usecases                 *container.Container
 	expirePaymentsUC         *paymentops.ExpirePaymentsUseCase
 	processCallbackRetriesUC *paymentops.ProcessCallbackRetriesUseCase
+}
+
+// Validator wraps go-playground/validator
+type Validator struct {
+	validate *validator.Validate
+}
+
+// Validate validates a struct
+func (v *Validator) Validate(i interface{}) error {
+	if v.validate == nil {
+		v.validate = validator.New()
+	}
+	return v.validate.Struct(i)
 }
 
 func main() {
@@ -36,30 +49,27 @@ func main() {
 	logger.Info("starting worker service")
 
 	// Load configuration
-	cfg, err := config.Load()
-	if err != nil {
-		logger.Fatal("failed to load configuration", zap.Error(err))
-	}
+	cfg := config3.MustLoad("")
 
 	// Initialize repositories
-	repos, err := repository.NewRepositories(repository.WithMemoryStore())
+	repos, err := domainapp.NewRepositories(domainapp.WithMemoryStore())
 	if err != nil {
 		logger.Fatal("failed to initialize repositories", zap.Error(err))
 	}
 	logger.Info("repositories initialized")
 
 	// Initialize caches
-	caches, err := cache.NewCaches(
-		cache.Dependencies{Repositories: repos},
-		cache.WithMemoryStore(),
+	caches, err := domainapp.NewCaches(
+		domainapp.Dependencies{Repositories: repos},
+		domainapp.WithMemoryCache(),
 	)
 	if err != nil {
 		logger.Fatal("failed to initialize caches", zap.Error(err))
 	}
 	logger.Info("caches initialized")
 
-	// Initialize auth services (minimal setup for worker)
-	authServices := &usecase.AuthServices{
+	// Initialize auth service (minimal setup for worker)
+	authServices := &container.AuthServices{
 		JWTService: auth.NewJWTService(
 			cfg.JWT.Secret,
 			cfg.JWT.AccessTokenTTL,
@@ -68,22 +78,26 @@ func main() {
 		),
 		PasswordService: auth.NewPasswordService(),
 	}
-	logger.Info("auth services initialized")
+	logger.Info("auth service initialized")
 
-	// Initialize payment gateway
+	// Initialize payment provider
 	epaymentConfig, err := epayment.LoadConfigFromEnv()
 	if err != nil {
 		logger.Warn("failed to load epayment config, payment features may not work", zap.Error(err))
 	}
 	paymentGateway := epayment.NewGateway(epaymentConfig, logger)
 
-	gatewayServices := &usecase.GatewayServices{
+	gatewayServices := &container.GatewayServices{
 		PaymentGateway: paymentGateway,
 	}
-	logger.Info("gateway services initialized")
+	logger.Info("provider service initialized")
+
+	// Initialize validator
+	validator := &Validator{}
+	logger.Info("validator initialized")
 
 	// Initialize use cases container
-	usecaseRepos := &usecase.Repositories{
+	usecaseRepos := &container.Repositories{
 		Book:        repos.Book,
 		Author:      repos.Author,
 		Member:      repos.Member,
@@ -91,11 +105,11 @@ func main() {
 		Payment:     repos.Payment,
 		SavedCard:   repos.SavedCard,
 	}
-	usecaseCaches := &usecase.Caches{
+	usecaseCaches := &container.Caches{
 		Book:   caches.Book,
 		Author: caches.Author,
 	}
-	usecases := usecase.NewContainer(usecaseRepos, usecaseCaches, authServices, gatewayServices)
+	usecases := container.NewContainer(usecaseRepos, usecaseCaches, authServices, gatewayServices, validator)
 
 	worker := &Worker{
 		logger:                   logger,

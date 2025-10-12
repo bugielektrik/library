@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"library-service/internal/adapters/repository/postgres"
+	"library-service/internal/infrastructure/pkg/repository/postgres"
 	"library-service/internal/payments/domain"
-	"library-service/internal/payments/operations/payment"
+	"library-service/internal/payments/service/payment"
 )
 
 // TestBasicPaymentOperations tests basic payment CRUD operations

@@ -88,13 +88,13 @@ func main() {
     bookRepo := repository.NewPostgresBookRepository(db)
     bookCache := cache.NewRedisBookCache(redis)
 
-    // 4. Create domain services
+    // 4. Create domain service
     bookService := book.NewService()
 
     // 5. Create use cases
     createBookUC := usecase.NewCreateBookUseCase(bookRepo, bookService, bookCache)
 
-    // 6. Create handlers
+    // 6. Create handler
     bookHandler := http.NewBookHandler(createBookUC, ...)
 
     // 7. Setup routes
@@ -154,7 +154,7 @@ func main() {
     // 1. Connect to job queue (Redis)
     queue := initQueue()
 
-    // 2. Register job handlers
+    // 2. Register job handler
     queue.Register("send_email", handleEmailJob)
     queue.Register("cleanup", handleCleanupJob)
 
@@ -277,7 +277,7 @@ docker run library-migrate:latest up
 ### Development
 
 ```bash
-# Start all services
+# Start all service
 make dev
 # Runs: docker-up → migrate-up → run (API)
 ```
@@ -299,10 +299,10 @@ scp bin/library-worker server:/opt/library/
 ### Docker Compose
 
 ```bash
-# Start all services
+# Start all service
 make up
 
-# Stop all services
+# Stop all service
 make down
 
 # View logs

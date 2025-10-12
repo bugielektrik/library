@@ -170,21 +170,21 @@ migrate-create:
 	@echo "$(YELLOW)Creating migration: $(name)...$(NC)"
 	$(GO) run ./cmd/migrate create $(name)
 
-## docker-up: Start all services with docker-compose (alias: up)
+## docker-up: Start all service with docker-compose (alias: up)
 .PHONY: docker-up up
 docker-up up:
 	@echo "$(YELLOW)Starting Docker services...$(NC)"
 	cd deployments/docker && $(DOCKER_COMPOSE) up -d
 	@echo "$(GREEN)Services started!$(NC)"
 
-## docker-down: Stop all services with docker-compose (alias: down)
+## docker-down: Stop all service with docker-compose (alias: down)
 .PHONY: docker-down down
 docker-down down:
 	@echo "$(YELLOW)Stopping Docker services...$(NC)"
 	cd deployments/docker && $(DOCKER_COMPOSE) down
 	@echo "$(GREEN)Services stopped!$(NC)"
 
-## docker-logs: Show logs from docker-compose services
+## docker-logs: Show logs from docker-compose service
 .PHONY: docker-logs
 docker-logs:
 	cd deployments/docker && $(DOCKER_COMPOSE) logs -f
@@ -196,7 +196,7 @@ docker-build:
 	cd deployments/docker && $(DOCKER_COMPOSE) build
 	@echo "$(GREEN)Docker images built!$(NC)"
 
-## restart: Restart docker services (alias for backward compatibility)
+## restart: Restart docker service (alias for backward compatibility)
 .PHONY: restart
 restart: docker-down docker-up
 

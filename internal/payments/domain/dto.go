@@ -51,7 +51,7 @@ func (r *Request) Bind(req *http.Request) error {
 	return nil
 }
 
-// Response represents the response payload for payment operations.
+// Response represents the response payload for payment service.
 type Response struct {
 	ID                   string        `json:"id"`
 	InvoiceID            string        `json:"invoice_id"`

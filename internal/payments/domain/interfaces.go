@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-// Gateway defines the interface for payment gateway operations.
+// Gateway defines the interface for payment provider service.
 //
-// This interface abstracts external payment gateway integration (epayment.kz, Stripe, etc.)
+// This interface abstracts external payment provider integration (epayment.kz, Stripe, etc.)
 // following the Dependency Inversion Principle:
 //   - Domain layer defines the contract (this interface)
 //   - Infrastructure layer implements it (epayment adapter)
@@ -20,17 +20,17 @@ import (
 //   - Minimal interface (only methods use cases actually need)
 //
 // See Also:
-//   - Implementation: internal/adapters/payment/epayment/gateway.go
+//   - Implementation: internal/adapters/payment/epayment/provider.go
 //   - Usage: internal/usecase/paymentops/ (all payment use cases)
-//   - ADR: .claude/adr/005-payment-gateway-interface.md
+//   - ADR: .claude/adr/005-payment-provider-interface.md
 type Gateway interface {
-	// GetAuthToken retrieves an authentication token from the payment gateway.
+	// GetAuthToken retrieves an authentication token from the payment provider.
 	// The token is typically cached and refreshed automatically before expiry.
 	//
 	// Returns an error if authentication fails (invalid credentials, network issues, etc.)
 	GetAuthToken(ctx context.Context) (string, error)
 
-	// CheckPaymentStatus queries the gateway for the current status of a payment.
+	// CheckPaymentStatus queries the provider for the current status of a payment.
 	// This is used to verify payments, handle callbacks, and check transaction state.
 	//
 	// Parameters:
@@ -63,7 +63,7 @@ type Gateway interface {
 	ChargeCard(ctx context.Context, req *CardChargeRequest) (*CardChargeResponse, error)
 }
 
-// GatewayConfig provides gateway configuration details.
+// GatewayConfig provides provider configuration details.
 //
 // Separated from Gateway to distinguish operations from configuration.
 // Configuration methods don't require context and never fail.
@@ -74,7 +74,7 @@ type GatewayConfig interface {
 	// GetBackLink returns the URL where users are redirected after payment.
 	GetBackLink() string
 
-	// GetPostLink returns the URL where the gateway sends payment callbacks.
+	// GetPostLink returns the URL where the provider sends payment callbacks.
 	GetPostLink() string
 
 	// GetWidgetURL returns the JavaScript widget URL for embedded payments.
@@ -83,7 +83,7 @@ type GatewayConfig interface {
 
 // GatewayStatusResponse represents a standardized payment status check response.
 //
-// This structure provides a gateway-agnostic view of payment status.
+// This structure provides a provider-agnostic view of payment status.
 // Gateway-specific implementations map their response format to this structure.
 type GatewayStatusResponse struct {
 	// ResultCode indicates the result of the status check (success, error, etc.)
@@ -98,7 +98,7 @@ type GatewayStatusResponse struct {
 
 // GatewayTransactionDetails contains detailed information about a payment transaction.
 type GatewayTransactionDetails struct {
-	// ID is the gateway's internal transaction identifier
+	// ID is the provider's internal transaction identifier
 	ID string
 
 	// InvoiceID is our invoice identifier (matches payment.InvoiceID)
@@ -110,7 +110,7 @@ type GatewayTransactionDetails struct {
 	// Currency is the three-letter currency code (e.g., "KZT")
 	Currency string
 
-	// Status is the gateway's status string (success, failed, pending, etc.)
+	// Status is the provider's status string (success, failed, pending, etc.)
 	// Note: Use payment.Service.MapGatewayStatus() to convert to domain Status
 	Status string
 
@@ -120,7 +120,7 @@ type GatewayTransactionDetails struct {
 	// ApprovalCode is the bank approval code for successful transactions
 	ApprovalCode string
 
-	// Reference is the gateway's reference number for tracking
+	// Reference is the provider's reference number for tracking
 	Reference string
 }
 
@@ -135,7 +135,7 @@ type CardChargeRequest struct {
 	// Currency is the three-letter currency code (e.g., "KZT")
 	Currency string
 
-	// CardID is the saved card token from the gateway
+	// CardID is the saved card token from the provider
 	CardID string
 
 	// Description is a human-readable payment description
@@ -144,16 +144,16 @@ type CardChargeRequest struct {
 
 // CardChargeResponse represents the response from charging a saved card.
 type CardChargeResponse struct {
-	// ID is the gateway's internal payment identifier
+	// ID is the provider's internal payment identifier
 	ID string
 
-	// TransactionID is the gateway's transaction identifier
+	// TransactionID is the provider's transaction identifier
 	TransactionID string
 
 	// Status is the payment status (success, failed, pending, etc.)
 	Status string
 
-	// Reference is the gateway's reference number
+	// Reference is the provider's reference number
 	Reference string
 
 	// ApprovalCode is the bank approval code (present on success)

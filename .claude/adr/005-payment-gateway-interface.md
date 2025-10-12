@@ -76,7 +76,7 @@ type InitiatePaymentUseCase struct {
 }
 
 func (uc *InitiatePaymentUseCase) Execute(ctx context.Context, req Request) (Response, error) {
-    // Use gateway methods without knowing implementation
+    // Use provider methods without knowing implementation
     token, err := uc.gateway.GetAuthToken(ctx)
     if err != nil {
         return Response{}, fmt.Errorf("failed to get auth token: %w", err)
@@ -94,7 +94,7 @@ func (uc *InitiatePaymentUseCase) Execute(ctx context.Context, req Request) (Res
 ### Implementation in Adapter
 
 ```go
-// internal/adapters/payment/epayment/gateway.go
+// internal/adapters/payment/epayment/provider.go
 package epayment
 
 type Gateway struct {
@@ -119,9 +119,9 @@ func (g *Gateway) GetTerminal() string {
 ### Dependency Injection
 
 ```go
-// internal/infrastructure/app/app.go
+// internal/app/app.go
 func NewApp(config *Config) *App {
-    // Create concrete gateway
+    // Create concrete provider
     paymentGateway := epayment.NewGateway(config.Payment)
 
     // Pass as interface to container
@@ -140,7 +140,7 @@ func NewApp(config *Config) *App {
 
 ✅ **Testable:** Easy to mock gateway in use case tests
 ```go
-// Test with mock gateway
+// Test with mock provider
 type mockGateway struct{}
 
 func (m *mockGateway) GetAuthToken(ctx context.Context) (string, error) {
@@ -150,13 +150,13 @@ func (m *mockGateway) GetAuthToken(ctx context.Context) (string, error) {
 func TestInitiatePayment(t *testing.T) {
     mockGateway := &mockGateway{}
     uc := NewInitiatePaymentUseCase(repo, service, mockGateway)
-    // Test without real gateway
+    // Test without real provider
 }
 ```
 
 ✅ **Flexible:** Easy to switch gateways
 ```go
-// Switch to different gateway
+// Switch to different provider
 paymentGateway := stripe.NewGateway(config)  // New implementation
 gatewayServices := &usecase.GatewayServices{
     PaymentGateway: paymentGateway,  // Same interface!
@@ -309,7 +309,7 @@ type PaymentGateway interface {
 
 2. **Implement in adapter:**
 ```go
-// internal/adapters/payment/epayment/gateway.go
+// internal/adapters/payment/epayment/provider.go
 func (g *Gateway) NewMethod(ctx context.Context, param string) (Result, error) {
     // Implementation
 }

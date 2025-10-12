@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Repository defines the interface for author repository operations.
+// Repository defines the interface for author repository service.
 type Repository interface {
 	// List retrieves all authors.
 	List(ctx context.Context) ([]Author, error)

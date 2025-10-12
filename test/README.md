@@ -20,7 +20,7 @@ test/
 import (
     "library-service/test/fixtures"
     "library-service/test/testutil"
-    "library-service/internal/adapters/repository/mocks"
+    "library-service/internal/infrastructure/pkg/repository/mocks"
 )
 
 func TestBookService(t *testing.T) {
@@ -50,7 +50,7 @@ import (
 )
 
 func TestPaymentFlow(t *testing.T) {
-    // Use mocks for external services
+    // Use mocks for external service
     gateway := mocks.NewPaymentGateway()
 
     // Use fixtures for test data
@@ -182,7 +182,7 @@ func TestPaymentFlow(t *testing.T) {
     // Use real repositories
     paymentRepo := postgres.NewPaymentRepository(db)
 
-    // Mock external services
+    // Mock external service
     gateway := mocks.NewPaymentGateway()
 
     // Test workflow
@@ -194,8 +194,8 @@ func TestPaymentFlow(t *testing.T) {
 
 | Mock Type | Location | Generator | Use Case |
 |-----------|----------|-----------|----------|
-| Repository Mocks | `internal/adapters/repository/mocks/` | mockery | Unit tests |
-| Cache Mocks | `internal/adapters/repository/mocks/` | mockery | Unit tests |
+| Repository Mocks | `internal/infrastructure/pkg/repository/mocks/` | mockery | Unit tests |
+| Cache Mocks | `internal/infrastructure/pkg/repository/mocks/` | mockery | Unit tests |
 | Service Mocks | `test/mocks/` | manual | Integration tests |
 | Integration Mocks | `test/integration/mocks.go` | manual | Integration tests only |
 
@@ -493,7 +493,7 @@ Tests run automatically in GitHub Actions on:
 **After Phase 7.3** (Centralized infrastructure):
 - Fixtures: `test/fixtures/` with 4 entity types
 - Testutil: `test/testutil/` with 12 assertions + context helpers
-- Mocks: `test/mocks/` for integration + auto-generated in `internal/adapters/repository/mocks/`
+- Mocks: `test/mocks/` for integration + auto-generated in `internal/infrastructure/pkg/repository/mocks/`
 - Clear documentation and examples
 
 **Migration Guide**:

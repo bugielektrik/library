@@ -19,7 +19,7 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     "library-service/internal/domain/book"
     "library-service/internal/usecase/bookops"
     "library-service/test/fixtures"
@@ -82,7 +82,7 @@ import (
     "github.com/google/uuid"
     "github.com/stretchr/testify/require"
 
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     "library-service/internal/domain/payment"
     "library-service/internal/usecase/paymentops"
     "library-service/test/mocks"
@@ -157,7 +157,7 @@ import (
 
     "github.com/stretchr/testify/require"
 
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     "library-service/test/fixtures"
 )
 
@@ -210,10 +210,10 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     "library-service/internal/domain/payment"
     "library-service/internal/usecase/paymentops"
-    "library-service/pkg/errors"
+    "library-service/internal/infrastructure/pkg/errors"
 )
 
 // TestPaymentErrorScenarios tests error handling
@@ -283,7 +283,7 @@ import (
     "github.com/google/uuid"
     "github.com/stretchr/testify/require"
 
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     "library-service/internal/domain/payment"
     "library-service/internal/usecase/paymentops"
 )
@@ -348,7 +348,7 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 
-    "library-service/internal/adapters/repository/postgres"
+    "library-service/internal/infrastructure/pkg/repository/postgres"
     "library-service/internal/domain/payment"
     "library-service/internal/usecase/paymentops"
 )

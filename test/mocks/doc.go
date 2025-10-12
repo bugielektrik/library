@@ -3,12 +3,15 @@
 
 // Package mocks provides mock implementations for integration testing.
 //
-// This package contains manual mock implementations for external services
+// This package contains manual mock implementations for external service
 // and interfaces that are used in integration tests. These mocks allow
-// integration tests to run without requiring actual external services.
+// integration tests to run without requiring actual external service.
 //
-// For repository and cache mocks, use the auto-generated mocks in
-// internal/adapters/repository/mocks/ instead.
+// For repository mocks, use the auto-generated mocks in each bounded context:
+//   - Books: internal/books/repository/mocks/
+//   - Members: internal/members/repository/mocks/
+//   - Payments: internal/payments/repository/mocks/
+//   - Reservations: internal/reservations/repository/mocks/
 //
 // Usage:
 //
@@ -20,7 +23,7 @@
 //	import "library-service/test/mocks"
 //
 //	func TestWithMock(t *testing.T) {
-//	    gateway := mocks.NewPaymentGateway()
-//	    // Use gateway in test
+//	    provider := mocks.NewPaymentGateway()
+//	    // Use provider in test
 //	}
 package mocks

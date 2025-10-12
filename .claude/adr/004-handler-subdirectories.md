@@ -9,7 +9,7 @@
 As the application grew, all HTTP handlers were in a flat directory structure:
 
 ```
-internal/adapters/http/handlers/
+internal/infrastructure/pkg/handlers/
 ├── auth.go
 ├── book.go
 ├── author.go
@@ -33,7 +33,7 @@ internal/adapters/http/handlers/
 Organize handlers into **domain-specific subdirectories**:
 
 ```
-internal/adapters/http/handlers/
+internal/infrastructure/pkg/handlers/
 ├── auth/
 │   ├── handler.go       # Handler struct + routes
 │   ├── login.go         # Login endpoint
@@ -67,7 +67,7 @@ Each domain subdirectory contains:
 ### Example: Book Handler
 
 ```go
-// internal/adapters/http/handlers/book/handler.go
+// internal/infrastructure/pkg/handler/book/handler.go
 package book
 
 type BookHandler struct {
@@ -96,7 +96,7 @@ func (h *BookHandler) RegisterRoutes(r chi.Router) {
 ```
 
 ```go
-// internal/adapters/http/handlers/book/crud.go
+// internal/infrastructure/pkg/handler/book/crud.go
 package book
 
 func (h *BookHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +110,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 ```
 
 ```go
-// internal/adapters/http/handlers/book/query.go
+// internal/infrastructure/pkg/handler/book/query.go
 package book
 
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
@@ -143,10 +143,10 @@ func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 ✅ **Better navigation:**
 ```bash
 # Find book endpoints
-ls handlers/book/
+ls handler/book/
 
 # Find payment endpoints
-ls handlers/payment/
+ls handler/payment/
 ```
 
 ✅ **Clear ownership:** Each domain has its own package
@@ -157,8 +157,8 @@ ls handlers/payment/
 
 ✅ **Domain-specific packages:**
 ```go
-import "library-service/internal/adapters/http/handlers/book"
-import "library-service/internal/adapters/http/handlers/payment"
+import "library-service/internal/infrastructure/pkg/handler/book"
+import "library-service/internal/infrastructure/pkg/handler/payment"
 ```
 
 ✅ **Package documentation:** Each handler has doc.go explaining its purpose
@@ -181,8 +181,8 @@ import "library-service/internal/adapters/http/handlers/payment"
 
 2. **Moved files:**
 ```bash
-mv handlers/book.go handlers/book/handler.go
-mv handlers/auth_*.go handlers/auth/
+mv handler/book.go handler/book/handler.go
+mv handler/auth_*.go handler/auth/
 # ...
 ```
 
@@ -198,13 +198,13 @@ package book
 4. **Updated imports in router.go:**
 ```go
 // Before
-import "library-service/internal/adapters/http/handlers"
+import "library-service/internal/infrastructure/pkg/handler"
 
 // After
 import (
-    "library-service/internal/adapters/http/handlers/auth"
-    "library-service/internal/adapters/http/handlers/book"
-    "library-service/internal/adapters/http/handlers/payment"
+    "library-service/internal/infrastructure/pkg/handler/auth"
+    "library-service/internal/infrastructure/pkg/handler/book"
+    "library-service/internal/infrastructure/pkg/handler/payment"
     // ...
 )
 ```
@@ -256,7 +256,7 @@ handlers/
 
 ## References
 
-- **Implementation:** `internal/adapters/http/handlers/*/`
+- **Implementation:** `internal/infrastructure/pkg/handlers/*/`
 - **Commit:** fa693e6 - Initial handler reorganization
 - **Documentation:** Each handler has `doc.go` explaining its purpose
 
@@ -264,7 +264,7 @@ handlers/
 
 ### Adding New Handler
 
-1. Create subdirectory: `internal/adapters/http/handlers/{domain}/`
+1. Create subdirectory: `internal/infrastructure/pkg/handlers/{domain}/`
 2. Add files:
    - `handler.go` - Struct + route registration
    - `crud.go` or `operations.go` - Endpoint implementations
@@ -272,7 +272,7 @@ handlers/
 
 3. Register in router:
 ```go
-// internal/adapters/http/router.go
+// internal/infrastructure/server/router.go
 domainHandler := handlers.NewDomainHandler(useCases.Domain...)
 domainHandler.RegisterRoutes(r)
 ```

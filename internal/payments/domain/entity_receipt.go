@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -41,12 +42,12 @@ type ReceiptItem struct {
 
 // ReceiptRepository defines the interface for receipt persistence
 type ReceiptRepository interface {
-	Create(receipt Receipt) (string, error)
-	GetByID(id string) (Receipt, error)
-	GetByPaymentID(paymentID string) (Receipt, error)
-	GetByReceiptNumber(receiptNumber string) (Receipt, error)
-	ListByMemberID(memberID string) ([]Receipt, error)
-	Update(receipt Receipt) error
+	Create(ctx context.Context, receipt Receipt) (string, error)
+	GetByID(ctx context.Context, id string) (Receipt, error)
+	GetByPaymentID(ctx context.Context, paymentID string) (Receipt, error)
+	GetByReceiptNumber(ctx context.Context, receiptNumber string) (Receipt, error)
+	ListByMemberID(ctx context.Context, memberID string) ([]Receipt, error)
+	Update(ctx context.Context, receipt Receipt) error
 }
 
 // GenerateReceiptNumber generates a unique receipt number.

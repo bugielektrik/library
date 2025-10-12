@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"library-service/internal/members/domain"
 )
 
 // JWTService handles JWT token generation and validation
@@ -28,11 +27,11 @@ func NewJWTService(secretKey string, accessTTL, refreshTTL time.Duration, issuer
 }
 
 // GenerateAccessToken generates a new access JWT token for a member
-func (s *JWTService) GenerateAccessToken(memberID string, email string, role domain.Role) (string, error) {
+func (s *JWTService) GenerateAccessToken(memberID string, email string, role string) (string, error) {
 	claims := &Claims{
 		MemberID: memberID,
 		Email:    email,
-		Role:     string(role),
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessTokenTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -62,7 +61,7 @@ func (s *JWTService) GenerateRefreshToken(memberID string) (string, error) {
 }
 
 // GenerateTokenPair generates both access and refresh tokens
-func (s *JWTService) GenerateTokenPair(memberID string, email string, role domain.Role) (*TokenPair, error) {
+func (s *JWTService) GenerateTokenPair(memberID string, email string, role string) (*TokenPair, error) {
 	accessToken, err := s.GenerateAccessToken(memberID, email, role)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
@@ -135,7 +134,7 @@ func (s *JWTService) ValidateRefreshToken(tokenString string) (*RefreshClaims, e
 }
 
 // RefreshAccessToken creates a new access token from a valid refresh token
-func (s *JWTService) RefreshAccessToken(refreshToken string, email string, role domain.Role) (string, error) {
+func (s *JWTService) RefreshAccessToken(refreshToken string, email string, role string) (string, error) {
 	refreshClaims, err := s.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid refresh token: %w", err)

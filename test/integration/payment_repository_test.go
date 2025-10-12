@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"library-service/internal/adapters/repository/postgres"
+	"library-service/internal/infrastructure/pkg/repository/postgres"
 	"library-service/internal/payments/domain"
 	"library-service/test/fixtures"
 )

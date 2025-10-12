@@ -25,7 +25,7 @@ func (r *Request) Bind(req *http.Request) error {
 	return nil
 }
 
-// Response represents the response payload for reservation operations.
+// Response represents the response payload for reservation service.
 type Response struct {
 	ID          string     `json:"id"`
 	BookID      string     `json:"book_id"`

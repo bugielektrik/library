@@ -14,7 +14,7 @@ const (
 	CancellationWindowDuration = 1 * time.Hour
 )
 
-// Payment gateway constants
+// Payment provider constants
 const (
 	// Gateway request timeouts
 	GatewayRequestTimeout = 30 * time.Second
@@ -121,7 +121,7 @@ const (
 	PaymentMethodBankTransfer = "bank_transfer"
 )
 
-// Transaction status codes from gateway
+// Transaction status codes from provider
 const (
 	GatewayStatusSuccess    = "Success"
 	GatewayStatusProcessing = "Processing"

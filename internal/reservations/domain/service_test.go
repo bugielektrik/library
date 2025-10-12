@@ -1,10 +1,9 @@
 package domain
 
 import (
+	"library-service/internal/pkg/errors"
 	"testing"
 	"time"
-
-	"library-service/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
 )

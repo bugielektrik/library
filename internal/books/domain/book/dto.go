@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// Request represents the request payload for book operations.
+// Request represents the request payload for book service.
 type Request struct {
 	Name    string   `json:"name"`
 	Genre   string   `json:"genre"`
@@ -30,7 +30,7 @@ func (s *Request) Bind(r *http.Request) error {
 	return nil
 }
 
-// Response represents the response payload for book operations.
+// Response represents the response payload for book service.
 type Response struct {
 	ID      string   `json:"id"`
 	Name    string   `json:"name"`

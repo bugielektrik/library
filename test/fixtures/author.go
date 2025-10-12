@@ -2,7 +2,7 @@ package fixtures
 
 import (
 	"library-service/internal/books/domain/author"
-	"library-service/pkg/strutil"
+	"library-service/internal/pkg/strutil"
 )
 
 // ValidAuthor returns a valid author entity for testing

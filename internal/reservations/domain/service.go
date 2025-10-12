@@ -1,9 +1,8 @@
 package domain
 
 import (
+	"library-service/internal/pkg/errors"
 	"time"
-
-	"library-service/pkg/errors"
 )
 
 // Service encapsulates business logic for reservations that doesn't naturally
@@ -17,12 +16,12 @@ import (
 //
 // See Also:
 //   - Use case example: internal/usecase/reservationops/create_reservation.go (demonstrates cross-domain validation)
-//   - Similar services: internal/books/domain/book/service.go (comprehensive example), internal/domain/payment/service.go
-//   - ADR: .claude/adr/003-domain-services-vs-infrastructure.md (pure business logic pattern)
+//   - Similar service: internal/books/domain/book/service.go (comprehensive example), internal/domain/payment/service.go
+//   - ADR: .claude/adr/003-domain-service-vs-infrastructure.md (pure business logic pattern)
 //   - ADR: .claude/adr/002-clean-architecture-boundaries.md (domain layer rules)
 //   - Test: internal/usecase/reservationops/create_reservation_test.go
 type Service struct {
-	// Domain services are typically stateless
+	// Domain service are typically stateless
 	// If state is needed, it should be passed as parameters
 }
 

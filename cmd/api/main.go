@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"library-service/internal/infrastructure/app"
+	"library-service/internal/app"
 )
 
 // @title Library Service API
@@ -29,7 +29,7 @@ import (
 Application Entry Point
 
 This is the main entry point for the Library Service API server. The application follows
-a strict boot sequence orchestrated by internal/infrastructure/app/app.go:
+a strict boot sequence orchestrated by internal/app/app.go:
 
 BOOT SEQUENCE:
 1. Logger initialization (Zap logger with structured logging)
@@ -50,7 +50,7 @@ BOOT SEQUENCE:
    - Redis connection if REDIS_HOST provided
    - Memory cache fallback if Redis unavailable
 
-5. Infrastructure services (auth layer)
+5. Infrastructure service (auth layer)
    - JWT service (token generation/validation)
    - Password service (bcrypt hashing)
 
@@ -59,14 +59,14 @@ BOOT SEQUENCE:
    - BaseRepository[T] generic pattern
 
 7. Use case container (usecase/container.go)
-   - Domain services instantiation
+   - Domain service instantiation
    - Use case wiring with dependencies
    - Complete dependency injection graph
 
 8. HTTP server (Chi router)
    - Middleware chain setup
    - Route registration
-   - Graceful shutdown handlers
+   - Graceful shutdown handler
 
 REQUIRED ENVIRONMENT VARIABLES:
 - POSTGRES_DSN: PostgreSQL connection string

@@ -96,7 +96,7 @@ func (s *Service) ValidateISBN(isbn string) error {
 **Characteristics:**
 - **External dependencies:** JWT libraries, bcrypt, HTTP clients
 - **Configuration-driven:** Secrets, URLs, timeouts
-- **Created in:** `internal/infrastructure/app/app.go` (application bootstrap)
+- **Created in:** `internal/app/app.go` (application bootstrap)
 - **Location:** `internal/infrastructure/{concern}/`
 
 **Examples:**
@@ -144,7 +144,7 @@ func (s *JWTService) GenerateToken(memberID string) (string, error) {
 **Step 1: app.go - Create Infrastructure Services**
 
 ```go
-// internal/infrastructure/app/app.go
+// internal/app/app.go
 package app
 
 func NewApp(config *Config) *App {
@@ -155,7 +155,7 @@ func NewApp(config *Config) *App {
     bookRepo := postgres.NewBookRepository(db)
     memberRepo := postgres.NewMemberRepository(db)
 
-    // 3. Infrastructure services (technical concerns)
+    // 3. Infrastructure service (technical concerns)
     jwtService := auth.NewJWTService(config.JWTSecret, config.JWTExpiry)
     passwordService := auth.NewPasswordService()
     paymentGateway := epayment.NewGateway(config.PaymentConfig)
@@ -169,7 +169,7 @@ func NewApp(config *Config) *App {
         PaymentGateway: paymentGateway,
     }
 
-    // 4. Pass to container (domain services created there)
+    // 4. Pass to container (domain service created there)
     container := usecase.NewContainer(repos, caches, authServices, gatewayServices)
 
     return &App{Container: container}
@@ -183,13 +183,13 @@ func NewApp(config *Config) *App {
 package usecase
 
 func NewContainer(repos *Repositories, caches *Caches, authSvcs *AuthServices, gatewaySvcs *GatewayServices) *Container {
-    // Create domain services (pure business logic, no config needed)
+    // Create domain service (pure business logic, no config needed)
     bookService := book.NewService()
     memberService := member.NewService()
     paymentService := payment.NewService()
 
     return &Container{
-        // Use cases get both types of services
+        // Use cases get both types of service
         CreateBook: bookops.NewCreateBookUseCase(
             repos.Book,        // Repository
             bookService,       // Domain service (created here)
@@ -252,7 +252,7 @@ func TestRegister(t *testing.T) {
 ### ❌ MISTAKE 1: Creating domain services in app.go
 
 ```go
-// internal/infrastructure/app/app.go - WRONG!
+// internal/app/app.go - WRONG!
 bookService := book.NewService()  // Domain service created too early
 ```
 

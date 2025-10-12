@@ -55,7 +55,7 @@ go test ./internal/domain/book/ -bench=. -benchmem
 # BenchmarkService_CalculateLateFee-8    50000000    25 ns/op    0 B/op    0 allocs/op
 
 # 2. Benchmark repository (database operations)
-go test ./internal/adapters/repository/postgres/ -bench=. -benchmem
+go test ./internal/infrastructure/pkg/repository/postgres/ -bench=. -benchmem
 
 # Expected (with indexes):
 # BenchmarkBookRepository_GetByID-8    10000    150000 ns/op    1200 B/op    25 allocs/op  (0.15ms)

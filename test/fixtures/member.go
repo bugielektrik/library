@@ -1,10 +1,10 @@
 package fixtures
 
 import (
+	"library-service/internal/pkg/strutil"
 	"time"
 
 	"library-service/internal/members/domain"
-	"library-service/pkg/strutil"
 )
 
 // ValidMember returns a valid member entity for testing

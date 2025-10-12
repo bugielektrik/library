@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
+	"library-service/internal/pkg/repository/postgres"
 
 	"github.com/jmoiron/sqlx"
 
-	"library-service/internal/adapters/repository/postgres"
 	reservationdomain "library-service/internal/reservations/domain"
 )
 
@@ -14,6 +14,9 @@ import (
 type ReservationRepository struct {
 	postgres.BaseRepository[reservationdomain.Reservation]
 }
+
+// Compile-time check that ReservationRepository implements reservationdomain.Repository
+var _ reservationdomain.Repository = (*ReservationRepository)(nil)
 
 // NewReservationRepository creates a new ReservationRepository.
 func NewReservationRepository(db *sqlx.DB) *ReservationRepository {

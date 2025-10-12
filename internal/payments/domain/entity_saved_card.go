@@ -13,7 +13,7 @@ type SavedCard struct {
 	// MemberID is the ID of the member who owns this card.
 	MemberID string `db:"member_id" bson:"member_id"`
 
-	// CardToken is the tokenized card reference from payment gateway.
+	// CardToken is the tokenized card reference from payment provider.
 	CardToken string `db:"card_token" bson:"card_token"`
 
 	// CardMask is the masked card number (e.g., "****1234").
@@ -84,7 +84,7 @@ func (c SavedCard) CanBeUsed() bool {
 	return c.IsActive && !c.IsExpired()
 }
 
-// SavedCardRepository defines the interface for saved card repository operations.
+// SavedCardRepository defines the interface for saved card repository service.
 type SavedCardRepository interface {
 	// Create inserts a new saved card and returns its ID.
 	Create(ctx context.Context, card SavedCard) (string, error)

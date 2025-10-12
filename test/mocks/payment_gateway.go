@@ -7,9 +7,9 @@ import (
 	"context"
 )
 
-// PaymentGateway provides a test implementation of the payment gateway interface.
-// This mock is used in integration tests to simulate payment gateway behavior
-// without making actual HTTP requests to external services.
+// PaymentGateway provides a test implementation of the payment provider interface.
+// This mock is used in integration tests to simulate payment provider behavior
+// without making actual HTTP requests to external service.
 type PaymentGateway struct {
 	terminal             string
 	backLink             string
@@ -18,7 +18,7 @@ type PaymentGateway struct {
 	checkPaymentResponse interface{}
 }
 
-// NewPaymentGateway creates a new mock payment gateway with default values.
+// NewPaymentGateway creates a new mock payment provider with default values.
 func NewPaymentGateway() *PaymentGateway {
 	return &PaymentGateway{
 		terminal:  "test-terminal",

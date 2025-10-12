@@ -11,10 +11,10 @@ package book
 
 import (
     "net/http"
-    "library-service/internal/adapters/http/dto"
+    "library-service/internal/infrastructure/pkg/dto"
     "library-service/internal/books/operations"
-    "library-service/pkg/httputil"
-    "library-service/pkg/logutil"
+    "library-service/internal/infrastructure/pkg/httputil"
+    "library-service/internal/infrastructure/pkg/logutil"
 )
 
 type BookHandler struct {
@@ -124,7 +124,7 @@ if !ok {
 Always use helpers for context values:
 
 ```go
-import "library-service/internal/adapters/http/middleware"
+import "library-service/internal/infrastructure/pkg/middleware"
 
 // ✅ CORRECT
 memberID, ok := middleware.GetMemberIDFromContext(ctx)

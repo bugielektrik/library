@@ -1,9 +1,8 @@
 package domain
 
 import (
+	errors2 "library-service/internal/pkg/errors"
 	"time"
-
-	"library-service/pkg/errors"
 )
 
 // SubscriptionType represents different subscription tier types
@@ -18,7 +17,7 @@ const (
 // Service encapsulates business logic for members and subscriptions
 // This is a domain service in DDD terms
 type Service struct {
-	// Domain services are typically stateless
+	// Domain service are typically stateless
 }
 
 // NewService creates a new member domain service
@@ -35,7 +34,7 @@ func (s *Service) ValidateSubscriptionType(subType string) error {
 	}
 
 	if !validTypes[subType] {
-		return errors.ErrInvalidInput.WithDetails("field", "subscription_type").
+		return errors2.ErrInvalidInput.WithDetails("field", "subscription_type").
 			WithDetails("valid_types", []string{"basic", "premium", "annual"})
 	}
 
@@ -50,7 +49,7 @@ func (s *Service) ValidateSubscriptionDuration(months int) error {
 	)
 
 	if months < minDuration || months > maxDuration {
-		return errors.ErrInvalidInput.WithDetails("field", "duration_months").
+		return errors2.ErrInvalidInput.WithDetails("field", "duration_months").
 			WithDetails("min", minDuration).
 			WithDetails("max", maxDuration)
 	}
@@ -120,7 +119,7 @@ func (s *Service) CanUpgradeSubscription(currentType, targetType string) error {
 	}
 
 	if tier[targetType] < tier[currentType] {
-		return errors.ErrBusinessRule.WithDetails("reason", "Cannot downgrade subscription").
+		return errors2.ErrBusinessRule.WithDetails("reason", "Cannot downgrade subscription").
 			WithDetails("current", currentType).
 			WithDetails("target", targetType)
 	}
@@ -131,7 +130,7 @@ func (s *Service) CanUpgradeSubscription(currentType, targetType string) error {
 // ValidateMember validates member according to business rules
 func (s *Service) Validate(member Member) error {
 	if member.FullName == nil || *member.FullName == "" {
-		return errors.ErrInvalidMemberData.WithDetails("field", "full_name")
+		return errors2.ErrInvalidMemberData.WithDetails("field", "full_name")
 	}
 
 	return nil

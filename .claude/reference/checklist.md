@@ -108,7 +108,7 @@ If `make ci` passes, you're 90% ready. Use this checklist for the final 10%.
 **Red Flags:**
 ```go
 // ❌ Domain importing from outer layers
-import "library-service/internal/adapters/repository/postgres"
+import "library-service/internal/infrastructure/pkg/repository/postgres"
 import "library-service/internal/usecase/bookops"
 
 // ❌ HTTP in domain

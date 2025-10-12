@@ -42,3 +42,4 @@ test.log
 /data/
 library-api
 service.log
+/vendor/

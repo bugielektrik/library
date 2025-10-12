@@ -181,7 +181,7 @@ Use mockery for auto-generated mocks:
 ```bash
 # Generate mocks
 mockery --name Repository --dir internal/books/domain/book \
-    --output internal/adapters/repository/mocks \
+    --output internal/infrastructure/pkg/repository/mocks \
     --outpkg mocks \
     --filename book_repository_mock.go \
     --structname MockBookRepository

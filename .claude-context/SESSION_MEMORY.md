@@ -20,7 +20,7 @@
 - Dependency flow: Adapters → Use Cases → Domain
 - Interfaces defined in consuming layer (domain/use case)
 - Repository interfaces in domain, implementations in adapters
-- Use case packages use "ops" suffix (e.g., `bookops`) to avoid naming conflicts
+- Use case packages use "ops" suffix (e.g., `bookservice`) to avoid naming conflicts
 
 **Token Impact:**
 - Current: ~5,000-7,000 tokens per feature change
@@ -32,19 +32,19 @@
 
 1. **Books** (`internal/books/`) ✅ Phase 2.1 + 2.5 Complete
    - CRUD operations, author relationships, author management
-   - Structure: domain/book, domain/author, operations/, operations/author/, http/, http/author/, repository/
+   - Structure: domain/book, domain/author, service/, service/author/, http/, http/author/, repository/
    - Handlers: create, get, update, delete, list books, list authors
 
 2. **Members** (`internal/members/`) ✅ Phase 2.2 Complete
    - Member profiles, authentication, subscriptions
-   - Structure: domain/, operations/auth|profile|subscription/, http/auth|profile/, repository/
+   - Structure: domain/, service/auth|profile|subscription/, http/auth|profile/, repository/
    - Auth: Registration, login, token refresh, validation (JWT-based)
    - Profile: Get profile, list members
    - Subscription: Subscribe member
 
 3. **Payments** (`internal/payments/`) ✅ Phase 2.3 Complete
    - Payment processing, saved cards, receipts
-   - Structure: domain/, operations/payment|savedcard|receipt/, http/, repository/, gateway/epayment/
+   - Structure: domain/, service/payment|savedcard|receipt/, http/, repository/, gateway/epayment/
    - Payment: Initiate, verify, cancel, refund, callbacks, expiry
    - SavedCard: Save, list, delete, set default, pay with saved card
    - Receipt: Generate, get, list receipts
@@ -52,13 +52,13 @@
 
 4. **Reservations** (`internal/reservations/`) ✅ Phase 2.4 Complete
    - Book reservations, cancellation, expiration handling
-   - Structure: domain/, operations/, http/, repository/
+   - Structure: domain/, service/, http/, repository/
    - Operations: Create, cancel, get, list member reservations
 
 **Phase 2 Status:** ✅ COMPLETE - All bounded contexts migrated (Phases 2.1-2.5)
 - Phase 2.1-2.4: Core domains (Books, Members, Payments, Reservations)
 - Phase 2.5: Author operations integrated into Books context
-- All legacy domain-specific code removed from `internal/usecase/` and `internal/adapters/http/handlers/`
+- All legacy domain-specific code removed from `internal/usecase/` and `internal/infrastructure/pkg/handlers/`
 
 ---
 
@@ -140,12 +140,12 @@ logger := logutil.RepositoryLogger(ctx, "repository", "operation")
 
 ### Dependency Injection
 ```go
-// Infrastructure services (created in app.go)
+// Infrastructure service (created in app.go)
 - JWT service
 - Password service
 - Payment gateway
 
-// Domain services (created in container.go)
+// Domain service (created in container.go)
 - Book service
 - Member service
 - Reservation service
@@ -225,7 +225,7 @@ logger := logutil.RepositoryLogger(ctx, "repository", "operation")
 **Completed Work:**
 - ✅ Created `internal/books/` bounded context structure
 - ✅ Moved book and author domains → `internal/books/domain/book/` and `internal/books/domain/author/`
-- ✅ Moved book operations → `internal/books/operations/`
+- ✅ Moved book operations → `internal/books/service/`
 - ✅ Moved book HTTP handlers → `internal/books/http/`
 - ✅ Moved book repositories → `internal/books/repository/`
 - ✅ Updated 47 files with new import paths
@@ -233,8 +233,8 @@ logger := logutil.RepositoryLogger(ctx, "repository", "operation")
 
 **Structure Change:**
 ```
-Before: internal/domain/book/, internal/usecase/bookops/, internal/adapters/http/handlers/book/
-After:  internal/books/ (domain/, operations/, http/, repository/)
+Before: internal/domain/book/, internal/usecase/bookservice/, internal/infrastructure/pkg/handlers/book/
+After:  internal/books/ (domain/, service/, http/, repository/)
 ```
 
 **Expected Token Impact:**
@@ -250,9 +250,9 @@ After:  internal/books/ (domain/, operations/, http/, repository/)
 **Completed Work:**
 - ✅ Created `internal/members/` bounded context structure
 - ✅ Moved member domain → `internal/members/domain/`
-- ✅ Moved auth operations → `internal/members/operations/auth/`
-- ✅ Moved member profile operations → `internal/members/operations/profile/`
-- ✅ Moved subscription operations → `internal/members/operations/subscription/`
+- ✅ Moved auth operations → `internal/members/service/auth/`
+- ✅ Moved member profile operations → `internal/members/service/profile/`
+- ✅ Moved subscription operations → `internal/members/service/subscription/`
 - ✅ Moved auth HTTP handlers → `internal/members/http/auth/`
 - ✅ Moved member HTTP handlers → `internal/members/http/profile/`
 - ✅ Moved member repository → `internal/members/repository/`
@@ -261,13 +261,13 @@ After:  internal/books/ (domain/, operations/, http/, repository/)
 
 **Structure Change:**
 ```
-Before: internal/domain/member/, internal/usecase/authops/, internal/usecase/memberops/, internal/usecase/subops/
-After:  internal/members/ (domain/, operations/auth/, operations/profile/, operations/subscription/, http/, repository/)
+Before: internal/domain/member/, internal/usecase/authservice/, internal/usecase/memberservice/, internal/usecase/subops/
+After:  internal/members/ (domain/, service/auth/, service/profile/, service/subscription/, http/, repository/)
 ```
 
 **Package Name Changes:**
-- `authops` → `auth` (cleaner within bounded context)
-- `memberops` → `profile` (more descriptive)
+- `authservice` → `auth` (cleaner within bounded context)
+- `memberservice` → `profile` (more descriptive)
 - `subops` → `subscription` (explicit)
 - `member` domain → `domain` (within members context)
 
@@ -282,9 +282,9 @@ After:  internal/members/ (domain/, operations/auth/, operations/profile/, opera
 **Completed Work:**
 - ✅ Created `internal/payments/` bounded context structure
 - ✅ Moved payment domain (payment, savedcard, receipt entities) → `internal/payments/domain/`
-- ✅ Moved payment operations → `internal/payments/operations/payment/`
-- ✅ Moved savedcard operations → `internal/payments/operations/savedcard/`
-- ✅ Moved receipt operations → `internal/payments/operations/receipt/`
+- ✅ Moved payment operations → `internal/payments/service/payment/`
+- ✅ Moved savedcard operations → `internal/payments/service/savedcard/`
+- ✅ Moved receipt operations → `internal/payments/service/receipt/`
 - ✅ Moved payment HTTP handlers → `internal/payments/http/payment/`
 - ✅ Moved receipt HTTP handlers → `internal/payments/http/receipt/`
 - ✅ Moved savedcard HTTP handlers → `internal/payments/http/savedcard/`
@@ -296,13 +296,13 @@ After:  internal/members/ (domain/, operations/auth/, operations/profile/, opera
 
 **Structure Change:**
 ```
-Before: internal/domain/payment/, internal/usecase/paymentops/, internal/adapters/http/handlers/payment/, internal/adapters/payment/epayment/
-After:  internal/payments/ (domain/, operations/payment/, operations/savedcard/, operations/receipt/, http/, repository/, gateway/epayment/)
+Before: internal/domain/payment/, internal/usecase/paymentservice/, internal/infrastructure/pkg/handlers/payment/, internal/adapters/payment/epayment/
+After:  internal/payments/ (domain/, service/payment/, service/savedcard/, service/receipt/, http/, repository/, gateway/epayment/)
 ```
 
 **Package Name Changes:**
 - `payment` domain → `domain` (within payments context)
-- `paymentops` → `payment`, `savedcard`, `receipt` (based on operation subdirectory)
+- `paymentservice` → `payment`, `savedcard`, `receipt` (based on operation subdirectory)
 - `postgres` repository → `repository` (within payments context)
 - Gateway kept as `epayment`
 
@@ -320,7 +320,7 @@ After:  internal/payments/ (domain/, operations/payment/, operations/savedcard/,
 **Completed Work:**
 - ✅ Created `internal/reservations/` bounded context structure
 - ✅ Moved reservation domain (entity, service, repository interface) → `internal/reservations/domain/`
-- ✅ Moved reservation operations → `internal/reservations/operations/`
+- ✅ Moved reservation operations → `internal/reservations/service/`
 - ✅ Moved reservation HTTP handlers → `internal/reservations/http/`
 - ✅ Moved reservation repository → `internal/reservations/repository/`
 - ✅ Updated 27 files with new import paths
@@ -329,13 +329,13 @@ After:  internal/payments/ (domain/, operations/payment/, operations/savedcard/,
 
 **Structure Change:**
 ```
-Before: internal/domain/reservation/, internal/usecase/reservationops/, internal/adapters/http/handlers/reservation/
-After:  internal/reservations/ (domain/, operations/, http/, repository/)
+Before: internal/domain/reservation/, internal/usecase/reservationservice/, internal/infrastructure/pkg/handlers/reservation/
+After:  internal/reservations/ (domain/, service/, http/, repository/)
 ```
 
 **Package Name Changes:**
 - `reservation` domain → `domain` (within reservations context)
-- `reservationops` → `operations` (within reservations context)
+- `reservationservice` → `service` (within reservations context)
 - `postgres` repository → `repository` (within reservations context)
 - HTTP handlers → `http`
 
@@ -351,17 +351,17 @@ After:  internal/reservations/ (domain/, operations/, http/, repository/)
 **Status:** Phase 2.5 Complete ⭐ **ALL LEGACY CODE MIGRATED!**
 
 **Completed Work:**
-- ✅ Moved author operations → `internal/books/operations/author/`
+- ✅ Moved author operations → `internal/books/service/author/`
 - ✅ Moved author HTTP handlers → `internal/books/http/author/`
 - ✅ Updated 5 files with new import paths
-- ✅ Removed empty legacy directories (`internal/usecase/authorops/`, `internal/adapters/http/handlers/author/`)
+- ✅ Removed empty legacy directories (`internal/usecase/authorops/`, `internal/infrastructure/pkg/handlers/author/`)
 - ✅ Build succeeds (api, worker, migrate binaries)
 - ✅ All tests pass
 
 **Structure Change:**
 ```
-Before: internal/usecase/authorops/, internal/adapters/http/handlers/author/
-After:  internal/books/operations/author/, internal/books/http/author/
+Before: internal/usecase/authorops/, internal/infrastructure/pkg/handlers/author/
+After:  internal/books/service/author/, internal/books/http/author/
 ```
 
 **Package Name Changes:**
