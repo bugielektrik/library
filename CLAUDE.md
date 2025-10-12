@@ -32,19 +32,21 @@ Clean Architecture with strict dependency rules: **Domain → Use Case → Adapt
 
 ```
 internal/
-├── books/              # Books bounded context (✅ Complete)
+├── books/              # Books bounded context (✅ Token-Optimized Oct 2025)
 │   ├── domain/        # book/ and author/ entities, services, interfaces
-│   ├── service/    # Book use cases + author/ subdomain
+│   ├── service/    # Consolidated service files (7 → 1 file, 86% reduction)
+│   │   ├── book_operations.go  # 563 lines: 6 use cases (Create, Update, Delete, Get, List, ListAuthors)
+│   │   └── author/    # Author subdomain (list_authors.go)
 │   ├── handler/       # Book HTTP handlers + author/ subdomain + DTOs
 │   ├── repository/    # Book PostgreSQL implementations + memory (tests)
 │   │   └── mocks/     # Auto-generated test mocks (✅ Phase 2.1)
 │   └── cache/         # ✅ Cache implementations (memory, redis)
-├── members/            # Members bounded context (✅ Phase 2.2 Complete)
+├── members/            # Members bounded context (✅ Token-Optimized Oct 2025)
 │   ├── domain/        # Member entity, service, repository interface
-│   ├── service/    # Auth, profile, subscription use cases
-│   │   ├── auth/      # Register, login, refresh, validate
-│   │   ├── profile/   # Get profile, list members
-│   │   └── subscription/  # Subscribe member
+│   ├── service/    # Consolidated service files (6 → 2 files, 67% reduction)
+│   │   ├── auth/      # auth.go (446 lines): Login, Register, Refresh, Validate, GetCurrentMember
+│   │   ├── profile/   # profile.go (101 lines): GetProfile, ListMembers
+│   │   └── subscription/  # Subscribe member (already consolidated)
 │   ├── handler/       # Auth and profile HTTP handlers + DTOs
 │   │   ├── auth/
 │   │   └── profile/
@@ -52,6 +54,7 @@ internal/
 │       └── mocks/     # Auto-generated test mocks (✅ Phase 2.1)
 ├── payments/           # Payments bounded context (✅ Token-Optimized Oct 2025)
 │   ├── domain/        # Payment, SavedCard, Receipt entities, service
+│   │   └── *_test.go  # 3 lifecycle-based test files (validation, lifecycle, utilities)
 │   ├── service/    # Consolidated service files (20 → 4 files, 50-60% token reduction)
 │   │   ├── payment/   # payment_operations.go (818 lines), payment_callbacks.go (449 lines)
 │   │   ├── savedcard/ # saved_card.go (342 lines - delete, list, pay with card)
@@ -64,8 +67,9 @@ internal/
 │   │   └── postgres/  # 4 repositories (payment, receipt, saved_card, callback_retry)
 │   └── provider/      # Payment gateway integrations
 │       └── epayment/  # epayment.kz adapter
-├── reservations/       # Reservations bounded context (✅ Phase 2.4 Complete)
+├── reservations/       # Reservations bounded context (✅ Tests Organized Oct 2025)
 │   ├── domain/        # Reservation entity, service, repository interface
+│   │   └── *_test.go  # 4 feature-based test files (validation, transitions, queries, entity)
 │   ├── service/    # Reservation use cases (create, cancel, get, list)
 │   ├── handler/       # Reservation HTTP handlers + DTOs
 │   └── repository/    # Reservation PostgreSQL implementation
@@ -722,3 +726,17 @@ var _ domain.Repository = (*BookRepository)(nil)
 - ✅ Zero breaking changes
 - ✅ Package analysis: All industry-standard packages optimal (chi, zap, viper, sqlx, jwt/v5)
 - ✅ See `.claude/REFACTORING_ANALYSIS.md` and `.claude/CLEANUP_COMPLETE.md` for details
+
+**Phase 8 - Token Optimization Refactoring (October 2025):**
+- ✅ **Service Layer Consolidation** (33 → 7 files, 79% reduction):
+  - Payments: 20 → 4 files (payment_operations.go 818 lines, payment_callbacks.go 449 lines, saved_card.go 342 lines, receipt.go 284 lines)
+  - Books: 7 → 1 file (book_operations.go 563 lines with 6 CRUD + query operations)
+  - Members: 6 → 2 files (auth.go 446 lines with 4 auth operations, profile.go 101 lines with 2 profile operations)
+- ✅ **Test File Organization** (2 → 7 files for better discoverability):
+  - Reservations: 1 → 4 feature-based files (validation, transitions, queries, entity tests)
+  - Payments: 1 → 3 lifecycle-based files (validation, lifecycle, utilities tests)
+- ✅ **Token Efficiency Impact**: 50-60% reduction in AI context loading (15-25 files → 1-2 files per feature)
+- ✅ **Code Quality**: All tests passing (60+ packages), zero breaking changes, all builds successful
+- ✅ **Pattern Consistency**: Section separators, Request/Response types, helper methods properly located
+- ✅ **Architecture Preservation**: Clean Architecture boundaries maintained, domain isolation preserved
+- ✅ See PR #3 for comprehensive summary and verification results
