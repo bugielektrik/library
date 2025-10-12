@@ -1,165 +1,222 @@
-// Package app provides the main application structure and lifecycle management
-// for the library service. It handles initialization, startup, and graceful shutdown
-// of all application components including servers, services, repositories, and caches.
+// Package app provides application lifecycle management following clean architecture
 package app
 
 import (
 	"context"
-	"flag"
 	"fmt"
+	"library-service/internal/container"
+	domainapp "library-service/internal/domain/app"
+	epayment2 "library-service/internal/payments/provider/epayment"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 
-	"library-service/internal/cache"
-	"library-service/internal/config"
-	"library-service/internal/handler"
-	"library-service/internal/repository"
-	"library-service/internal/service"
-	"library-service/pkg/log"
-	"library-service/pkg/server"
+	"library-service/internal/infrastructure/auth"
+	"library-service/internal/infrastructure/config"
+	"library-service/internal/infrastructure/log"
+	"library-service/internal/infrastructure/shutdown"
 )
 
-// App holds application-wide dependencies and lifecycle management.
-// It encapsulates all the components needed to run the library service
-// and provides methods for initialization, startup, and shutdown.
+// App represents the application with all its dependencies
 type App struct {
 	logger       *zap.Logger
-	configs      *config.Configs
-	repositories *repository.Repositories
-	caches       *cache.Caches
-	services     *service.Services
-	servers      *server.Servers
-	handlers     *handler.Handlers
+	config       *config.Config
+	repositories *domainapp.Repositories
+	caches       *domainapp.Caches
+	authServices *container.AuthServices
+	usecases     *container.Container
+	httpServer   *Server
 }
 
-// Run initializes and runs the application with proper error handling
-// and graceful shutdown capabilities. It serves as the main entry point
-// for the application lifecycle.
-func Run() {
-	logger := log.GetLogger()
-	app, err := initApp(logger)
+// Validator wraps go-playground/validator
+type Validator struct {
+	validate *validator.Validate
+}
+
+// Validate validates a struct
+func (v *Validator) Validate(i interface{}) error {
+	if v.validate == nil {
+		v.validate = validator.New()
+	}
+	return v.validate.Struct(i)
+}
+
+// New creates a new application instance.
+//
+// Bootstrap Order (CRITICAL - must follow this sequence):
+//  1. Logger - First so all subsequent steps can log
+//  2. Config - Load environment variables and settings
+//  3. Repositories - PostgreSQL/memory implementations
+//  4. Caches - Redis/memory cache layer
+//  5. Auth Services - JWT + Password (infrastructure service)
+//  6. Gateway Services - Payment provider client
+//  7. Use Case Container - Wires everything together
+//  8. HTTP Server - Routes and middleware
+//
+// See Also:
+//   - Counterpart: internal/usecase/container.go (domain service creation)
+//   - ADR: .claude/adr/003-domain-service-vs-infrastructure.md (where to create service)
+//   - ADR: .claude/adr/002-clean-architecture-boundaries.md (layer dependencies)
+//   - Example: internal/infrastructure/auth/jwt.go (infrastructure service)
+//   - Documentation: cmd/api/main.go (application entry point)
+func New() (*App, error) {
+	app := &App{}
+
+	// Initialize logger first
+	logger, err := log.NewLogger()
 	if err != nil {
-		logger.Error("app init error", zap.Error(err))
-		return
+		return nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
+	app.logger = logger
 
-	// Start all configured servers
-	if err := app.startServers(); err != nil {
-		app.logger.Error("server start error", zap.Error(err))
-		app.shutdown()
-		return
+	// Load configuration
+	cfg := config.MustLoad("")
+	app.config = cfg
+	app.logger.Info("configuration loaded", zap.String("environment", cfg.App.Environment))
+
+	// Initialize repositories
+	repos, err := domainapp.NewRepositories(domainapp.WithMemoryStore())
+	if err != nil {
+		app.logger.Error("failed to initialize repositories", zap.Error(err))
+		return nil, err
 	}
+	app.repositories = repos
+	app.logger.Info("repositories initialized")
 
-	app.logStartupInfo()
+	// Initialize caches
+	caches, err := domainapp.NewCaches(
+		domainapp.Dependencies{Repositories: repos},
+		domainapp.WithMemoryCache(),
+	)
+	if err != nil {
+		app.logger.Error("failed to initialize caches", zap.Error(err))
+		return nil, err
+	}
+	app.caches = caches
+	app.logger.Info("caches initialized")
 
-	// Wait for termination signal and shutdown gracefully
-	wait := parseGracefulTimeout()
-	app.waitForShutdown(wait)
+	// Warm caches asynchronously (non-blocking)
+	go domainapp.WarmCachesAsync(context.Background(), caches, domainapp.DefaultWarmingConfig(app.logger))
+
+	// Initialize auth service
+	authServices := &container.AuthServices{
+		JWTService: auth.NewJWTService(
+			cfg.JWT.Secret,
+			cfg.JWT.AccessTokenTTL,
+			cfg.JWT.RefreshTokenTTL,
+			cfg.JWT.Issuer,
+		),
+		PasswordService: auth.NewPasswordService(),
+	}
+	app.authServices = authServices
+	app.logger.Info("auth service initialized")
+
+	// Initialize payment provider
+	epaymentConfig, err := epayment2.LoadConfigFromEnv()
+	if err != nil {
+		app.logger.Warn("failed to load epayment config, payment features may not work", zap.Error(err))
+	}
+	paymentGateway := epayment2.NewGateway(epaymentConfig, app.logger)
+
+	gatewayServices := &container.GatewayServices{
+		PaymentGateway: paymentGateway,
+	}
+	app.logger.Info("provider service initialized")
+
+	// Initialize validator
+	validator := &Validator{}
+	app.logger.Info("validator initialized")
+
+	// Initialize usecases
+	usecaseRepos := &container.Repositories{
+		Book:          repos.Book,
+		Author:        repos.Author,
+		Member:        repos.Member,
+		Reservation:   repos.Reservation,
+		Payment:       repos.Payment,
+		SavedCard:     repos.SavedCard,
+		CallbackRetry: repos.CallbackRetry,
+		Receipt:       repos.Receipt,
+	}
+	usecaseCaches := &container.Caches{
+		Book:   caches.Book,
+		Author: caches.Author,
+	}
+	usecases := container.NewContainer(usecaseRepos, usecaseCaches, authServices, gatewayServices, validator)
+	app.usecases = usecases
+	app.logger.Info("usecases initialized")
+
+	// Initialize HTTP server
+	httpSrv, err := NewHTTPServer(cfg, usecases, authServices, app.logger)
+	if err != nil {
+		app.logger.Error("failed to initialize server", zap.Error(err))
+		return nil, err
+	}
+	app.httpServer = httpSrv
+	app.logger.Info("server initialized")
+
+	return app, nil
 }
 
-// startServers initializes and starts all configured servers in background goroutines.
-// It ensures servers are ready to accept connections and logs startup information.
-func (app *App) startServers() error {
-	if err := app.servers.Run(app.logger); err != nil {
-		app.logger.Error("server startup failed",
-			zap.Error(err),
-			zap.String("port", app.configs.APP.Port),
-		)
+// Run starts the application and handles graceful shutdown with phased execution.
+//
+// Shutdown Phases:
+//  1. Pre-shutdown: Mark service unhealthy, prepare for shutdown
+//  2. Stop accepting: Stop accepting new connections
+//  3. Drain connections: Wait for in-flight requests (10s max)
+//  4. Cleanup: Close DB, cache, external connections
+//  5. Post-shutdown: Flush logs, final cleanup
+//
+// Total shutdown time: ~20 seconds maximum
+//
+// See Also:
+//   - Shutdown manager: internal/infrastructure/shutdown/shutdown.go
+func (a *App) Run() error {
+	// Start server
+	if err := a.httpServer.Start(); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+
+	a.logger.Info("application started",
+		zap.Int("port", a.config.Server.Port),
+		zap.String("environment", a.config.App.Environment),
+	)
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	sig := <-quit
+
+	a.logger.Info("received shutdown signal",
+		zap.String("signal", sig.String()),
+	)
+
+	// Create shutdown manager and register hooks
+	shutdownMgr := shutdown.NewManager(a.logger)
+	shutdownMgr.RegisterDefaultHooks(a.httpServer, a.repositories)
+
+	// Register custom cache cleanup hook
+	if a.caches != nil {
+		shutdownMgr.RegisterHook(shutdown.PhaseCleanup, "close_caches", func(ctx context.Context) error {
+			a.logger.Info("closing cache connections")
+			// Caches will be closed when repositories close
+			return nil
+		})
+	}
+
+	// Execute graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := shutdownMgr.Shutdown(ctx); err != nil {
+		a.logger.Error("graceful shutdown completed with errors", zap.Error(err))
 		return err
 	}
 
-	app.logServerStarted()
+	a.logger.Info("application stopped gracefully")
 	return nil
-}
-
-// logServerStarted logs detailed information about started servers
-// including addresses and useful endpoints for development and monitoring
-func (app *App) logServerStarted() {
-	port := app.configs.APP.Port
-	baseURL := fmt.Sprintf("http://localhost%s", port)
-
-	app.logger.Info("http server started",
-		zap.String("address", baseURL),
-		zap.String("port", port),
-		zap.String("mode", app.configs.APP.Mode),
-	)
-
-	// Log useful development endpoints
-	if app.configs.APP.Mode == "dev" {
-		app.logger.Info("development endpoints",
-			zap.String("swagger", fmt.Sprintf("%s/swagger/index.html", baseURL)),
-			zap.String("health", fmt.Sprintf("%s/health", baseURL)),
-			zap.String("metrics", fmt.Sprintf("%s/metrics", baseURL)),
-		)
-	}
-}
-
-// logStartupInfo logs application startup information including
-// server addresses and useful links for development
-func (app *App) logStartupInfo() {
-	app.logger.Info("application started",
-		zap.String("time", time.Now().Format("02.01.2006 15:04:05")),
-		zap.String("mode", app.configs.APP.Mode),
-		zap.String("swagger", fmt.Sprintf("http://localhost%s/swagger/index.html", app.configs.APP.Port)),
-		zap.String("health", fmt.Sprintf("http://localhost%s/health", app.configs.APP.Port)),
-	)
-}
-
-// waitForShutdown waits for OS termination signals and triggers graceful shutdown.
-// It handles SIGINT and SIGTERM signals to allow for clean application termination.
-func (app *App) waitForShutdown(timeout time.Duration) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-
-	sig := <-quit
-	app.logger.Info("shutdown signal received",
-		zap.String("signal", sig.String()),
-		zap.Duration("timeout", timeout),
-	)
-
-	// Create context with timeout for graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	// Stop servers with timeout
-	if err := app.servers.Stop(ctx); err != nil {
-		app.logger.Error("server shutdown error", zap.Error(err))
-	} else {
-		app.logger.Info("server stopped gracefully")
-	}
-
-	app.shutdown()
-}
-
-// shutdown performs cleanup of all application resources.
-// It ensures proper resource cleanup and logging synchronization.
-func (app *App) shutdown() {
-	app.logger.Info("running cleanup tasks")
-
-	// Close repositories and database connections
-	if app.repositories != nil {
-		app.repositories.Close()
-		app.logger.Info("repositories closed")
-	}
-
-	// Flush logger buffers (best-effort)
-	if app.logger != nil {
-		_ = app.logger.Sync()
-	}
-
-	app.logger.Info("application shutdown complete")
-}
-
-// parseGracefulTimeout reads the graceful-timeout flag from command line
-// or returns the default timeout for server shutdown operations
-func parseGracefulTimeout() time.Duration {
-	var wait time.Duration
-	flag.DurationVar(&wait, "graceful-timeout", 15*time.Second,
-		"duration for which the server waits for existing connections to finish")
-	flag.Parse()
-	return wait
 }

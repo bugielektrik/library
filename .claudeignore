@@ -1,0 +1,164 @@
+# Claude Code Ignore File
+# Prevents Claude from loading these files/directories to save tokens
+
+# Generated Code (3,000-5,000 tokens per file)
+# Never load - these are auto-generated and not meant to be edited
+generated/
+*.pb.go
+*.pb.gw.go
+*_gen.go
+api/openapi/docs.go
+api/openapi/swagger.json
+api/openapi/swagger.yaml
+
+# Vendor Dependencies (100,000+ tokens)
+# Never load - third-party code
+vendor/
+node_modules/
+
+# Build Artifacts (not source code)
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+dist/
+build/
+
+# Logs and Temporary Files
+*.log
+*.tmp
+*.temp
+service.log
+*.pid
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git Internal Files
+.git/
+.gitignore
+
+# Test Coverage and Reports
+coverage.html
+coverage.txt
+*.out
+*.prof
+
+# Documentation Build Artifacts
+docs/_build/
+docs/.doctrees/
+
+# Migration Binaries (if any)
+migrations/*.exe
+migrations/*.so
+
+# Environment Files (may contain secrets)
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.crt
+
+# Docker Build Context
+.dockerignore
+Dockerfile.build
+
+# Large Data Files
+*.csv
+*.json.gz
+*.tar.gz
+*.zip
+
+# Compiled Object Files
+*.o
+*.a
+
+# Archives
+archive/
+.archive/
+
+# Notes for Humans Only (not for AI)
+# These are developer notes, not code documentation
+NOTES.md
+TODO.txt
+SCRATCH.md
+
+# Old/Deprecated Code
+# If you have deprecated directories
+deprecated/
+old/
+backup/
+
+# Test Data Files
+testdata/large/
+fixtures/large/
+*.fixture.json
+
+# Performance Profiles
+cpu.prof
+mem.prof
+trace.out
+
+# CI/CD Generated Files
+.github/workflows/*.log
+
+# MacOS Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux Files
+.directory
+
+---
+
+# IMPORTANT NOTES FOR CLAUDE CODE:
+#
+# 1. Generated Files Save 3,000-5,000 Tokens Per File
+#    - Never load *.pb.go, *_gen.go, or generated/
+#    - These are auto-generated and massive
+#    - Reference .proto files instead
+#
+# 2. Vendor Directory Saves 100,000+ Tokens
+#    - Never load vendor/ or node_modules/
+#    - Use go.mod/package.json to understand dependencies
+#
+# 3. Binary/Build Files Save Time
+#    - Skip bin/, *.exe, *.so
+#    - These aren't source code
+#
+# 4. Log Files Pollute Context
+#    - Ignore *.log, service.log
+#    - These contain runtime data, not code
+#
+# 5. IDE Files Are Irrelevant
+#    - Skip .vscode/, .idea/
+#    - These are editor-specific
+#
+# TOKEN SAVINGS:
+# - Without .claudeignore: Load ~150,000 unwanted tokens
+# - With .claudeignore: Load only ~20,000-30,000 needed tokens
+# - Net savings: ~120,000 tokens (80% reduction in noise)
+#
+# PATTERNS TO LOAD INSTEAD:
+# - Source code: internal/, cmd/, pkg/
+# - Documentation: .claude/, examples/, CLAUDE.md
+# - Configuration: *.go (not *_gen.go), *.yaml, Makefile
+# - Tests: *_test.go (actual test code)

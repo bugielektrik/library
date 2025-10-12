@@ -1,0 +1,39 @@
+// Package profile implements use cases for member management service.
+//
+// This package orchestrates member-related workflows including member profile
+// management, subscription handling, and member information retrieval. Members
+// are registered users who can borrow books and access library service.
+//
+// Use cases implemented:
+//   - GetMemberUseCase: Retrieves member details by ID
+//   - UpdateMemberUseCase: Updates member profile information
+//   - ListMembersUseCase: Returns all members (admin operation)
+//   - SubscribeMemberUseCase: Handles member subscription workflows
+//
+// Dependencies:
+//   - member.Repository: For member persistence
+//   - member.Service: For subscription business rules and pricing
+//
+// Example usage:
+//
+//	getMemberUC := profile.NewGetMemberUseCase(repo)
+//	response, err := getMemberUC.Execute(ctx, profile.GetMemberRequest{
+//	    ID: "member-uuid",
+//	})
+//
+// Subscription handling:
+//   - Premium tier: $9.99/month, allows 10 concurrent loans
+//   - Basic tier: $4.99/month, allows 3 concurrent loans
+//   - Subscription expiry tracked and validated
+//   - Auto-renewal configurable
+//
+// Business rules:
+//   - Email must be unique across all members
+//   - Active subscription required for book borrowing
+//   - Member profile updates logged for audit trail
+//
+// Architecture:
+//   - Package organized in bounded context structure
+//   - Subscription logic delegated to member.Service in domain layer
+//   - Member creation handled by auth.RegisterMemberUseCase
+package profile

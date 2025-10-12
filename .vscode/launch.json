@@ -5,25 +5,76 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // Name of the configuration; appears in the launch configuration dropdown menu.
-            "name": "Launch Go Program",
-            // Type of configuration; here it's for Go.
+            "name": "Debug API Server",
             "type": "go",
-            // Request type of the configuration; can be 'launch' or 'attach'.
             "request": "launch",
-            // Path to the program to debug.
-            "program": "${workspaceFolder}/main.go",
-            // Automatically restart the program if it exits.
-            "restart": true,
-            // Environment variables to pass to the program.
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/api",
             "env": {
-                "GO_ENV": "development"
+                "GO_ENV": "development",
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "DB_NAME": "library",
+                "DB_USER": "library",
+                "DB_PASSWORD": "library123",
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379"
             },
-            // Enable source maps for better debugging experience.
-            "trace": "verbose",
-            // Pre-launch task to run before starting the debugger.
-            "preLaunchTask": "go: build",
-            // Console to use for debugging; can be 'internalConsole', 'integratedTerminal', or 'externalTerminal'.
+            "console": "integratedTerminal",
+            "trace": "verbose"
+        },
+        {
+            "name": "Debug Worker",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/worker",
+            "env": {
+                "GO_ENV": "development",
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "DB_NAME": "library",
+                "DB_USER": "library",
+                "DB_PASSWORD": "library123",
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Migration",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/migrate",
+            "args": ["up"],
+            "env": {
+                "GO_ENV": "development",
+                "DB_HOST": "localhost",
+                "DB_PORT": "5432",
+                "DB_NAME": "library",
+                "DB_USER": "library",
+                "DB_PASSWORD": "library123"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Current Test",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${fileDirname}",
+            "env": {
+                "GO_ENV": "test"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Current File",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${file}",
             "console": "integratedTerminal"
         }
     ]

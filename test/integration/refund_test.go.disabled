@@ -1,0 +1,294 @@
+//go:build integration
+// +build integration
+
+package integration
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"library-service/internal/adapters/repository/postgres"
+	"library-service/internal/domain/payment"
+	"library-service/internal/usecase/paymentops"
+)
+
+// TestFullRefund tests full payment refund
+func TestFullRefund(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
+	refundUC := paymentops.NewRefundPaymentUseCase(paymentRepo, paymentService, mockGateway)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+	amount := int64(10000)
+
+	// Create and complete a payment
+	initReq := paymentops.InitiatePaymentRequest{
+		MemberID:      memberID,
+		Amount:        amount,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Description:   "Test payment for refund",
+		PaymentMethod: payment.PaymentMethodCard,
+	}
+
+	initResp, err := initiateUC.Execute(ctx, initReq)
+	require.NoError(t, err)
+
+	// Complete the payment via callback
+	paymentEntity, err := paymentRepo.GetByID(ctx, initResp.PaymentID)
+	require.NoError(t, err)
+
+	callbackReq := paymentops.PaymentCallbackRequest{
+		InvoiceID:     paymentEntity.InvoiceID,
+		TransactionID: "txn-" + uuid.New().String(),
+		Amount:        amount,
+		Currency:      "KZT",
+		Status:        "success",
+		CardMask:      stringPtr("1234 56** **** 7890"),
+	}
+
+	_, err = handleCallbackUC.Execute(ctx, callbackReq)
+	require.NoError(t, err)
+
+	// Perform full refund
+	t.Run("Full Refund", func(t *testing.T) {
+		refundReq := paymentops.RefundPaymentRequest{
+			PaymentID: initResp.PaymentID,
+			MemberID:  memberID,
+			Reason:    "Customer requested refund",
+			IsAdmin:   true,
+		}
+
+		refundResp, err := refundUC.Execute(ctx, refundReq)
+		require.NoError(t, err)
+		assert.Equal(t, initResp.PaymentID, refundResp.PaymentID)
+		assert.Equal(t, payment.StatusRefunded, refundResp.Status)
+		assert.Equal(t, amount, refundResp.RefundedAmount)
+
+		// Verify status in database
+		updatedPayment, err := paymentRepo.GetByID(ctx, initResp.PaymentID)
+		require.NoError(t, err)
+		assert.Equal(t, payment.StatusRefunded, updatedPayment.Status)
+		assert.NotNil(t, updatedPayment.RefundedAt)
+	})
+}
+
+// TestPartialRefund tests partial payment refund
+func TestPartialRefund(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
+	refundUC := paymentops.NewRefundPaymentUseCase(paymentRepo, paymentService, mockGateway)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+	amount := int64(10000)
+	partialAmount := int64(3000)
+
+	// Create and complete a payment
+	initReq := paymentops.InitiatePaymentRequest{
+		MemberID:      memberID,
+		Amount:        amount,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Description:   "Test payment for partial refund",
+		PaymentMethod: payment.PaymentMethodCard,
+	}
+
+	initResp, err := initiateUC.Execute(ctx, initReq)
+	require.NoError(t, err)
+
+	// Complete the payment
+	paymentEntity, err := paymentRepo.GetByID(ctx, initResp.PaymentID)
+	require.NoError(t, err)
+
+	callbackReq := paymentops.PaymentCallbackRequest{
+		InvoiceID:     paymentEntity.InvoiceID,
+		TransactionID: "txn-" + uuid.New().String(),
+		Amount:        amount,
+		Currency:      "KZT",
+		Status:        "success",
+	}
+
+	_, err = handleCallbackUC.Execute(ctx, callbackReq)
+	require.NoError(t, err)
+
+	// Perform partial refund
+	t.Run("Partial Refund", func(t *testing.T) {
+		refundReq := paymentops.RefundPaymentRequest{
+			PaymentID:    initResp.PaymentID,
+			MemberID:     memberID,
+			Reason:       "Partial refund requested",
+			IsAdmin:      true,
+			RefundAmount: &partialAmount,
+		}
+
+		refundResp, err := refundUC.Execute(ctx, refundReq)
+		require.NoError(t, err)
+		assert.Equal(t, partialAmount, refundResp.RefundedAmount)
+		assert.Equal(t, payment.StatusRefunded, refundResp.Status)
+	})
+
+	t.Run("Validate Refund Amount", func(t *testing.T) {
+		// Try to refund more than payment amount
+		invalidAmount := int64(20000)
+		refundReq := paymentops.RefundPaymentRequest{
+			PaymentID:    initResp.PaymentID,
+			MemberID:     memberID,
+			Reason:       "Invalid refund amount",
+			IsAdmin:      true,
+			RefundAmount: &invalidAmount,
+		}
+
+		_, err := refundUC.Execute(ctx, refundReq)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot exceed")
+	})
+}
+
+// TestRefundNonCompletedPayment tests that only completed payments can be refunded
+func TestRefundNonCompletedPayment(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	refundUC := paymentops.NewRefundPaymentUseCase(paymentRepo, paymentService, mockGateway)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create a pending payment (not completed)
+	initReq := paymentops.InitiatePaymentRequest{
+		MemberID:      memberID,
+		Amount:        5000,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Description:   "Test pending payment refund",
+		PaymentMethod: payment.PaymentMethodCard,
+	}
+
+	initResp, err := initiateUC.Execute(ctx, initReq)
+	require.NoError(t, err)
+
+	t.Run("Cannot Refund Pending Payment", func(t *testing.T) {
+		refundReq := paymentops.RefundPaymentRequest{
+			PaymentID: initResp.PaymentID,
+			MemberID:  memberID,
+			Reason:    "Attempt to refund pending payment",
+			IsAdmin:   true,
+		}
+
+		_, err := refundUC.Execute(ctx, refundReq)
+		assert.Error(t, err)
+	})
+}
+
+// TestDoubleRefund tests that a payment cannot be refunded twice
+func TestDoubleRefund(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	// Create a completed payment directly
+	ctx := context.Background()
+	memberID := uuid.New().String()
+	paymentID := uuid.New().String()
+
+	completedPayment := payment.Payment{
+		ID:                   paymentID,
+		MemberID:             memberID,
+		InvoiceID:            "double-refund-" + uuid.New().String(),
+		Amount:               5000,
+		Currency:             "KZT",
+		PaymentType:          payment.PaymentTypeFine,
+		Status:               payment.StatusCompleted,
+		PaymentMethod:        payment.PaymentMethodCard,
+		GatewayTransactionID: stringPtr("txn-123"),
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
+		CompletedAt:          ptrTime(time.Now()),
+		ExpiresAt:            time.Now().Add(30 * time.Minute),
+	}
+
+	err := paymentRepo.Create(ctx, &completedPayment)
+	require.NoError(t, err)
+
+	refundUC := paymentops.NewRefundPaymentUseCase(paymentRepo, paymentService, mockGateway)
+
+	// First refund - should succeed
+	t.Run("First Refund - Success", func(t *testing.T) {
+		refundReq := paymentops.RefundPaymentRequest{
+			PaymentID: paymentID,
+			MemberID:  memberID,
+			Reason:    "First refund",
+			IsAdmin:   true,
+		}
+
+		refundResp, err := refundUC.Execute(ctx, refundReq)
+		require.NoError(t, err)
+		assert.Equal(t, payment.StatusRefunded, refundResp.Status)
+	})
+
+	// Second refund - should fail
+	t.Run("Second Refund - Fail", func(t *testing.T) {
+		refundReq := paymentops.RefundPaymentRequest{
+			PaymentID: paymentID,
+			MemberID:  memberID,
+			Reason:    "Second refund attempt",
+			IsAdmin:   true,
+		}
+
+		_, err := refundUC.Execute(ctx, refundReq)
+		assert.Error(t, err)
+	})
+}
+
+func ptrTime(t time.Time) *time.Time {
+	return &t
+}

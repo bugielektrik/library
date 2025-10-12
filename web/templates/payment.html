@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Library Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .payment-info {
+            background: #f7f9fc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .amount {
+            font-size: 36px;
+            color: #667eea;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .payment-methods {
+            margin-top: 30px;
+        }
+
+        .method-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .saved-cards {
+            margin-bottom: 20px;
+        }
+
+        .saved-card {
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .saved-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .saved-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .card-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 28px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .card-details {
+            flex: 1;
+        }
+
+        .card-mask {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .card-type {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .default-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f4ff;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e1e8ed;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            color: #c33;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            color: #3c3;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Payment</h1>
+        <p class="subtitle">Choose your payment method</p>
+
+        <div class="payment-info">
+            <div class="info-row">
+                <span class="info-label">Invoice ID:</span>
+                <span class="info-value" id="invoice-id">Loading...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Description:</span>
+                <span class="info-value" id="payment-type">Loading...</span>
+            </div>
+        </div>
+
+        <div class="amount" id="amount">Loading...</div>
+
+        <div class="payment-methods">
+            <div class="method-title">Saved Cards</div>
+            <div class="saved-cards" id="saved-cards">
+                <p style="color: #666; text-align: center;">Loading saved cards...</p>
+            </div>
+
+            <button class="btn btn-primary" id="pay-with-card" onclick="payWithSavedCard()" style="display: none;">
+                Pay with Selected Card
+            </button>
+
+            <div class="divider">or</div>
+
+            <button class="btn btn-secondary" onclick="payWithNewCard()">
+                Pay with New Card
+            </button>
+
+            <div class="loader" id="loader"></div>
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+        </div>
+    </div>
+
+    <!-- epayment.kz widget will be loaded dynamically based on environment -->
+    <script id="epayment-widget"></script>
+    <script>
+        // Get payment details from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentId = urlParams.get('paymentId');
+        const invoiceId = urlParams.get('invoiceId');
+        const authToken = urlParams.get('authToken');
+        const terminal = urlParams.get('terminal');
+        const amount = urlParams.get('amount');
+        const currency = urlParams.get('currency') || 'KZT';
+        const backLink = urlParams.get('backLink') || window.location.origin;
+        const postLink = urlParams.get('postLink');
+        const widgetUrl = urlParams.get('widgetUrl'); // Widget URL from backend
+
+        let selectedCardId = null;
+        let widgetLoaded = false;
+
+        // Load epayment.kz widget dynamically
+        function loadPaymentWidget() {
+            if (widgetLoaded || !widgetUrl) {
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = widgetUrl;
+                script.onload = () => {
+                    widgetLoaded = true;
+                    resolve();
+                };
+                script.onerror = () => {
+                    reject(new Error('Failed to load payment widget'));
+                };
+                document.body.appendChild(script);
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Display payment info
+            document.getElementById('invoice-id').textContent = invoiceId || 'N/A';
+            document.getElementById('amount').textContent = formatAmount(amount, currency);
+
+            // Get payment type
+            const paymentType = urlParams.get('paymentType') || 'Payment';
+            document.getElementById('payment-type').textContent = formatPaymentType(paymentType);
+
+            // Load payment widget
+            try {
+                await loadPaymentWidget();
+            } catch (error) {
+                console.error('Failed to load payment widget:', error);
+            }
+
+            // Load saved cards
+            await loadSavedCards();
+        });
+
+        async function loadSavedCards() {
+            try {
+                const response = await fetch('/api/v1/saved-cards', {
+                    headers: {
+                        'Authorization': 'Bearer ' + getAuthToken()
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load saved cards');
+                }
+
+                const data = await response.json();
+                displaySavedCards(data.cards || []);
+            } catch (error) {
+                console.error('Error loading saved cards:', error);
+                document.getElementById('saved-cards').innerHTML =
+                    '<p style="color: #666; text-align: center;">No saved cards available</p>';
+            }
+        }
+
+        function displaySavedCards(cards) {
+            const container = document.getElementById('saved-cards');
+
+            if (cards.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">No saved cards available</p>';
+                return;
+            }
+
+            container.innerHTML = cards.map(card => `
+                <div class="saved-card" onclick="selectCard('${card.id}')">
+                    <div class="card-info">
+                        <div class="card-icon">${card.card_type}</div>
+                        <div class="card-details">
+                            <div class="card-mask">${card.card_mask}</div>
+                            <div class="card-type">${card.card_type} • Expires ${card.expiry_month}/${card.expiry_year}</div>
+                        </div>
+                    </div>
+                    ${card.is_default ? '<span class="default-badge">DEFAULT</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function selectCard(cardId) {
+            selectedCardId = cardId;
+
+            // Update UI
+            document.querySelectorAll('.saved-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            // Show pay button
+            document.getElementById('pay-with-card').style.display = 'block';
+        }
+
+        async function payWithSavedCard() {
+            if (!selectedCardId) {
+                showError('Please select a card');
+                return;
+            }
+
+            showLoader();
+
+            try {
+                const response = await fetch('/api/v1/payments/pay-with-card', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getAuthToken()
+                    },
+                    body: JSON.stringify({
+                        saved_card_id: selectedCardId,
+                        amount: parseInt(amount),
+                        currency: currency,
+                        payment_type: urlParams.get('paymentType') || 'fine'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Payment failed');
+                }
+
+                const data = await response.json();
+                showSuccess('Payment initiated successfully!');
+
+                setTimeout(() => {
+                    window.location.href = backLink + '?paymentId=' + data.payment_id;
+                }, 2000);
+            } catch (error) {
+                console.error('Payment error:', error);
+                showError('Payment failed. Please try again.');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function payWithNewCard() {
+            // Initialize epayment.kz widget
+            if (typeof halyk === 'undefined') {
+                showError('Payment widget not loaded. Please refresh the page.');
+                return;
+            }
+
+            halyk.pay({
+                invoiceId: invoiceId,
+                backLink: backLink,
+                postLink: postLink,
+                failureBackLink: backLink,
+                failurePostLink: postLink,
+                language: 'rus',
+                terminal: terminal,
+                amount: amount,
+                currency: currency,
+                auth: authToken
+            });
+        }
+
+        function formatAmount(amount, currency) {
+            const formatted = (parseInt(amount) / 100).toFixed(2);
+            return `${formatted} ${currency}`;
+        }
+
+        function formatPaymentType(type) {
+            const types = {
+                'fine': 'Library Fine',
+                'subscription': 'Membership Subscription',
+                'deposit': 'Deposit'
+            };
+            return types[type] || type;
+        }
+
+        function getAuthToken() {
+            // Get JWT token from localStorage or cookie
+            return localStorage.getItem('auth_token') || '';
+        }
+
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

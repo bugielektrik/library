@@ -1,0 +1,491 @@
+//go:build integration
+// +build integration
+
+package integration
+
+import (
+	"context"
+	"encoding/json"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"library-service/internal/adapters/payment/epayment"
+	"library-service/internal/adapters/repository/postgres"
+	"library-service/internal/domain/payment"
+	"library-service/internal/usecase/paymentops"
+)
+
+// TestPaymentFullLifecycle tests the complete payment lifecycle
+func TestPaymentFullLifecycle(t *testing.T) {
+	// Setup
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+
+	// Create a mock payment gateway for testing
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	verifyUC := paymentops.NewVerifyPaymentUseCase(paymentRepo, paymentService, mockGateway)
+	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
+	cancelUC := paymentops.NewCancelPaymentUseCase(paymentRepo, paymentService)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+	amount := int64(5000) // 50 KZT
+
+	// Step 1: Initiate Payment
+	t.Run("Initiate Payment", func(t *testing.T) {
+		req := paymentops.InitiatePaymentRequest{
+			MemberID:      memberID,
+			Amount:        amount,
+			Currency:      "KZT",
+			PaymentType:   payment.PaymentTypeFine,
+			Description:   "Test payment",
+			PaymentMethod: payment.PaymentMethodCard,
+		}
+
+		resp, err := initiateUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.NotEmpty(t, resp.PaymentID)
+		assert.NotEmpty(t, resp.InvoiceID)
+		assert.NotEmpty(t, resp.PaymentURL)
+		assert.Equal(t, amount, resp.Amount)
+		assert.Equal(t, "KZT", resp.Currency)
+		assert.Equal(t, payment.StatusPending, resp.Status)
+
+		// Store payment ID for subsequent tests
+		t.Cleanup(func() {
+			// Verify payment was created in database
+			paymentEntity, err := paymentRepo.GetByID(ctx, resp.PaymentID)
+			require.NoError(t, err)
+			assert.Equal(t, memberID, paymentEntity.MemberID)
+			assert.Equal(t, amount, paymentEntity.Amount)
+		})
+	})
+
+	// Step 2: Get payment for callback test
+	payments, err := paymentRepo.ListByMemberID(ctx, memberID)
+	require.NoError(t, err)
+	require.Len(t, payments, 1)
+	testPayment := payments[0]
+
+	// Step 3: Handle Successful Callback
+	t.Run("Handle Successful Callback", func(t *testing.T) {
+		callbackReq := paymentops.PaymentCallbackRequest{
+			InvoiceID:     testPayment.InvoiceID,
+			TransactionID: "txn-" + uuid.New().String(),
+			Amount:        amount,
+			Currency:      "KZT",
+			Status:        "success",
+			CardMask:      stringPtr("1234 56** **** 7890"),
+			ApprovalCode:  stringPtr("123456"),
+		}
+
+		resp, err := handleCallbackUC.Execute(ctx, callbackReq)
+		require.NoError(t, err)
+		assert.Equal(t, testPayment.ID, resp.PaymentID)
+		assert.Equal(t, payment.StatusCompleted, resp.Status)
+		assert.True(t, resp.Processed)
+
+		// Verify payment status updated
+		updatedPayment, err := paymentRepo.GetByID(ctx, testPayment.ID)
+		require.NoError(t, err)
+		assert.Equal(t, payment.StatusCompleted, updatedPayment.Status)
+		assert.NotNil(t, updatedPayment.CardMask)
+		assert.NotNil(t, updatedPayment.CompletedAt)
+	})
+
+	// Step 4: Verify Payment Status
+	t.Run("Verify Payment Status", func(t *testing.T) {
+		mockGateway.SetCheckPaymentResponse(map[string]interface{}{
+			"Status": "success",
+			"Transaction": map[string]interface{}{
+				"ID":         "txn-123",
+				"StatusName": "Success",
+			},
+		})
+
+		req := paymentops.VerifyPaymentRequest{
+			PaymentID: testPayment.ID,
+			MemberID:  memberID,
+		}
+
+		resp, err := verifyUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, testPayment.ID, resp.PaymentID)
+		assert.Equal(t, payment.StatusCompleted, resp.Status)
+	})
+}
+
+// TestPaymentCancellation tests payment cancellation
+func TestPaymentCancellation(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	cancelUC := paymentops.NewCancelPaymentUseCase(paymentRepo, paymentService)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create a payment
+	req := paymentops.InitiatePaymentRequest{
+		MemberID:      memberID,
+		Amount:        3000,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Description:   "Test payment for cancellation",
+		PaymentMethod: payment.PaymentMethodCard,
+	}
+
+	initResp, err := initiateUC.Execute(ctx, req)
+	require.NoError(t, err)
+
+	// Cancel the payment
+	t.Run("Cancel Pending Payment", func(t *testing.T) {
+		cancelReq := paymentops.CancelPaymentRequest{
+			PaymentID: initResp.PaymentID,
+			MemberID:  memberID,
+			Reason:    "User cancelled",
+		}
+
+		cancelResp, err := cancelUC.Execute(ctx, cancelReq)
+		require.NoError(t, err)
+		assert.Equal(t, initResp.PaymentID, cancelResp.PaymentID)
+		assert.Equal(t, payment.StatusCancelled, cancelResp.Status)
+
+		// Verify status in database
+		paymentEntity, err := paymentRepo.GetByID(ctx, initResp.PaymentID)
+		require.NoError(t, err)
+		assert.Equal(t, payment.StatusCancelled, paymentEntity.Status)
+	})
+}
+
+// TestCallbackIdempotency tests that callbacks are idempotent
+func TestCallbackIdempotency(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create payment
+	initReq := paymentops.InitiatePaymentRequest{
+		MemberID:      memberID,
+		Amount:        2000,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Description:   "Test idempotency",
+		PaymentMethod: payment.PaymentMethodCard,
+	}
+
+	initResp, err := initiateUC.Execute(ctx, initReq)
+	require.NoError(t, err)
+
+	// Get payment to use invoice ID
+	paymentEntity, err := paymentRepo.GetByID(ctx, initResp.PaymentID)
+	require.NoError(t, err)
+
+	callbackReq := paymentops.PaymentCallbackRequest{
+		InvoiceID:     paymentEntity.InvoiceID,
+		TransactionID: "txn-" + uuid.New().String(),
+		Amount:        2000,
+		Currency:      "KZT",
+		Status:        "success",
+	}
+
+	// First callback - should process
+	t.Run("First Callback - Process", func(t *testing.T) {
+		resp, err := handleCallbackUC.Execute(ctx, callbackReq)
+		require.NoError(t, err)
+		assert.True(t, resp.Processed)
+		assert.Equal(t, payment.StatusCompleted, resp.Status)
+	})
+
+	// Second callback - should be skipped (idempotent)
+	t.Run("Second Callback - Skip", func(t *testing.T) {
+		resp, err := handleCallbackUC.Execute(ctx, callbackReq)
+		require.NoError(t, err)
+		assert.False(t, resp.Processed) // Should not process again
+		assert.Equal(t, payment.StatusCompleted, resp.Status)
+	})
+}
+
+// TestPaymentExpiry tests the payment expiry mechanism
+func TestPaymentExpiry(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+
+	expireUC := paymentops.NewExpirePaymentsUseCase(paymentRepo, paymentService)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create an expired payment
+	expiredPayment := payment.Payment{
+		ID:            uuid.New().String(),
+		MemberID:      memberID,
+		InvoiceID:     "expired-invoice-" + uuid.New().String(),
+		Amount:        1000,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Status:        payment.StatusPending,
+		PaymentMethod: payment.PaymentMethodCard,
+		CreatedAt:     time.Now().Add(-2 * time.Hour),
+		UpdatedAt:     time.Now().Add(-2 * time.Hour),
+		ExpiresAt:     time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
+	}
+
+	err := paymentRepo.Create(ctx, &expiredPayment)
+	require.NoError(t, err)
+
+	t.Run("Expire Old Payments", func(t *testing.T) {
+		req := paymentops.ExpirePaymentsRequest{
+			BatchSize: 100,
+		}
+
+		resp, err := expireUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.ExpiredCount)
+		assert.Equal(t, 0, resp.FailedCount)
+
+		// Verify payment status updated
+		updatedPayment, err := paymentRepo.GetByID(ctx, expiredPayment.ID)
+		require.NoError(t, err)
+		assert.Equal(t, payment.StatusFailed, updatedPayment.Status)
+	})
+}
+
+// TestCallbackRetryMechanism tests the callback retry system
+func TestCallbackRetryMechanism(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	callbackRetryRepo := postgres.NewCallbackRetryRepository(db)
+	paymentService := payment.NewService()
+
+	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
+	processRetriesUC := paymentops.NewProcessCallbackRetriesUseCase(callbackRetryRepo, handleCallbackUC)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create a payment
+	testPayment := payment.Payment{
+		ID:            uuid.New().String(),
+		MemberID:      memberID,
+		InvoiceID:     "retry-invoice-" + uuid.New().String(),
+		Amount:        5000,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Status:        payment.StatusPending,
+		PaymentMethod: payment.PaymentMethodCard,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		ExpiresAt:     time.Now().Add(30 * time.Minute),
+	}
+
+	err := paymentRepo.Create(ctx, &testPayment)
+	require.NoError(t, err)
+
+	// Create a callback retry entry
+	callbackData := paymentops.PaymentCallbackRequest{
+		InvoiceID:     testPayment.InvoiceID,
+		TransactionID: "txn-" + uuid.New().String(),
+		Amount:        5000,
+		Currency:      "KZT",
+		Status:        "success",
+	}
+
+	callbackJSON, err := json.Marshal(callbackData)
+	require.NoError(t, err)
+
+	now := time.Now()
+	callbackRetry := &payment.CallbackRetry{
+		ID:           uuid.New().String(),
+		PaymentID:    testPayment.ID,
+		CallbackData: callbackJSON,
+		RetryCount:   0,
+		MaxRetries:   5,
+		NextRetryAt:  &now, // Ready to retry now
+		Status:       payment.CallbackRetryStatusPending,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	err = callbackRetryRepo.Create(callbackRetry)
+	require.NoError(t, err)
+
+	t.Run("Process Callback Retries", func(t *testing.T) {
+		req := paymentops.ProcessCallbackRetriesRequest{
+			BatchSize: 50,
+		}
+
+		resp, err := processRetriesUC.Execute(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.ProcessedCount)
+		assert.Equal(t, 1, resp.SuccessCount)
+		assert.Equal(t, 0, resp.FailedCount)
+
+		// Verify callback retry marked as completed
+		updatedRetry, err := callbackRetryRepo.GetByID(callbackRetry.ID)
+		require.NoError(t, err)
+		assert.Equal(t, payment.CallbackRetryStatusCompleted, updatedRetry.Status)
+
+		// Verify payment status updated
+		updatedPayment, err := paymentRepo.GetByID(ctx, testPayment.ID)
+		require.NoError(t, err)
+		assert.Equal(t, payment.StatusCompleted, updatedPayment.Status)
+	})
+}
+
+// TestCallbackValidation tests callback security validations
+func TestCallbackValidation(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	paymentRepo := postgres.NewPaymentRepository(db)
+	paymentService := payment.NewService()
+	mockGateway := &MockPaymentGateway{
+		terminal:  "test-terminal",
+		backLink:  "http://localhost:8080/payment",
+		postLink:  "http://localhost:8080/api/v1/payments/callback",
+		widgetURL: "https://test.epayment.kz/widget",
+	}
+
+	initiateUC := paymentops.NewInitiatePaymentUseCase(paymentRepo, paymentService, mockGateway)
+	handleCallbackUC := paymentops.NewHandleCallbackUseCase(paymentRepo, paymentService)
+
+	ctx := context.Background()
+	memberID := uuid.New().String()
+
+	// Create payment
+	initReq := paymentops.InitiatePaymentRequest{
+		MemberID:      memberID,
+		Amount:        4000,
+		Currency:      "KZT",
+		PaymentType:   payment.PaymentTypeFine,
+		Description:   "Test validation",
+		PaymentMethod: payment.PaymentMethodCard,
+	}
+
+	initResp, err := initiateUC.Execute(ctx, initReq)
+	require.NoError(t, err)
+
+	paymentEntity, err := paymentRepo.GetByID(ctx, initResp.PaymentID)
+	require.NoError(t, err)
+
+	t.Run("Amount Mismatch", func(t *testing.T) {
+		callbackReq := paymentops.PaymentCallbackRequest{
+			InvoiceID:     paymentEntity.InvoiceID,
+			TransactionID: "txn-" + uuid.New().String(),
+			Amount:        9999, // Wrong amount
+			Currency:      "KZT",
+			Status:        "success",
+		}
+
+		_, err := handleCallbackUC.Execute(ctx, callbackReq)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "amount")
+	})
+
+	t.Run("Currency Mismatch", func(t *testing.T) {
+		callbackReq := paymentops.PaymentCallbackRequest{
+			InvoiceID:     paymentEntity.InvoiceID,
+			TransactionID: "txn-" + uuid.New().String(),
+			Amount:        4000,
+			Currency:      "USD", // Wrong currency
+			Status:        "success",
+		}
+
+		_, err := handleCallbackUC.Execute(ctx, callbackReq)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "currency")
+	})
+}
+
+// MockPaymentGateway is a mock implementation for testing
+type MockPaymentGateway struct {
+	terminal              string
+	backLink              string
+	postLink              string
+	widgetURL             string
+	checkPaymentResponse  interface{}
+}
+
+func (m *MockPaymentGateway) GetAuthToken(ctx context.Context) (string, error) {
+	return "test-token", nil
+}
+
+func (m *MockPaymentGateway) GetTerminal() string {
+	return m.terminal
+}
+
+func (m *MockPaymentGateway) GetBackLink() string {
+	return m.backLink
+}
+
+func (m *MockPaymentGateway) GetPostLink() string {
+	return m.postLink
+}
+
+func (m *MockPaymentGateway) GetWidgetURL() string {
+	return m.widgetURL
+}
+
+func (m *MockPaymentGateway) CheckPaymentStatus(ctx context.Context, invoiceID string) (interface{}, error) {
+	if m.checkPaymentResponse != nil {
+		return m.checkPaymentResponse, nil
+	}
+	return map[string]interface{}{
+		"Status": "pending",
+	}, nil
+}
+
+func (m *MockPaymentGateway) SetCheckPaymentResponse(resp interface{}) {
+	m.checkPaymentResponse = resp
+}
+
+// MockPaymentGateway implements the PaymentGateway interface for testing
+// Note: It only implements the methods defined in the interface
+
+func stringPtr(s string) *string {
+	return &s
+}
