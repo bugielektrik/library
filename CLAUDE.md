@@ -74,8 +74,12 @@ internal/
 │   ├── handler/       # Reservation HTTP handlers + DTOs
 │   └── repository/    # Reservation PostgreSQL implementation
 │       └── mocks/     # Auto-generated test mocks (✅ Phase 2.1)
-├── container/          # ✅ Use case container (consolidated)
-│   └── container.go   # All use case wiring & dependency injection
+├── usecase/            # ✅ Use case container + factories
+│   ├── container.go   # All use case wiring & dependency injection
+│   ├── book_factory.go
+│   ├── auth_factory.go
+│   ├── payment_factory.go
+│   └── reservation_factory.go
 ├── app/               # ✅ Application layer (domain-aware wiring)
 │   ├── app.go         # Application bootstrap
 │   ├── repository.go  # Repository container (domain-aware)
@@ -87,6 +91,7 @@ internal/
 │   │   └── postgres/  # Generic SQL utilities (shared by all repos)
 │   ├── handlers/      # Base handler utilities
 │   ├── middleware/    # Auth, error, logging, validation middleware
+│   ├── dto/           # Shared error DTOs only
 │   ├── errors/        # Domain-specific error types
 │   ├── httputil/      # HTTP helpers (status, JSON)
 │   ├── logutil/       # Logger factories
@@ -98,7 +103,7 @@ internal/
     ├── config/        # Viper wrapper with validation
     ├── log/           # Logging configuration
     ├── store/         # DB connections
-    ├── server/        # ✅ HTTP server (moved to break import cycles)
+    ├── server/        # ✅ HTTP server and routing
     │   ├── http.go    # Server initialization
     │   └── router.go  # Route configuration
     └── shutdown/      # Graceful shutdown manager
@@ -224,7 +229,7 @@ make gen-docs           # Regenerate Swagger docs
    - Mocks: `internal/{entity}/repository/mocks/` (auto-generated via `make gen-mocks`)
    - Add Swagger annotations to handlers
 
-5. **Wire Dependencies** (`internal/container/container.go`)
+5. **Wire Dependencies** (`internal/usecase/container.go`)
    - Add repository to `Repositories` struct
    - Add use cases to appropriate domain group in `Container`
    - Wire in `NewContainer()` function
@@ -323,7 +328,7 @@ if !ok {
 }
 ```
 
-**Note:** Middleware was moved from `internal/infrastructure/pkg/middleware` to `internal/pkg/middleware` in Phase 5 (October 2025)
+**Note:** Middleware location: `internal/pkg/middleware` (moved from `internal/adapters/http/middleware` in Phase 6, October 2025)
 
 **4. Status Code Checks (NEVER use magic numbers):**
 ```go
@@ -483,7 +488,7 @@ func TestBookService_ValidateISBN(t *testing.T) {
 ## Important Files
 
 ### Core Architecture
-- `internal/container/container.go` - **CRITICAL**: Use case dependency injection
+- `internal/usecase/container.go` - **CRITICAL**: Use case dependency injection
 - `internal/app/app.go` - **CRITICAL**: Application bootstrap
 - `internal/app/repository.go` - **CRITICAL**: Repository container (domain-aware)
 - `internal/app/cache.go` - **CRITICAL**: Cache container (domain-aware)
@@ -584,7 +589,7 @@ make ci                 # Run full CI pipeline
 # 3. Service (orchestration + tests)         → internal/{entity}/service/ (package: service)
 # 4. Adapters (HTTP + repository)            → internal/{entity}/handler/ and repository/
 # 5. Add Swagger annotations to handler     → @Security, @Summary, @Param, etc.
-# 6. Wire in container.go                    → internal/container/container.go
+# 6. Wire in container.go                    → internal/usecase/container.go
 # 7. Migration (if needed)                   → make migrate-create name=...
 # 8. Regenerate API docs                     → make gen-docs
 ```
@@ -699,7 +704,8 @@ var _ domain.Repository = (*BookRepository)(nil)
 - ✅ Zero breaking changes
 
 **Phase 5 - Package Organization (October 2025):**
-- ✅ Utilities organized in `internal/pkg/` (shared, domain-agnostic)
+- ✅ Moved shared utilities from `pkg/` to `internal/pkg/` (7 packages, 94 files updated)
+- ✅ Updated all import paths across codebase
 - ✅ Infrastructure services in `internal/infrastructure/` (auth, config, log, store, shutdown)
 - ✅ Clear separation: utilities vs infrastructure concerns
 - ✅ All tests passing, all builds successful
@@ -729,14 +735,28 @@ var _ domain.Repository = (*BookRepository)(nil)
 
 **Phase 8 - Token Optimization Refactoring (October 2025):**
 - ✅ **Service Layer Consolidation** (33 → 7 files, 79% reduction):
-  - Payments: 20 → 4 files (payment_operations.go 818 lines, payment_callbacks.go 449 lines, saved_card.go 342 lines, receipt.go 284 lines)
-  - Books: 7 → 1 file (book_operations.go 563 lines with 6 CRUD + query operations)
-  - Members: 6 → 2 files (auth.go 446 lines with 4 auth operations, profile.go 101 lines with 2 profile operations)
+  - **Payments**: 20 → 4 files (80% reduction)
+    - payment_operations.go (818 lines): 7 use cases + 3 helpers (Initiate, Verify, Cancel, Refund, SaveCard, SetDefaultCard, ListMemberPayments)
+    - payment_callbacks.go (449 lines): 3 background operations (HandleCallback, ProcessCallbackRetries, ExpirePayments)
+    - saved_card.go (342 lines): 3 card operations (Delete, List, PayWithSavedCard)
+    - receipt.go (284 lines): 3 receipt operations (Generate, Get, List)
+  - **Books**: 7 → 1 file (86% reduction)
+    - book_operations.go (563 lines): 6 operations (Create, Update, Delete, Get, List, ListBookAuthors with concurrent fetching)
+  - **Members**: 6 → 2 files (67% reduction)
+    - auth.go (446 lines): 4 auth operations (Login, Register, Refresh, Validate) + GetCurrentMember helper
+    - profile.go (101 lines): 2 profile operations (GetMemberProfile, ListMembers)
 - ✅ **Test File Organization** (2 → 7 files for better discoverability):
-  - Reservations: 1 → 4 feature-based files (validation, transitions, queries, entity tests)
-  - Payments: 1 → 3 lifecycle-based files (validation, lifecycle, utilities tests)
+  - **Reservations**: 1 → 4 feature-based files (652 lines split)
+    - service_validation_test.go (210 lines): Validation logic
+    - service_transitions_test.go (234 lines): Status transitions
+    - service_queries_test.go (98 lines): Queue management
+    - reservation_entity_test.go (95 lines): Entity methods
+  - **Payments**: 1 → 3 lifecycle-based files (596 lines split)
+    - service_validation_test.go (230 lines): Input/currency validation (10 scenarios)
+    - service_lifecycle_test.go (237 lines): Status transitions (28 scenarios), expiration, refund eligibility
+    - service_utilities_test.go (129 lines): Invoice ID, amount formatting (8 currencies), calculations
 - ✅ **Token Efficiency Impact**: 50-60% reduction in AI context loading (15-25 files → 1-2 files per feature)
 - ✅ **Code Quality**: All tests passing (60+ packages), zero breaking changes, all builds successful
-- ✅ **Pattern Consistency**: Section separators, Request/Response types, helper methods properly located
+- ✅ **Pattern Consistency**: Section separators (`// ========`), Request/Response types, helper methods properly located
 - ✅ **Architecture Preservation**: Clean Architecture boundaries maintained, domain isolation preserved
 - ✅ See PR #3 for comprehensive summary and verification results
