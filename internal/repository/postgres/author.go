@@ -3,91 +3,108 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 
 	"library-service/internal/domain/author"
+	"library-service/internal/repository/sqlc"
 	"library-service/pkg/store"
 )
 
 type AuthorRepository struct {
-	db *sqlx.DB
+	db      *sqlx.DB
+	queries *sqlc.Queries
 }
 
 func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
-	return &AuthorRepository{db: db}
+	return &AuthorRepository{
+		db:      db,
+		queries: sqlc.New(db),
+	}
 }
 
 func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
-	query := `SELECT id, full_name, pseudonym, specialty FROM authors ORDER BY id`
-	var authors []author.Entity
-	err := r.db.SelectContext(ctx, &authors, query)
-	return authors, err
+	dbAuthors, err := r.queries.ListAuthors(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	authors := make([]author.Entity, 0, len(dbAuthors))
+	for _, dbAuthor := range dbAuthors {
+		authors = append(authors, author.Entity{
+			ID:        dbAuthor.ID,
+			FullName:  nullStringToPtr(dbAuthor.FullName),
+			Pseudonym: nullStringToPtr(dbAuthor.Pseudonym),
+			Specialty: nullStringToPtr(dbAuthor.Specialty),
+		})
+	}
+
+	return authors, nil
 }
 
 func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string, error) {
-	query := `INSERT INTO authors (full_name, pseudonym, specialty) VALUES ($1, $2, $3) RETURNING id`
-	args := []interface{}{data.FullName, data.Pseudonym, data.Specialty}
-	var id string
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return "", store.ErrorNotFound
+	author, err := r.queries.AddAuthor(ctx, sqlc.AddAuthorParams{
+		FullName:  ptrToNullString(data.FullName),
+		Pseudonym: ptrToNullString(data.Pseudonym),
+		Specialty: ptrToNullString(data.Specialty),
+	})
+	if err != nil {
+		return "", nil
 	}
-	return id, err
+	return author, nil
 }
 
 func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, error) {
-	query := `SELECT id, full_name, pseudonym, specialty FROM authors WHERE id=$1`
-	var author author.Entity
-	err := r.db.GetContext(ctx, &author, query, id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return author, store.ErrorNotFound
+	dbAuthor, err := r.queries.GetAuthor(ctx, id)
+	if err != nil {
+		return author.Entity{}, err
 	}
-	return author, err
+	author := author.Entity{
+		ID:        dbAuthor.ID,
+		FullName:  &dbAuthor.FullName.String,
+		Pseudonym: &dbAuthor.Pseudonym.String,
+		Specialty: &dbAuthor.Specialty.String,
+	}
+	return author, nil
 }
 
 func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
-	sets, args := r.prepareArgs(data)
-	if len(args) == 0 {
-		return nil
+	_, err := r.queries.UpdateAuthor(ctx, sqlc.UpdateAuthorParams{
+		ID:        id,
+		FullName:  ptrToNullString(data.FullName),
+		Pseudonym: ptrToNullString(data.Pseudonym),
+		Specialty: ptrToNullString(data.Specialty),
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return store.ErrorNotFound
+		}
+		return err
 	}
-	args = append(args, id)
-	query := fmt.Sprintf("UPDATE authors SET %s, updated_at=CURRENT_TIMESTAMP WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
-	}
-	return err
+	return nil
 }
 
 func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM authors WHERE id=$1 RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
+	_, err := r.queries.DeleteAuthor(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return store.ErrorNotFound
+		}
+		return err
 	}
-	return err
+	return nil
 }
 
-func (r *AuthorRepository) prepareArgs(data author.Entity) ([]string, []interface{}) {
-	var sets []string
-	var args []interface{}
+func nullStringToPtr(ns sql.NullString) *string {
+	if !ns.Valid {
+		return nil
+	}
+	return &ns.String
+}
 
-	if data.FullName != nil {
-		args = append(args, data.FullName)
-		sets = append(sets, fmt.Sprintf("full_name=$%d", len(args)))
+func ptrToNullString(s *string) sql.NullString {
+	if s == nil || *s == "" {
+		return sql.NullString{Valid: false}
 	}
-	if data.Pseudonym != nil {
-		args = append(args, data.Pseudonym)
-		sets = append(sets, fmt.Sprintf("pseudonym=$%d", len(args)))
-	}
-	if data.Specialty != nil {
-		args = append(args, data.Specialty)
-		sets = append(sets, fmt.Sprintf("specialty=$%d", len(args)))
-	}
-
-	return sets, args
+	return sql.NullString{String: *s, Valid: true}
 }
