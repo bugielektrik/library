@@ -17,6 +17,8 @@ services:
 
   mongo:
     image: mongo:latest
+    ports:
+      - "27017:27017"
     environment:
       - MONGODB_DATABASE=mongo
       - MONGO_INITDB_ROOT_USERNAME=mongo
@@ -24,6 +26,8 @@ services:
 
   postgres:
     image: postgres:latest
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres

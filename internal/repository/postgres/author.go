@@ -13,17 +13,14 @@ import (
 	"library-service/pkg/store"
 )
 
-// AuthorRepository handles CRUD operations for authors in a PostgreSQL database.
 type AuthorRepository struct {
 	db *sqlx.DB
 }
 
-// NewAuthorRepository creates a new AuthorRepository.
 func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
 	return &AuthorRepository{db: db}
 }
 
-// List retrieves all authors from the database.
 func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 	query := `SELECT id, full_name, pseudonym, specialty FROM authors ORDER BY id`
 	var authors []author.Entity
@@ -31,7 +28,6 @@ func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 	return authors, err
 }
 
-// Add inserts a new author into the database.
 func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string, error) {
 	query := `INSERT INTO authors (full_name, pseudonym, specialty) VALUES ($1, $2, $3) RETURNING id`
 	args := []interface{}{data.FullName, data.Pseudonym, data.Specialty}
@@ -43,7 +39,6 @@ func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string,
 	return id, err
 }
 
-// Get retrieves an author by ID from the database.
 func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, error) {
 	query := `SELECT id, full_name, pseudonym, specialty FROM authors WHERE id=$1`
 	var author author.Entity
@@ -54,7 +49,6 @@ func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, e
 	return author, err
 }
 
-// Update modifies an existing author in the database.
 func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
 	sets, args := r.prepareArgs(data)
 	if len(args) == 0 {
@@ -69,7 +63,6 @@ func (r *AuthorRepository) Update(ctx context.Context, id string, data author.En
 	return err
 }
 
-// Delete removes an author by ID from the database.
 func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM authors WHERE id=$1 RETURNING id`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(&id)
@@ -79,7 +72,6 @@ func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-// prepareArgs prepares the update arguments for the SQL query.
 func (r *AuthorRepository) prepareArgs(data author.Entity) ([]string, []interface{}) {
 	var sets []string
 	var args []interface{}

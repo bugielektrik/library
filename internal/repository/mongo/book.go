@@ -12,17 +12,14 @@ import (
 	"library-service/pkg/store"
 )
 
-// BookRepository handles CRUD operations for books in a MongoDB database.
 type BookRepository struct {
 	db *mongo.Collection
 }
 
-// NewBookRepository creates a new BookRepository.
 func NewBookRepository(db *mongo.Database) *BookRepository {
 	return &BookRepository{db: db.Collection("books")}
 }
 
-// List retrieves all books from the database.
 func (r *BookRepository) List(ctx context.Context) ([]book.Entity, error) {
 	cur, err := r.db.Find(ctx, bson.M{})
 	if err != nil {
@@ -35,7 +32,6 @@ func (r *BookRepository) List(ctx context.Context) ([]book.Entity, error) {
 	return books, nil
 }
 
-// Add inserts a new book into the database.
 func (r *BookRepository) Add(ctx context.Context, data book.Entity) (string, error) {
 	res, err := r.db.InsertOne(ctx, data)
 	if err != nil {
@@ -44,7 +40,6 @@ func (r *BookRepository) Add(ctx context.Context, data book.Entity) (string, err
 	return res.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-// Get retrieves a book by ID from the database.
 func (r *BookRepository) Get(ctx context.Context, id string) (book.Entity, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -58,7 +53,6 @@ func (r *BookRepository) Get(ctx context.Context, id string) (book.Entity, error
 	return book, err
 }
 
-// Update modifies an existing book in the database.
 func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -78,7 +72,6 @@ func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity
 	return nil
 }
 
-// Delete removes a book by ID from the database.
 func (r *BookRepository) Delete(ctx context.Context, id string) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -94,7 +87,6 @@ func (r *BookRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// prepareArgs prepares the update arguments for the MongoDB query.
 func (r *BookRepository) prepareArgs(data book.Entity) bson.M {
 	args := bson.M{}
 	if data.Name != nil {

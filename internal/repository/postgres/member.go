@@ -18,12 +18,10 @@ type MemberRepository struct {
 	db *sqlx.DB
 }
 
-// NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository(db *sqlx.DB) *MemberRepository {
 	return &MemberRepository{db: db}
 }
 
-// List retrieves all members from the database.
 func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
 	query := `
 		SELECT id, full_name, books
@@ -37,7 +35,6 @@ func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
 	return members, nil
 }
 
-// Add inserts a new member into the database.
 func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
 	query := `
 		INSERT INTO members (full_name, books)
@@ -56,7 +53,6 @@ func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string,
 	return id, nil
 }
 
-// Get retrieves a member by ID from the database.
 func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
 	query := `
 		SELECT id, full_name, books
@@ -73,7 +69,6 @@ func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, e
 	return member, nil
 }
 
-// Update modifies an existing member in the database.
 func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
 	sets, args := r.prepareUpdateArgs(data)
 	if len(args) == 0 {
@@ -93,7 +88,6 @@ func (r *MemberRepository) Update(ctx context.Context, id string, data member.En
 	return nil
 }
 
-// prepareUpdateArgs prepares the arguments for the update query.
 func (r *MemberRepository) prepareUpdateArgs(data member.Entity) ([]string, []interface{}) {
 	var sets []string
 	var args []interface{}
@@ -111,7 +105,6 @@ func (r *MemberRepository) prepareUpdateArgs(data member.Entity) ([]string, []in
 	return sets, args
 }
 
-// Delete removes a member by ID from the database.
 func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	query := `
 		DELETE FROM members

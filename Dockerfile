@@ -27,8 +27,6 @@ FROM alpine:3.22 as hoster
 
 # Copy configuration files, assets, templates, and the built application from the builder stage
 COPY --from=builder /build/.env ./.env
-COPY --from=builder /build/assets ./assets
-COPY --from=builder /build/templates ./templates
 COPY --from=builder /build/library-service ./library-service
 
 # Define the entry point for the final application image
