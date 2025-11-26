@@ -4,13 +4,27 @@
 
 package sqlc
 
-import (
-	"database/sql"
-)
-
 type Author struct {
 	ID        string
-	FullName  sql.NullString
-	Pseudonym sql.NullString
-	Specialty sql.NullString
+	FullName  string
+	Pseudonym string
+	Specialty string
+}
+
+type Book struct {
+	ID       string
+	Name     string
+	Genre    string
+	Isbn     string
+	AuthorID string
+}
+
+type Member struct {
+	ID       string
+	FullName string
+}
+
+type MembersAndBook struct {
+	BookID   string
+	MemberID string
 }

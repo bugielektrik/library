@@ -25,9 +25,8 @@ DO $$
         isbn        VARCHAR NOT NULL UNIQUE,
         rating      NUMERIC NOT NULL DEFAULT 0,
         is_archived BOOLEAN NOT NULL DEFAULT FALSE,
-        description JSONB NOT NULL
+        description JSONB
     );
-
     CREATE TABLE IF NOT EXISTS members (
         created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -1,19 +1,19 @@
 package store
 
 import (
-	_ "database/sql"
+	"context"
 	"fmt"
 	"log"
 	"strings"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const defaultMaxOpenConns = 20
 
 type SQL struct {
-	Connection *sqlx.DB
+	Connection *pgxpool.Pool
 }
 
 func NewSQL(dsn string) (*SQL, error) {
@@ -22,24 +22,26 @@ func NewSQL(dsn string) (*SQL, error) {
 		return nil, fmt.Errorf("store: empty data source name")
 	}
 
-	if !strings.Contains(dsn, "://") {
-		return nil, fmt.Errorf("store: invalid data source name: %s", dsn)
-	}
-
-	driver := strings.ToLower(strings.SplitN(dsn, "://", 2)[0])
-	if driver == "" {
-		return nil, fmt.Errorf("store: unable to detect driver from dsn: %s", sanitizeDSN(dsn))
-	}
-
-	db, err := sqlx.Connect(driver, dsn)
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		log.Printf("store: connection failed driver=%s dsn=%s err=%v", driver, sanitizeDSN(dsn), err)
-		return nil, fmt.Errorf("store: connect failed: driver=%s err=%w", driver, err)
+		log.Printf("store: failed to parse config dsn=%s err=%v", sanitizeDSN(dsn), err)
+		return nil, fmt.Errorf("store: parse config failed: err=%w", err)
 	}
 
-	db.SetMaxOpenConns(defaultMaxOpenConns)
+	config.MaxConns = defaultMaxOpenConns
 
-	log.Printf("store: connected driver=%s dsn=%s", driver, sanitizeDSN(dsn))
+	db, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		log.Printf("store: connection failed dsn=%s err=%v", sanitizeDSN(dsn), err)
+		return nil, fmt.Errorf("store: connect failed: err=%w", err)
+	}
+
+	if err = db.Ping(context.Background()); err != nil {
+		log.Printf("store: ping failed dsn=%s err=%v", sanitizeDSN(dsn), err)
+		return nil, fmt.Errorf("store: ping failed: err=%w", err)
+	}
+
+	log.Printf("store: connected dsn=%s", sanitizeDSN(dsn))
 
 	return &SQL{Connection: db}, nil
 }
