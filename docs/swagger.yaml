@@ -19,6 +19,52 @@ definitions:
       specialty:
         type: string
     type: object
+  book.Request:
+    properties:
+      author_id:
+        type: string
+      genre:
+        type: string
+      isbn:
+        type: string
+      name:
+        type: string
+    type: object
+  book.Response:
+    properties:
+      author_id:
+        type: string
+      genre:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      name:
+        type: string
+    type: object
+  member.Request:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      fullName:
+        type: string
+      id:
+        type: string
+    type: object
+  member.Response:
+    properties:
+      books:
+        items:
+          type: string
+        type: array
+      fullName:
+        type: string
+      id:
+        type: string
+    type: object
   response.Object:
     properties:
       data: {}
@@ -112,7 +158,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -139,7 +185,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: body param
         in: body
         name: request
@@ -166,4 +212,306 @@ paths:
       summary: update the author in the repository
       tags:
       - authors
+  /books:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/book.Response'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: list of books from the repository
+      tags:
+      - books
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/book.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/book.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: add a new book to the repository
+      tags:
+      - books
+  /books/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: delete the book from the repository
+      tags:
+      - books
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/book.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: get the book from the repository
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/book.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: update the book in the repository
+      tags:
+      - books
+  /members:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/member.Response'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: list of members from the repository
+      tags:
+      - members
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/member.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/member.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: add a new member to the repository
+      tags:
+      - members
+  /members/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: delete the member from the repository
+      tags:
+      - members
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/member.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: get the member from the repository
+      tags:
+      - members
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/member.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: update the member in the repository
+      tags:
+      - members
+  /members/{id}/books:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: path param
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/book.Response'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: list of books from the repository
+      tags:
+      - members
 swagger: "2.0"
