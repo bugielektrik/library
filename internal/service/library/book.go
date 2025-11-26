@@ -12,7 +12,16 @@ import (
 	"library-service/pkg/store"
 )
 
-func (s *Service) ListBooks(ctx context.Context) ([]book.Response, error) {
+type BookService struct {
+	bookRepository book.Repository
+	bookCache      book.Cache
+}
+
+func NewBookService(r book.Repository, c book.Cache) *BookService {
+	return &BookService{bookRepository: r, bookCache: c}
+}
+
+func (s *BookService) ListBooks(ctx context.Context) ([]book.Response, error) {
 	logger := log.FromContext(ctx).Named("list_books")
 
 	books, err := s.bookRepository.List(ctx)
@@ -23,7 +32,7 @@ func (s *Service) ListBooks(ctx context.Context) ([]book.Response, error) {
 	return book.ParseFromEntities(books), nil
 }
 
-func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Response, error) {
+func (s *BookService) CreateBook(ctx context.Context, req book.Request) (book.Response, error) {
 	logger := log.FromContext(ctx).Named("create_book").With(zap.Any("book", req))
 
 	newBook := book.New(req)
@@ -42,7 +51,7 @@ func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Respon
 	return book.ParseFromEntity(newBook), nil
 }
 
-func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error) {
+func (s *BookService) GetBook(ctx context.Context, id string) (book.Response, error) {
 	logger := log.FromContext(ctx).Named("get_book").With(zap.String("id", id))
 
 	bookEntity, err := s.bookCache.Get(ctx, id)
@@ -67,7 +76,7 @@ func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error)
 	return book.ParseFromEntity(bookEntity), nil
 }
 
-func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) error {
+func (s *BookService) UpdateBook(ctx context.Context, id string, req book.Request) error {
 	logger := log.FromContext(ctx).Named("update_book").With(zap.String("id", id), zap.Any("book", req))
 
 	updatedBook := book.New(req)
@@ -89,7 +98,7 @@ func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) e
 	return nil
 }
 
-func (s *Service) DeleteBook(ctx context.Context, id string) error {
+func (s *BookService) DeleteBook(ctx context.Context, id string) error {
 	logger := log.FromContext(ctx).Named("delete_book").With(zap.String("id", id))
 
 	err := s.bookRepository.Delete(ctx, id)
@@ -109,32 +118,33 @@ func (s *Service) DeleteBook(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Service) ListBookAuthors(ctx context.Context, id string) ([]author.Response, error) {
-	logger := log.FromContext(ctx).Named("list_book_authors").With(zap.String("id", id))
-
-	bookEntity, err := s.bookRepository.Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, store.ErrorNotFound) {
-			logger.Warn("book not found", zap.Error(err))
-			return nil, err
-		}
-		logger.Error("failed to get book", zap.Error(err))
-		return nil, err
-	}
-
-	authors := make([]author.Response, len(bookEntity.Authors))
-	for i, authorID := range bookEntity.Authors {
-		authorResp, err := s.GetAuthor(ctx, authorID)
-		if err != nil {
-			if errors.Is(err, store.ErrorNotFound) {
-				logger.Warn("author not found", zap.Error(err))
-				continue
-			}
-			logger.Error("failed to get author", zap.Error(err))
-			return nil, err
-		}
-		authors[i] = authorResp
-	}
-
-	return authors, nil
+func (s *BookService) ListBookAuthors(ctx context.Context, id string) ([]author.Response, error) {
+	//logger := log.FromContext(ctx).Named("list_book_authors").With(zap.String("id", id))
+	//
+	//bookEntity, err := s.bookRepository.Get(ctx, id)
+	//if err != nil {
+	//	if errors.Is(err, store.ErrorNotFound) {
+	//		logger.Warn("book not found", zap.Error(err))
+	//		return nil, err
+	//	}
+	//	logger.Error("failed to get book", zap.Error(err))
+	//	return nil, err
+	//}
+	//
+	//authors := make([]author.Response, len(bookEntity.Authors))
+	//for i, authorID := range bookEntity.Authors {
+	//	authorResp, err := s.GetAuthor(ctx, authorID)
+	//	if err != nil {
+	//		if errors.Is(err, store.ErrorNotFound) {
+	//			logger.Warn("author not found", zap.Error(err))
+	//			continue
+	//		}
+	//		logger.Error("failed to get author", zap.Error(err))
+	//		return nil, err
+	//	}
+	//	authors[i] = authorResp
+	//}
+	//
+	//return authors, nil
+	return nil, nil
 }

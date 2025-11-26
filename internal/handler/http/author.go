@@ -82,7 +82,7 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Tags		authors
 // @Accept		json
 // @Produce	json
-// @Param		id	path		int	true	"path param"
+// @Param		id	path		string	true	"path param"
 // @Success	200	{object}	author.Response
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -108,7 +108,7 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Tags		authors
 // @Accept		json
 // @Produce	json
-// @Param		id		path	int				true	"path param"
+// @Param		id		path	string				true	"path param"
 // @Param		request	body	author.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object

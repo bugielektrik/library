@@ -1,8 +1,10 @@
 package service
 
 import (
+	"errors"
 	"library-service/internal/cache"
 	"library-service/internal/repository"
+	"library-service/internal/service/interfaces"
 	"library-service/internal/service/library"
 	"library-service/internal/service/subscription"
 )
@@ -16,9 +18,9 @@ type Configuration func(s *Services) error
 
 type Services struct {
 	dependencies Dependencies
-
-	Library      *library.Service
-	Subscription *subscription.Service
+	Author       interfaces.AuthorService
+	Book         interfaces.BookService
+	Member       interfaces.MemberService
 }
 
 func New(dependencies Dependencies, configs ...Configuration) (s *Services, err error) {
@@ -37,22 +39,28 @@ func New(dependencies Dependencies, configs ...Configuration) (s *Services, err 
 
 func WithLibraryService() Configuration {
 	return func(s *Services) (err error) {
-		s.Library = library.New(
+		s.Author = library.NewAuthorService(
 			s.dependencies.Repositories.Author,
-			s.dependencies.Repositories.Book,
 			s.dependencies.Caches.Author,
+		)
+		s.Book = library.NewBookService(
+			s.dependencies.Repositories.Book,
 			s.dependencies.Caches.Book,
 		)
-		return err
+		return nil
 	}
 }
 
 func WithSubscriptionService() Configuration {
 	return func(s *Services) (err error) {
-		s.Subscription = subscription.New(
+		if s.Book == nil {
+			return errors.New("book service is required for subscription service")
+		}
+
+		s.Member = subscription.NewMemberService(
 			s.dependencies.Repositories.Member,
-			s.Library,
+			s.Book,
 		)
-		return err
+		return nil
 	}
 }

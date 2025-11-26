@@ -3,6 +3,7 @@ package subscription
 import (
 	"context"
 	"errors"
+	"library-service/internal/service/interfaces"
 
 	"go.uber.org/zap"
 
@@ -12,7 +13,18 @@ import (
 	"library-service/pkg/store"
 )
 
-func (s *Service) ListMembers(ctx context.Context) ([]member.Response, error) {
+type MemberService struct {
+	memberRepository member.Repository
+	bookService      interfaces.BookService
+}
+
+func NewMemberService(r member.Repository, service interfaces.BookService) *MemberService {
+	return &MemberService{
+		memberRepository: r,
+		bookService:      service,
+	}
+}
+func (s *MemberService) ListMembers(ctx context.Context) ([]member.Response, error) {
 	logger := log.FromContext(ctx).Named("list_members")
 
 	members, err := s.memberRepository.List(ctx)
@@ -23,7 +35,7 @@ func (s *Service) ListMembers(ctx context.Context) ([]member.Response, error) {
 	return member.ParseFromEntities(members), nil
 }
 
-func (s *Service) CreateMember(ctx context.Context, req member.Request) (member.Response, error) {
+func (s *MemberService) CreateMember(ctx context.Context, req member.Request) (member.Response, error) {
 	logger := log.FromContext(ctx).Named("create_member").With(zap.Any("member", req))
 
 	newMember := member.New(req)
@@ -38,7 +50,7 @@ func (s *Service) CreateMember(ctx context.Context, req member.Request) (member.
 	return member.ParseFromEntity(newMember), nil
 }
 
-func (s *Service) GetMember(ctx context.Context, id string) (member.Response, error) {
+func (s *MemberService) GetMember(ctx context.Context, id string) (member.Response, error) {
 	logger := log.FromContext(ctx).Named("get_member").With(zap.String("id", id))
 
 	memberData, err := s.memberRepository.Get(ctx, id)
@@ -53,7 +65,7 @@ func (s *Service) GetMember(ctx context.Context, id string) (member.Response, er
 	return member.ParseFromEntity(memberData), nil
 }
 
-func (s *Service) UpdateMember(ctx context.Context, id string, req member.Request) error {
+func (s *MemberService) UpdateMember(ctx context.Context, id string, req member.Request) error {
 	logger := log.FromContext(ctx).Named("update_member").With(zap.String("id", id), zap.Any("member", req))
 
 	updatedMember := member.New(req)
@@ -70,7 +82,7 @@ func (s *Service) UpdateMember(ctx context.Context, id string, req member.Reques
 	return nil
 }
 
-func (s *Service) DeleteMember(ctx context.Context, id string) error {
+func (s *MemberService) DeleteMember(ctx context.Context, id string) error {
 	logger := log.FromContext(ctx).Named("delete_member").With(zap.String("id", id))
 
 	err := s.memberRepository.Delete(ctx, id)
@@ -85,7 +97,7 @@ func (s *Service) DeleteMember(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Service) ListMemberBooks(ctx context.Context, memberID string) ([]book.Response, error) {
+func (s *MemberService) ListMemberBooks(ctx context.Context, memberID string) ([]book.Response, error) {
 	logger := log.FromContext(ctx).Named("list_member_books").With(zap.String("id", memberID))
 
 	memberData, err := s.memberRepository.Get(ctx, memberID)
@@ -100,7 +112,7 @@ func (s *Service) ListMemberBooks(ctx context.Context, memberID string) ([]book.
 
 	bookResponses := make([]book.Response, 0, len(memberData.Books))
 	for _, bookID := range memberData.Books {
-		bookResponse, err := s.libraryService.GetBook(ctx, bookID)
+		bookResponse, err := s.bookService.GetBook(ctx, bookID)
 		if err != nil {
 			if errors.Is(err, store.ErrorNotFound) {
 				logger.Warn("book not found", zap.Error(err))

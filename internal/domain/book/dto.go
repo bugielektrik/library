@@ -6,10 +6,10 @@ import (
 )
 
 type Request struct {
-	Name    string   `json:"name"`
-	Genre   string   `json:"genre"`
-	ISBN    string   `json:"isbn"`
-	Authors []string `json:"authors"`
+	Name     string `json:"name"`
+	Genre    string `json:"genre"`
+	ISBN     string `json:"isbn"`
+	AuthorID string `json:"author_id"`
 }
 
 func (s *Request) Bind(r *http.Request) error {
@@ -29,20 +29,20 @@ func (s *Request) Bind(r *http.Request) error {
 }
 
 type Response struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	Genre   string   `json:"genre"`
-	ISBN    string   `json:"isbn"`
-	Authors []string `json:"authors"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Genre    string `json:"genre"`
+	ISBN     string `json:"isbn"`
+	AuthorId string `json:"author_id"`
 }
 
 func ParseFromEntity(data Entity) Response {
 	return Response{
-		ID:      data.ID,
-		Name:    *data.Name,
-		Genre:   *data.Genre,
-		ISBN:    *data.ISBN,
-		Authors: data.Authors,
+		ID:       data.ID,
+		Name:     *data.Name,
+		Genre:    *data.Genre,
+		ISBN:     *data.ISBN,
+		AuthorId: *data.AuthorId,
 	}
 }
 

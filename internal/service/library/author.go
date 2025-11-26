@@ -11,7 +11,19 @@ import (
 	"library-service/pkg/store"
 )
 
-func (s *Service) ListAuthors(ctx context.Context) ([]author.Response, error) {
+type AuthorService struct {
+	authorRepository author.Repository
+	authorCache      author.Cache
+}
+
+func NewAuthorService(r author.Repository, c author.Cache) *AuthorService {
+	return &AuthorService{
+		authorRepository: r,
+		authorCache:      c,
+	}
+}
+
+func (s *AuthorService) ListAuthors(ctx context.Context) ([]author.Response, error) {
 	logger := log.FromContext(ctx).Named("list_authors")
 
 	authors, err := s.authorRepository.List(ctx)
@@ -22,7 +34,7 @@ func (s *Service) ListAuthors(ctx context.Context) ([]author.Response, error) {
 	return author.ParseFromEntities(authors), nil
 }
 
-func (s *Service) AddAuthor(ctx context.Context, req author.Request) (author.Response, error) {
+func (s *AuthorService) AddAuthor(ctx context.Context, req author.Request) (author.Response, error) {
 	logger := log.FromContext(ctx).Named("add_author").With(zap.Any("author", req))
 
 	newAuthor := author.New(req)
@@ -41,7 +53,7 @@ func (s *Service) AddAuthor(ctx context.Context, req author.Request) (author.Res
 	return author.ParseFromEntity(newAuthor), nil
 }
 
-func (s *Service) GetAuthor(ctx context.Context, id string) (author.Response, error) {
+func (s *AuthorService) GetAuthor(ctx context.Context, id string) (author.Response, error) {
 	logger := log.FromContext(ctx).Named("get_author").With(zap.String("id", id))
 
 	cachedAuthor, err := s.authorCache.Get(ctx, id)
@@ -66,7 +78,7 @@ func (s *Service) GetAuthor(ctx context.Context, id string) (author.Response, er
 	return author.ParseFromEntity(repoAuthor), nil
 }
 
-func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Request) error {
+func (s *AuthorService) UpdateAuthor(ctx context.Context, id string, req author.Request) error {
 	logger := log.FromContext(ctx).Named("update_author").With(zap.String("id", id), zap.Any("author", req))
 
 	updatedAuthor := author.New(req)
@@ -88,7 +100,7 @@ func (s *Service) UpdateAuthor(ctx context.Context, id string, req author.Reques
 	return nil
 }
 
-func (s *Service) DeleteAuthor(ctx context.Context, id string) error {
+func (s *AuthorService) DeleteAuthor(ctx context.Context, id string) error {
 	logger := log.FromContext(ctx).Named("delete_author").With(zap.String("id", id))
 
 	err := s.authorRepository.Delete(ctx, id)

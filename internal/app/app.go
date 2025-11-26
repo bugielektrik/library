@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"library-service/config"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,7 +13,6 @@ import (
 	"go.uber.org/zap"
 
 	"library-service/internal/cache"
-	"library-service/internal/config"
 	"library-service/internal/handler"
 	"library-service/internal/repository"
 	"library-service/internal/service"

@@ -37,6 +37,13 @@ func (h *BookHandler) Routes() chi.Router {
 	return r
 }
 
+// @Summary	list of books from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Success	200		{array}		book.Response
+// @Failure	500		{object}	response.Object
+// @Router		/books 	[get]
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.bookService.ListBooks(r.Context())
 	if err != nil {
@@ -47,6 +54,15 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
+// @Summary	add a new book to the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		request	body		book.Request	true	"body param"
+// @Success	200		{object}	book.Response
+// @Failure	400		{object}	response.Object
+// @Failure	500		{object}	response.Object
+// @Router		/books [post]
 func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := book.Request{}
 	if err := render.Bind(r, &req); err != nil {
@@ -63,6 +79,15 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
+// @Summary	get the book from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id	path		string	true	"path param"
+// @Success	200	{object}	book.Response
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id} [get]
 func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -80,6 +105,17 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	response.OK(w, r, res)
 }
 
+// @Summary	update the book in the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id		path	string				true	"path param"
+// @Param		request	body	book.Request	true	"body param"
+// @Success	200
+// @Failure	400	{object}	response.Object
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id} [put]
 func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -100,6 +136,15 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary	delete the book from the repository
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id	path	string	true	"path param"
+// @Success	200
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Router		/books/{id} [delete]
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

@@ -3,7 +3,6 @@ package response
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -35,11 +34,7 @@ func checkDB(name, dsn string) string {
 		return "down"
 	}
 
-	defer func() {
-		if cerr := conn.Connection.Close(); cerr != nil {
-			log.Printf("health db=%s close_err=%v", name, cerr)
-		}
-	}()
+	defer conn.Connection.Close()
 
 	return "up"
 }

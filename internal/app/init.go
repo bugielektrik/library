@@ -1,12 +1,12 @@
 package app
 
 import (
+	"library-service/config"
 	"time"
 
 	"go.uber.org/zap"
 
 	"library-service/internal/cache"
-	"library-service/internal/config"
 	"library-service/internal/handler"
 	"library-service/internal/repository"
 	"library-service/internal/service"
