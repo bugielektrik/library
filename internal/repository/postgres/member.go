@@ -2,127 +2,141 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
-	"strings"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"library-service/internal/domain/member"
+	"library-service/internal/repository/sqlc"
 	"library-service/pkg/store"
 )
 
 type MemberRepository struct {
-	db *sqlx.DB
+	db      *pgxpool.Pool
+	queries *sqlc.Queries
 }
 
-// NewMemberRepository creates a new instance of MemberRepository.
-func NewMemberRepository(db *sqlx.DB) *MemberRepository {
-	return &MemberRepository{db: db}
+func NewMemberRepository(db *pgxpool.Pool) *MemberRepository {
+	return &MemberRepository{
+		db:      db,
+		queries: sqlc.New(db),
+	}
 }
 
-// List retrieves all members from the database.
 func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
-	query := `
-		SELECT id, full_name, books
-		FROM members
-		ORDER BY id`
-
-	var members []member.Entity
-	if err := r.db.SelectContext(ctx, &members, query); err != nil {
+	dbMembers, err := r.queries.ListMembers(ctx)
+	if err != nil {
 		return nil, err
 	}
+
+	members := make([]member.Entity, 0, len(dbMembers))
+	for _, dbMember := range dbMembers {
+		books, err := r.queries.GetMemberBooks(ctx, dbMember.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		members = append(members, member.Entity{
+			ID:       dbMember.ID,
+			FullName: &dbMember.FullName,
+			Books:    books,
+		})
+	}
+
 	return members, nil
 }
 
-// Add inserts a new member into the database.
 func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
-	query := `
-		INSERT INTO members (full_name, books)
-		VALUES ($1, $2)
-		RETURNING id`
-
-	args := []interface{}{data.FullName, pq.Array(data.Books)}
-
-	var id string
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", store.ErrorNotFound
-		}
+	id, err := r.queries.AddMember(ctx, sqlc.AddMemberParams{
+		ID:       data.ID,
+		FullName: *data.FullName,
+	})
+	if err != nil {
 		return "", err
 	}
+
+	for _, bookID := range data.Books {
+		err := r.queries.AddMemberBook(ctx, sqlc.AddMemberBookParams{
+			BookID:   bookID,
+			MemberID: id,
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+
 	return id, nil
 }
 
-// Get retrieves a member by ID from the database.
 func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
-	query := `
-		SELECT id, full_name, books
-		FROM members
-		WHERE id=$1`
-
-	var member member.Entity
-	if err := r.db.GetContext(ctx, &member, query, id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return member, store.ErrorNotFound
+	dbMember, err := r.queries.GetMember(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return member.Entity{}, store.ErrorNotFound
 		}
-		return member, err
+		return member.Entity{}, err
 	}
-	return member, nil
+
+	books, err := r.queries.GetMemberBooks(ctx, id)
+	if err != nil {
+		return member.Entity{}, err
+	}
+
+	return member.Entity{
+		ID:       dbMember.ID,
+		FullName: &dbMember.FullName,
+		Books:    books,
+	}, nil
 }
 
-// Update modifies an existing member in the database.
 func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
-	sets, args := r.prepareUpdateArgs(data)
-	if len(args) == 0 {
-		return nil
-	}
-
-	args = append(args, id)
-	sets = append(sets, "updated_at=CURRENT_TIMESTAMP")
-	query := fmt.Sprintf("UPDATE members SET %s WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
-
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return store.ErrorNotFound
-		}
-		return err
-	}
-	return nil
-}
-
-// prepareUpdateArgs prepares the arguments for the update query.
-func (r *MemberRepository) prepareUpdateArgs(data member.Entity) ([]string, []interface{}) {
-	var sets []string
-	var args []interface{}
-
 	if data.FullName != nil {
-		args = append(args, data.FullName)
-		sets = append(sets, fmt.Sprintf("full_name=$%d", len(args)))
+		_, err := r.queries.UpdateMember(ctx, sqlc.UpdateMemberParams{
+			ID:       id,
+			FullName: *data.FullName,
+		})
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return store.ErrorNotFound
+			}
+			return err
+		}
 	}
 
 	if len(data.Books) > 0 {
-		args = append(args, pq.Array(data.Books))
-		sets = append(sets, fmt.Sprintf("books=$%d", len(args)))
+		err := r.queries.DeleteAllMemberBooks(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		for _, bookID := range data.Books {
+			err := r.queries.AddMemberBook(ctx, sqlc.AddMemberBookParams{
+				BookID:   bookID,
+				MemberID: id,
+			})
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	return sets, args
+	return nil
 }
 
-// Delete removes a member by ID from the database.
 func (r *MemberRepository) Delete(ctx context.Context, id string) error {
-	query := `
-		DELETE FROM members
-		WHERE id=$1
-		RETURNING id`
+	err := r.queries.DeleteAllMemberBooks(ctx, id)
+	if err != nil {
+		return err
+	}
 
-	if err := r.db.QueryRowContext(ctx, query, id).Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	err = r.queries.DeleteMember(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrorNotFound
 		}
 		return err
 	}
+
 	return nil
 }

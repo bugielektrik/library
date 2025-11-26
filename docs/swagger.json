@@ -92,7 +92,7 @@
                 "summary": "get the author from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -133,7 +133,7 @@
                 "summary": "update the author in the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -186,7 +186,7 @@
                 "summary": "delete the author from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -300,7 +300,7 @@
                 "summary": "get the book from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -341,7 +341,7 @@
                 "summary": "update the book in the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -394,7 +394,7 @@
                 "summary": "delete the book from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -404,52 +404,6 @@
                 "responses": {
                     "200": {
                         "description": "OK"
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/response.Object"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.Object"
-                        }
-                    }
-                }
-            }
-        },
-        "/books/{id}/authors": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "books"
-                ],
-                "summary": "list of authors from the repository",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "path param",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/author.Response"
-                            }
-                        }
                     },
                     "404": {
                         "description": "Not Found",
@@ -554,7 +508,7 @@
                 "summary": "get the member from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -595,7 +549,7 @@
                 "summary": "update the member in the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -648,7 +602,7 @@
                 "summary": "delete the member from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -688,7 +642,7 @@
                 "summary": "list of books from the repository",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "path param",
                         "name": "id",
                         "in": "path",
@@ -756,16 +710,10 @@
         "book.Request": {
             "type": "object",
             "properties": {
-                "authors": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "genre": {
+                "author_id": {
                     "type": "string"
                 },
-                "id": {
+                "genre": {
                     "type": "string"
                 },
                 "isbn": {
@@ -779,11 +727,8 @@
         "book.Response": {
             "type": "object",
             "properties": {
-                "authors": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "author_id": {
+                    "type": "string"
                 },
                 "genre": {
                     "type": "string"

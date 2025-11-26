@@ -9,8 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// mongodb://username:password@localhost:27017/?retryWrites=true&w=majority&tls=false
-
 const timeout = 10 * time.Second
 
 type Mongo struct {

@@ -2,23 +2,23 @@ package http
 
 import (
 	"errors"
+	"library-service/internal/service/interfaces"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
 	"library-service/internal/domain/author"
-	"library-service/internal/service/library"
 	"library-service/pkg/server/response"
 	"library-service/pkg/store"
 )
 
 type AuthorHandler struct {
-	libraryService *library.Service
+	authorService interfaces.AuthorService
 }
 
-func NewAuthorHandler(s *library.Service) *AuthorHandler {
-	return &AuthorHandler{libraryService: s}
+func NewAuthorHandler(s interfaces.AuthorService) *AuthorHandler {
+	return &AuthorHandler{authorService: s}
 }
 
 func (h *AuthorHandler) Routes() chi.Router {
@@ -44,7 +44,7 @@ func (h *AuthorHandler) Routes() chi.Router {
 // @Failure	500			{object}	response.Object
 // @Router		/authors 	[get]
 func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
-	res, err := h.libraryService.ListAuthors(r.Context())
+	res, err := h.authorService.ListAuthors(r.Context())
 	if err != nil {
 		response.InternalServerError(w, r, err, nil)
 		return
@@ -69,7 +69,7 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.libraryService.AddAuthor(r.Context(), req)
+	res, err := h.authorService.AddAuthor(r.Context(), req)
 	if err != nil {
 		response.InternalServerError(w, r, err, nil)
 		return
@@ -82,7 +82,7 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Tags		authors
 // @Accept		json
 // @Produce	json
-// @Param		id	path		int	true	"path param"
+// @Param		id	path		string	true	"path param"
 // @Success	200	{object}	author.Response
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -90,7 +90,7 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.libraryService.GetAuthor(r.Context(), id)
+	res, err := h.authorService.GetAuthor(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
@@ -108,7 +108,7 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Tags		authors
 // @Accept		json
 // @Produce	json
-// @Param		id		path	int				true	"path param"
+// @Param		id		path	string				true	"path param"
 // @Param		request	body	author.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object
@@ -124,7 +124,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.libraryService.UpdateAuthor(r.Context(), id, req); err != nil {
+	if err := h.authorService.UpdateAuthor(r.Context(), id, req); err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
@@ -139,7 +139,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Tags		authors
 // @Accept		json
 // @Produce	json
-// @Param		id	path	int	true	"path param"
+// @Param		id	path	string	true	"path param"
 // @Success	200
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -147,7 +147,7 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.libraryService.DeleteAuthor(r.Context(), id); err != nil {
+	if err := h.authorService.DeleteAuthor(r.Context(), id); err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)

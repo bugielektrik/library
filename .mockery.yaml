@@ -1,0 +1,21 @@
+# .mockery.yaml
+quiet: false
+with-expecter: true
+issue-845-fix: true
+resolve-type-alias: false
+disable-version-string: true
+
+packages:
+  library-service/internal/domain/author:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+    interfaces:
+      Repository:
+        config:
+          filename: "AuthorRepository.go"
+          mockname: "MockAuthorRepository"
+      Cache:
+        config:
+          filename: "AuthorCache.go"
+          mockname: "MockAuthorCache"

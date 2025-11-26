@@ -1,12 +1,12 @@
 package app
 
 import (
+	"library-service/config"
 	"time"
 
 	"go.uber.org/zap"
 
 	"library-service/internal/cache"
-	"library-service/internal/config"
 	"library-service/internal/handler"
 	"library-service/internal/repository"
 	"library-service/internal/service"
@@ -14,18 +14,12 @@ import (
 )
 
 const (
-	// dbStartupDelay is a small delay to allow database to be ready
-	// This follows the original behavior for backward compatibility
 	dbStartupDelay = time.Second
 )
 
-// initApp builds and initializes the application with all its dependencies.
-// It follows the dependency injection pattern and ensures proper initialization order.
-// Returns a fully initialized App instance or an error if any component fails to initialize.
 func initApp(logger *zap.Logger) (*App, error) {
 	app := &App{logger: logger}
 
-	// Initialize components in dependency order
 	if err := app.loadConfiguration(); err != nil {
 		return nil, err
 	}
@@ -57,7 +51,6 @@ func initApp(logger *zap.Logger) (*App, error) {
 	return app, nil
 }
 
-// loadConfiguration loads and validates application configuration
 func (app *App) loadConfiguration() error {
 	configs, err := config.New()
 	if err != nil {
@@ -74,15 +67,13 @@ func (app *App) loadConfiguration() error {
 	return nil
 }
 
-// initializeRepositories sets up database connections and repositories
 func (app *App) initializeRepositories() error {
-	// Small backoff to allow DB to be ready (preserved from original)
 	app.logger.Info("initializing repositories",
 		zap.Duration("db startup delay", dbStartupDelay))
 	time.Sleep(dbStartupDelay)
 
 	repositories, err := repository.New(
-		repository.WithMemoryStore(),
+		repository.WithPostgresStore(app.configs.Store.DSN),
 	)
 	if err != nil {
 		app.logger.Error("repository init error", zap.Error(err))
@@ -94,7 +85,6 @@ func (app *App) initializeRepositories() error {
 	return nil
 }
 
-// initializeCaches sets up caching layers with repository dependencies
 func (app *App) initializeCaches() error {
 	caches, err := cache.New(
 		cache.Dependencies{
@@ -112,7 +102,6 @@ func (app *App) initializeCaches() error {
 	return nil
 }
 
-// initializeServices composes business logic services from repositories and providers
 func (app *App) initializeServices() error {
 	services, err := service.New(
 		service.Dependencies{
@@ -132,7 +121,6 @@ func (app *App) initializeServices() error {
 	return nil
 }
 
-// initializeHandlers sets up HTTP and other protocol handlers
 func (app *App) initializeHandlers() error {
 	handlers, err := handler.New(
 		handler.Dependencies{
@@ -151,7 +139,6 @@ func (app *App) initializeHandlers() error {
 	return nil
 }
 
-// initializeServers sets up HTTP and other protocol servers
 func (app *App) initializeServers() error {
 	servers, err := server.NewServer(
 		server.WithHTTP(app.handlers.HTTP, app.configs.APP.Port),
@@ -166,8 +153,6 @@ func (app *App) initializeServers() error {
 	return nil
 }
 
-// cleanup performs partial cleanup when initialization fails
-// This ensures resources are properly released even if setup is incomplete
 func (app *App) cleanup() {
 	if app.repositories != nil {
 		app.repositories.Close()

@@ -12,11 +12,18 @@ import (
 	"library-service/pkg/store"
 )
 
-// ListBooks retrieves all books from the repository.
-func (s *Service) ListBooks(ctx context.Context) ([]book.Response, error) {
+type BookService struct {
+	bookRepository book.Repository
+	bookCache      book.Cache
+}
+
+func NewBookService(r book.Repository, c book.Cache) *BookService {
+	return &BookService{bookRepository: r, bookCache: c}
+}
+
+func (s *BookService) ListBooks(ctx context.Context) ([]book.Response, error) {
 	logger := log.FromContext(ctx).Named("list_books")
 
-	// Retrieve the list of books from the repository
 	books, err := s.bookRepository.List(ctx)
 	if err != nil {
 		logger.Error("failed to list books", zap.Error(err))
@@ -25,14 +32,11 @@ func (s *Service) ListBooks(ctx context.Context) ([]book.Response, error) {
 	return book.ParseFromEntities(books), nil
 }
 
-// CreateBook adds a new book to the repository.
-func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Response, error) {
+func (s *BookService) CreateBook(ctx context.Context, req book.Request) (book.Response, error) {
 	logger := log.FromContext(ctx).Named("create_book").With(zap.Any("book", req))
 
-	// Create a new book entity from the request
 	newBook := book.New(req)
 
-	// Add the new book to the repository
 	id, err := s.bookRepository.Add(ctx, newBook)
 	if err != nil {
 		logger.Error("failed to create book", zap.Error(err))
@@ -40,7 +44,6 @@ func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Respon
 	}
 	newBook.ID = id
 
-	// Cache the newly created book
 	if err := s.bookCache.Set(ctx, id, newBook); err != nil {
 		logger.Warn("failed to cache new book", zap.Error(err))
 	}
@@ -48,17 +51,14 @@ func (s *Service) CreateBook(ctx context.Context, req book.Request) (book.Respon
 	return book.ParseFromEntity(newBook), nil
 }
 
-// GetBook retrieves a book by ID from the repository.
-func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error) {
+func (s *BookService) GetBook(ctx context.Context, id string) (book.Response, error) {
 	logger := log.FromContext(ctx).Named("get_book").With(zap.String("id", id))
 
-	// Try to get the book from the cache
 	bookEntity, err := s.bookCache.Get(ctx, id)
 	if err == nil {
 		return book.ParseFromEntity(bookEntity), nil
 	}
 
-	// If not found in cache, get it from the repository
 	bookEntity, err = s.bookRepository.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
@@ -69,7 +69,6 @@ func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error)
 		return book.Response{}, err
 	}
 
-	// Cache the retrieved book
 	if err := s.bookCache.Set(ctx, id, bookEntity); err != nil {
 		logger.Warn("failed to cache book", zap.Error(err))
 	}
@@ -77,14 +76,11 @@ func (s *Service) GetBook(ctx context.Context, id string) (book.Response, error)
 	return book.ParseFromEntity(bookEntity), nil
 }
 
-// UpdateBook updates an existing book in the repository.
-func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) error {
+func (s *BookService) UpdateBook(ctx context.Context, id string, req book.Request) error {
 	logger := log.FromContext(ctx).Named("update_book").With(zap.String("id", id), zap.Any("book", req))
 
-	// Create an updated book entity from the request
 	updatedBook := book.New(req)
 
-	// Update the book in the repository
 	err := s.bookRepository.Update(ctx, id, updatedBook)
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
@@ -95,7 +91,6 @@ func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) e
 		return err
 	}
 
-	// Update the cache with the new book data
 	if err := s.bookCache.Set(ctx, id, updatedBook); err != nil {
 		logger.Warn("failed to update cache for book", zap.Error(err))
 	}
@@ -103,11 +98,9 @@ func (s *Service) UpdateBook(ctx context.Context, id string, req book.Request) e
 	return nil
 }
 
-// DeleteBook deletes a book by ID from the repository.
-func (s *Service) DeleteBook(ctx context.Context, id string) error {
+func (s *BookService) DeleteBook(ctx context.Context, id string) error {
 	logger := log.FromContext(ctx).Named("delete_book").With(zap.String("id", id))
 
-	// Delete the book from the repository
 	err := s.bookRepository.Delete(ctx, id)
 	if err != nil {
 		if errors.Is(err, store.ErrorNotFound) {
@@ -118,7 +111,6 @@ func (s *Service) DeleteBook(ctx context.Context, id string) error {
 		return err
 	}
 
-	// Remove the book from the cache
 	if err := s.bookCache.Set(ctx, id, book.Entity{}); err != nil {
 		logger.Warn("failed to remove book from cache", zap.Error(err))
 	}
@@ -126,35 +118,33 @@ func (s *Service) DeleteBook(ctx context.Context, id string) error {
 	return nil
 }
 
-// ListBookAuthors retrieves all authors of a book by book ID.
-func (s *Service) ListBookAuthors(ctx context.Context, id string) ([]author.Response, error) {
-	logger := log.FromContext(ctx).Named("list_book_authors").With(zap.String("id", id))
-
-	// Retrieve the book entity from the repository
-	bookEntity, err := s.bookRepository.Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, store.ErrorNotFound) {
-			logger.Warn("book not found", zap.Error(err))
-			return nil, err
-		}
-		logger.Error("failed to get book", zap.Error(err))
-		return nil, err
-	}
-
-	// Retrieve the authors of the book
-	authors := make([]author.Response, len(bookEntity.Authors))
-	for i, authorID := range bookEntity.Authors {
-		authorResp, err := s.GetAuthor(ctx, authorID)
-		if err != nil {
-			if errors.Is(err, store.ErrorNotFound) {
-				logger.Warn("author not found", zap.Error(err))
-				continue
-			}
-			logger.Error("failed to get author", zap.Error(err))
-			return nil, err
-		}
-		authors[i] = authorResp
-	}
-
-	return authors, nil
+func (s *BookService) ListBookAuthors(ctx context.Context, id string) ([]author.Response, error) {
+	//logger := log.FromContext(ctx).Named("list_book_authors").With(zap.String("id", id))
+	//
+	//bookEntity, err := s.bookRepository.Get(ctx, id)
+	//if err != nil {
+	//	if errors.Is(err, store.ErrorNotFound) {
+	//		logger.Warn("book not found", zap.Error(err))
+	//		return nil, err
+	//	}
+	//	logger.Error("failed to get book", zap.Error(err))
+	//	return nil, err
+	//}
+	//
+	//authors := make([]author.Response, len(bookEntity.Authors))
+	//for i, authorID := range bookEntity.Authors {
+	//	authorResp, err := s.GetAuthor(ctx, authorID)
+	//	if err != nil {
+	//		if errors.Is(err, store.ErrorNotFound) {
+	//			logger.Warn("author not found", zap.Error(err))
+	//			continue
+	//		}
+	//		logger.Error("failed to get author", zap.Error(err))
+	//		return nil, err
+	//	}
+	//	authors[i] = authorResp
+	//}
+	//
+	//return authors, nil
+	return nil, nil
 }

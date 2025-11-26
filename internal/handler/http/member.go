@@ -2,23 +2,23 @@ package http
 
 import (
 	"errors"
+	"library-service/internal/service/interfaces"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
 	"library-service/internal/domain/member"
-	"library-service/internal/service/subscription"
 	"library-service/pkg/server/response"
 	"library-service/pkg/store"
 )
 
 type MemberHandler struct {
-	subscriptionService *subscription.Service
+	memberService interfaces.MemberService
 }
 
-func NewMemberHandler(s *subscription.Service) *MemberHandler {
-	return &MemberHandler{subscriptionService: s}
+func NewMemberHandler(s interfaces.MemberService) *MemberHandler {
+	return &MemberHandler{memberService: s}
 }
 
 func (h *MemberHandler) Routes() chi.Router {
@@ -45,7 +45,7 @@ func (h *MemberHandler) Routes() chi.Router {
 // @Failure	500			{object}	response.Object
 // @Router		/members 	[get]
 func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
-	res, err := h.subscriptionService.ListMembers(r.Context())
+	res, err := h.memberService.ListMembers(r.Context())
 	if err != nil {
 		response.InternalServerError(w, r, err, nil)
 		return
@@ -70,7 +70,7 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.subscriptionService.CreateMember(r.Context(), req)
+	res, err := h.memberService.CreateMember(r.Context(), req)
 	if err != nil {
 		response.InternalServerError(w, r, err, nil)
 		return
@@ -83,7 +83,7 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Tags		members
 // @Accept		json
 // @Produce	json
-// @Param		id	path		int	true	"path param"
+// @Param		id	path		string	true	"path param"
 // @Success	200	{object}	member.Response
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -91,7 +91,7 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.subscriptionService.GetMember(r.Context(), id)
+	res, err := h.memberService.GetMember(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
@@ -109,7 +109,7 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Tags		members
 // @Accept		json
 // @Produce	json
-// @Param		id		path	int				true	"path param"
+// @Param		id		path	string				true	"path param"
 // @Param		request	body	member.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object
@@ -125,7 +125,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.subscriptionService.UpdateMember(r.Context(), id, req); err != nil {
+	if err := h.memberService.UpdateMember(r.Context(), id, req); err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
@@ -140,7 +140,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Tags		members
 // @Accept		json
 // @Produce	json
-// @Param		id	path	int	true	"path param"
+// @Param		id	path	string	true	"path param"
 // @Success	200
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -148,7 +148,7 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.subscriptionService.DeleteMember(r.Context(), id); err != nil {
+	if err := h.memberService.DeleteMember(r.Context(), id); err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
@@ -163,7 +163,7 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 // @Tags		members
 // @Accept		json
 // @Produce	json
-// @Param		id	path		int	true	"path param"
+// @Param		id	path		string	true	"path param"
 // @Success	200	{array}		book.Response
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -171,7 +171,7 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.subscriptionService.ListMemberBooks(r.Context(), id)
+	res, err := h.memberService.ListMemberBooks(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):

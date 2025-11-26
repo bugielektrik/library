@@ -2,23 +2,23 @@ package http
 
 import (
 	"errors"
+	"library-service/internal/service/interfaces"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 
 	"library-service/internal/domain/book"
-	"library-service/internal/service/library"
 	"library-service/pkg/server/response"
 	"library-service/pkg/store"
 )
 
 type BookHandler struct {
-	libraryService *library.Service
+	bookService interfaces.BookService
 }
 
-func NewBookHandler(s *library.Service) *BookHandler {
-	return &BookHandler{libraryService: s}
+func NewBookHandler(s interfaces.BookService) *BookHandler {
+	return &BookHandler{bookService: s}
 }
 
 func (h *BookHandler) Routes() chi.Router {
@@ -45,7 +45,7 @@ func (h *BookHandler) Routes() chi.Router {
 // @Failure	500		{object}	response.Object
 // @Router		/books 	[get]
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
-	res, err := h.libraryService.ListBooks(r.Context())
+	res, err := h.bookService.ListBooks(r.Context())
 	if err != nil {
 		response.InternalServerError(w, r, err, nil)
 		return
@@ -70,7 +70,7 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.libraryService.CreateBook(r.Context(), req)
+	res, err := h.bookService.CreateBook(r.Context(), req)
 	if err != nil {
 		response.InternalServerError(w, r, err, nil)
 		return
@@ -83,7 +83,7 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Tags		books
 // @Accept		json
 // @Produce	json
-// @Param		id	path		int	true	"path param"
+// @Param		id	path		string	true	"path param"
 // @Success	200	{object}	book.Response
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -91,7 +91,7 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.libraryService.GetBook(r.Context(), id)
+	res, err := h.bookService.GetBook(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
@@ -109,7 +109,7 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Tags		books
 // @Accept		json
 // @Produce	json
-// @Param		id		path	int				true	"path param"
+// @Param		id		path	string				true	"path param"
 // @Param		request	body	book.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object
@@ -125,7 +125,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.libraryService.UpdateBook(r.Context(), id, req); err != nil {
+	if err := h.bookService.UpdateBook(r.Context(), id, req); err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
@@ -140,7 +140,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Tags		books
 // @Accept		json
 // @Produce	json
-// @Param		id	path	int	true	"path param"
+// @Param		id	path	string	true	"path param"
 // @Success	200
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
@@ -148,7 +148,7 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if err := h.libraryService.DeleteBook(r.Context(), id); err != nil {
+	if err := h.bookService.DeleteBook(r.Context(), id); err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):
 			response.NotFound(w, r, err)
@@ -159,19 +159,10 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// @Summary	list of authors from the repository
-// @Tags		books
-// @Accept		json
-// @Produce	json
-// @Param		id	path		int	true	"path param"
-// @Success	200	{array}		author.Response
-// @Failure	404	{object}	response.Object
-// @Failure	500	{object}	response.Object
-// @Router		/books/{id}/authors [get]
 func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	res, err := h.libraryService.ListBookAuthors(r.Context(), id)
+	res, err := h.bookService.ListBookAuthors(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrorNotFound):

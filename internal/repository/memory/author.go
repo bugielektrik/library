@@ -10,18 +10,15 @@ import (
 	"library-service/internal/domain/author"
 )
 
-// AuthorRepository handles CRUD operations for authors in an in-memory database.
 type AuthorRepository struct {
 	db map[string]author.Entity
 	sync.RWMutex
 }
 
-// NewAuthorRepository creates a new AuthorRepository.
 func NewAuthorRepository() *AuthorRepository {
 	return &AuthorRepository{db: make(map[string]author.Entity)}
 }
 
-// List retrieves all authors from the in-memory database.
 func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -33,7 +30,6 @@ func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 	return authors, nil
 }
 
-// Add inserts a new author into the in-memory database.
 func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string, error) {
 	r.Lock()
 	defer r.Unlock()
@@ -44,7 +40,6 @@ func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string,
 	return id, nil
 }
 
-// Get retrieves an author by ID from the in-memory database.
 func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, error) {
 	r.RLock()
 	defer r.RUnlock()
@@ -56,7 +51,6 @@ func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, e
 	return data, nil
 }
 
-// Update modifies an existing author in the in-memory database.
 func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
 	r.Lock()
 	defer r.Unlock()
@@ -68,7 +62,6 @@ func (r *AuthorRepository) Update(ctx context.Context, id string, data author.En
 	return nil
 }
 
-// Delete removes an author by ID from the in-memory database.
 func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
 	r.Lock()
 	defer r.Unlock()

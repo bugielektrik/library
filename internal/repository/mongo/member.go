@@ -12,19 +12,16 @@ import (
 	"library-service/pkg/store"
 )
 
-// MemberRepository handles CRUD operations for members in MongoDB.
 type MemberRepository struct {
 	collection *mongo.Collection
 }
 
-// NewMemberRepository creates a new instance of MemberRepository.
 func NewMemberRepository(db *mongo.Database) *MemberRepository {
 	return &MemberRepository{
 		collection: db.Collection("members"),
 	}
 }
 
-// List retrieves all members from the MongoDB collection.
 func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
 	cur, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -40,7 +37,6 @@ func (r *MemberRepository) List(ctx context.Context) ([]member.Entity, error) {
 	return members, nil
 }
 
-// Add inserts a new member into the MongoDB collection.
 func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string, error) {
 	res, err := r.collection.InsertOne(ctx, data)
 	if err != nil {
@@ -51,7 +47,6 @@ func (r *MemberRepository) Add(ctx context.Context, data member.Entity) (string,
 	return id, nil
 }
 
-// Get retrieves a member by ID from the MongoDB collection.
 func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, error) {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -69,7 +64,6 @@ func (r *MemberRepository) Get(ctx context.Context, id string) (member.Entity, e
 	return member, nil
 }
 
-// Update modifies an existing member in the MongoDB collection.
 func (r *MemberRepository) Update(ctx context.Context, id string, data member.Entity) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -93,7 +87,6 @@ func (r *MemberRepository) Update(ctx context.Context, id string, data member.En
 	return nil
 }
 
-// prepareUpdateData prepares the data for the update query.
 func (r *MemberRepository) prepareUpdateData(data member.Entity) bson.M {
 	updateData := bson.M{}
 
@@ -108,7 +101,6 @@ func (r *MemberRepository) prepareUpdateData(data member.Entity) bson.M {
 	return updateData
 }
 
-// Delete removes a member by ID from the MongoDB collection.
 func (r *MemberRepository) Delete(ctx context.Context, id string) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
