@@ -2,9 +2,10 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"library-service/internal/domain/author"
 	"library-service/internal/repository/sqlc"
@@ -12,11 +13,11 @@ import (
 )
 
 type AuthorRepository struct {
-	db      *sqlx.DB
+	db      *pgxpool.Pool
 	queries *sqlc.Queries
 }
 
-func NewAuthorRepository(db *sqlx.DB) *AuthorRepository {
+func NewAuthorRepository(db *pgxpool.Pool) *AuthorRepository {
 	return &AuthorRepository{
 		db:      db,
 		queries: sqlc.New(db),
@@ -33,9 +34,9 @@ func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 	for _, dbAuthor := range dbAuthors {
 		authors = append(authors, author.Entity{
 			ID:        dbAuthor.ID,
-			FullName:  nullStringToPtr(dbAuthor.FullName),
-			Pseudonym: nullStringToPtr(dbAuthor.Pseudonym),
-			Specialty: nullStringToPtr(dbAuthor.Specialty),
+			FullName:  &dbAuthor.FullName,
+			Pseudonym: &dbAuthor.Pseudonym,
+			Specialty: &dbAuthor.Specialty,
 		})
 	}
 
@@ -44,9 +45,9 @@ func (r *AuthorRepository) List(ctx context.Context) ([]author.Entity, error) {
 
 func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string, error) {
 	author, err := r.queries.AddAuthor(ctx, sqlc.AddAuthorParams{
-		FullName:  ptrToNullString(data.FullName),
-		Pseudonym: ptrToNullString(data.Pseudonym),
-		Specialty: ptrToNullString(data.Specialty),
+		FullName:  *data.FullName,
+		Pseudonym: *data.Pseudonym,
+		Specialty: *data.Specialty,
 	})
 	if err != nil {
 		return "", nil
@@ -57,26 +58,29 @@ func (r *AuthorRepository) Add(ctx context.Context, data author.Entity) (string,
 func (r *AuthorRepository) Get(ctx context.Context, id string) (author.Entity, error) {
 	dbAuthor, err := r.queries.GetAuthor(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return author.Entity{}, store.ErrorNotFound
+		}
 		return author.Entity{}, err
 	}
-	author := author.Entity{
+	authorEntity := author.Entity{
 		ID:        dbAuthor.ID,
-		FullName:  &dbAuthor.FullName.String,
-		Pseudonym: &dbAuthor.Pseudonym.String,
-		Specialty: &dbAuthor.Specialty.String,
+		FullName:  &dbAuthor.FullName,
+		Pseudonym: &dbAuthor.Pseudonym,
+		Specialty: &dbAuthor.Specialty,
 	}
-	return author, nil
+	return authorEntity, nil
 }
 
 func (r *AuthorRepository) Update(ctx context.Context, id string, data author.Entity) error {
 	_, err := r.queries.UpdateAuthor(ctx, sqlc.UpdateAuthorParams{
 		ID:        id,
-		FullName:  ptrToNullString(data.FullName),
-		Pseudonym: ptrToNullString(data.Pseudonym),
-		Specialty: ptrToNullString(data.Specialty),
+		FullName:  *data.FullName,
+		Pseudonym: *data.Pseudonym,
+		Specialty: *data.Specialty,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrorNotFound
 		}
 		return err
@@ -85,26 +89,12 @@ func (r *AuthorRepository) Update(ctx context.Context, id string, data author.En
 }
 
 func (r *AuthorRepository) Delete(ctx context.Context, id string) error {
-	_, err := r.queries.DeleteAuthor(ctx, id)
+	err := r.queries.DeleteAuthor(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return store.ErrorNotFound
 		}
 		return err
 	}
 	return nil
-}
-
-func nullStringToPtr(ns sql.NullString) *string {
-	if !ns.Valid {
-		return nil
-	}
-	return &ns.String
-}
-
-func ptrToNullString(s *string) sql.NullString {
-	if s == nil || *s == "" {
-		return sql.NullString{Valid: false}
-	}
-	return sql.NullString{String: *s, Valid: true}
 }

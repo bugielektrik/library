@@ -98,8 +98,8 @@ func (r *BookRepository) prepareArgs(data book.Entity) bson.M {
 	if data.ISBN != nil {
 		args["isbn"] = data.ISBN
 	}
-	if len(data.Authors) > 0 {
-		args["authors"] = data.Authors
+	if data.AuthorId != nil {
+		args["author_id"] = data.AuthorId
 	}
 	return args
 }

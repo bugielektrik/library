@@ -2,97 +2,90 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
-	"fmt"
-	"strings"
+	"library-service/internal/repository/sqlc"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"library-service/internal/domain/book"
+
 	"library-service/pkg/store"
 )
 
 type BookRepository struct {
-	db *sqlx.DB
+	db      *pgxpool.Pool
+	queries *sqlc.Queries
 }
 
-func NewBookRepository(db *sqlx.DB) *BookRepository {
-	return &BookRepository{db: db}
+func NewBookRepository(db *pgxpool.Pool) *BookRepository {
+	return &BookRepository{
+		db:      db,
+		queries: sqlc.New(db),
+	}
 }
 
 func (r *BookRepository) List(ctx context.Context) ([]book.Entity, error) {
-	query := `SELECT id, name, genre, isbn, authors FROM books ORDER BY id`
-	var books []book.Entity
-	err := r.db.SelectContext(ctx, &books, query)
-	return books, err
+	dbBooks, err := r.queries.ListBooks(ctx)
+	if err != nil {
+		return nil, err
+	}
+	books := make([]book.Entity, 0, len(dbBooks))
+	for _, dbBook := range dbBooks {
+		books = append(books, book.Entity{
+			ID:       dbBook.ID,
+			Name:     &dbBook.Name,
+			Genre:    &dbBook.Genre,
+			ISBN:     &dbBook.Isbn,
+			AuthorId: &dbBook.AuthorID,
+		})
+	}
+	return books, nil
 }
 
 func (r *BookRepository) Add(ctx context.Context, data book.Entity) (string, error) {
-	query := `INSERT INTO books (name, genre, isbn, authors) VALUES ($1, $2, $3, $4) RETURNING id`
-	args := []interface{}{data.Name, data.Genre, data.ISBN, pq.Array(data.Authors)}
-	var id string
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return "", store.ErrorNotFound
+	dbBook, err := r.queries.AddBook(ctx, sqlc.AddBookParams{
+		Name:     *data.Name,
+		Genre:    *data.Genre,
+		Isbn:     *data.ISBN,
+		AuthorID: *data.AuthorId,
+	})
+	if err != nil {
+		return "", err
 	}
-	return id, err
+	return dbBook, nil
 }
 
 func (r *BookRepository) Get(ctx context.Context, id string) (book.Entity, error) {
-	query := `SELECT id, name, genre, isbn, authors FROM books WHERE id=$1`
-	var book book.Entity
-	err := r.db.GetContext(ctx, &book, query, id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return book, store.ErrorNotFound
+	dbBook, err := r.queries.GetBook(ctx, id)
+	if err != nil {
+		return book.Entity{}, err
 	}
-	return book, err
+	bookEntity := book.Entity{
+		ID:       dbBook.ID,
+		Name:     &dbBook.Name,
+		Genre:    &dbBook.Genre,
+		ISBN:     &dbBook.Isbn,
+		AuthorId: &dbBook.AuthorID,
+	}
+	return bookEntity, nil
 }
 
 func (r *BookRepository) Update(ctx context.Context, id string, data book.Entity) error {
-	sets, args := r.prepareArgs(data)
-	if len(args) == 0 {
-		return nil
+	err := r.queries.UpdateBook(ctx, sqlc.UpdateBookParams{ID: id, Name: *data.Name, Genre: *data.Genre, Isbn: *data.ISBN, AuthorID: *data.AuthorId})
+	if err != nil {
+		return err
 	}
-	args = append(args, id)
-	query := fmt.Sprintf("UPDATE books SET %s, updated_at=CURRENT_TIMESTAMP WHERE id=$%d RETURNING id", strings.Join(sets, ", "), len(args))
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
-	}
-	return err
+	return nil
 }
 
 func (r *BookRepository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM books WHERE id=$1 RETURNING id`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&id)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return store.ErrorNotFound
+	err := r.queries.DeleteBook(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return store.ErrorNotFound
+		}
+		return err
 	}
-	return err
-}
-
-func (r *BookRepository) prepareArgs(data book.Entity) ([]string, []interface{}) {
-	var sets []string
-	var args []interface{}
-
-	if data.Name != nil {
-		args = append(args, data.Name)
-		sets = append(sets, fmt.Sprintf("name=$%d", len(args)))
-	}
-	if data.Genre != nil {
-		args = append(args, data.Genre)
-		sets = append(sets, fmt.Sprintf("genre=$%d", len(args)))
-	}
-	if data.ISBN != nil {
-		args = append(args, data.ISBN)
-		sets = append(sets, fmt.Sprintf("isbn=$%d", len(args)))
-	}
-	if len(data.Authors) > 0 {
-		args = append(args, pq.Array(data.Authors))
-		sets = append(sets, fmt.Sprintf("authors=$%d", len(args)))
-	}
-
-	return sets, args
+	return nil
 }
