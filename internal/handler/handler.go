@@ -2,6 +2,7 @@ package handler
 
 import (
 	"library-service/config"
+	authmw "library-service/internal/handler/middleware"
 
 	chiprometheus "github.com/766b/chi-prometheus"
 	"github.com/go-chi/chi/v5"
@@ -74,11 +75,21 @@ func WithHTTPHandler() Configuration {
 		authorHandler := http.NewAuthorHandler(h.dependencies.Services.Author)
 		bookHandler := http.NewBookHandler(h.dependencies.Services.Book)
 		memberHandler := http.NewMemberHandler(h.dependencies.Services.Member)
+		authHandler := http.NewAuthHandler(h.dependencies.Services.Auth)
+
+		authMiddleware := authmw.NewAuthMiddleware(h.dependencies.Configs.JWT)
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
-			r.Mount("/authors", authorHandler.Routes())
-			r.Mount("/books", bookHandler.Routes())
-			r.Mount("/members", memberHandler.Routes())
+			// Public routes
+			r.Mount("/auth", authHandler.Routes())
+
+			// Protected routes
+			r.Group(func(r chi.Router) {
+				r.Use(authMiddleware.RequireAuth)
+				r.Mount("/authors", authorHandler.Routes())
+				r.Mount("/books", bookHandler.Routes())
+				r.Mount("/members", memberHandler.Routes())
+			})
 		})
 
 		return

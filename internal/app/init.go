@@ -1,9 +1,13 @@
 package app
 
 import (
+	"context"
 	"library-service/config"
+	jetstream2 "library-service/pkg/broker/nats/jetstream"
 	"time"
 
+	"github.com/nats-io/nats.go"
+	natsJetstream "github.com/nats-io/nats.go/jetstream"
 	"go.uber.org/zap"
 
 	"library-service/internal/cache"
@@ -46,6 +50,18 @@ func initApp(logger *zap.Logger) (*App, error) {
 	if err := app.initializeServers(); err != nil {
 		app.cleanup()
 		return nil, err
+	}
+
+	//if err := app.initializeNATSServer(); err != nil {
+	//	app.cleanup()
+	//	return nil, err
+	//}
+
+	if app.configs.NATS.EnableJetStream {
+		if err := app.initializeJetStream(); err != nil {
+			app.cleanup()
+			return nil, err
+		}
 	}
 
 	return app, nil
@@ -107,9 +123,11 @@ func (app *App) initializeServices() error {
 		service.Dependencies{
 			Repositories: app.repositories,
 			Caches:       app.caches,
+			Configs:      app.configs,
 		},
 		service.WithLibraryService(),
 		service.WithSubscriptionService(),
+		service.WithAuthService(),
 	)
 	if err != nil {
 		app.logger.Error("service init error", zap.Error(err))
@@ -153,7 +171,144 @@ func (app *App) initializeServers() error {
 	return nil
 }
 
+//func (app *App) initializeNATSServer() error {
+//	bookHandler := natsHandler.NewBookHandler(app.logger, app.services.Book)
+//	authorHandler := natsHandler.NewAuthorHandler(app.logger, app.services.Author)
+//	memberHandler := natsHandler.NewMemberHandler(app.logger, app.services.Member)
+//
+//	router := map[string]natsServer.CallHandler{
+//		"health": app.natsHealthHandler,
+//
+//		// Book handlers
+//		"book.get":          bookHandler.GetBook,
+//		"book.list":         bookHandler.ListBooks,
+//		"book.create":       bookHandler.CreateBook,
+//		"book.update":       bookHandler.UpdateBook,
+//		"book.delete":       bookHandler.DeleteBook,
+//		"book.authors.list": bookHandler.ListBookAuthors,
+//
+//		// Author handlers
+//		"author.get":    authorHandler.GetAuthor,
+//		"author.list":   authorHandler.ListAuthors,
+//		"author.create": authorHandler.CreateAuthor,
+//		"author.update": authorHandler.UpdateAuthor,
+//		"author.delete": authorHandler.DeleteAuthor,
+//
+//		// Member handlers
+//		"member.get":    memberHandler.GetMember,
+//		"member.list":   memberHandler.ListMembers,
+//		"member.create": memberHandler.CreateMember,
+//		"member.update": memberHandler.UpdateMember,
+//		"member.delete": memberHandler.DeleteMember,
+//	}
+//
+//	natsServerInstance, err := natsServer.New(
+//		app.configs.NATS.URL,
+//		app.configs.NATS.Subject,
+//		router,
+//	)
+//	if err != nil {
+//		app.logger.Error("nats server init error", zap.Error(err))
+//		return err
+//	}
+//
+//	app.natsServer = natsServerInstance
+//	app.natsServer.Start()
+//
+//	app.logger.Info("nats server initialized",
+//		zap.String("url", app.configs.NATS.URL),
+//		zap.String("subject", app.configs.NATS.Subject),
+//		zap.Int("handlers", len(router)),
+//	)
+//
+//	return nil
+//}
+
+func (app *App) natsHealthHandler(msg *nats.Msg) (interface{}, error) {
+	return map[string]string{
+		"status":  "healthy",
+		"service": "library-service",
+	}, nil
+}
+
+func (app *App) initializeJetStream() error {
+	js, err := jetstream2.New(jetstream2.Config{
+		URL:           app.configs.NATS.URL,
+		StreamName:    app.configs.NATS.StreamName,
+		Subjects:      []string{"events.>"},
+		MaxAge:        24 * time.Hour * 7,
+		MaxBytes:      1024 * 1024 * 1024,
+		Replicas:      1,
+		StorageType:   natsJetstream.FileStorage,
+		RetentionType: natsJetstream.LimitsPolicy,
+	})
+	if err != nil {
+		app.logger.Error("jetstream init error", zap.Error(err))
+		return err
+	}
+
+	app.jetStream = js
+	app.eventPublisher = jetstream2.NewPublisher(js, app.logger, "library-service")
+	app.eventConsumer = jetstream2.NewConsumer(js, app.logger)
+
+	app.registerEventHandlers()
+
+	go func() {
+		ctx := context.Background()
+		err := app.eventConsumer.Start(ctx, app.configs.NATS.StreamName, "library-consumer", []string{"events.>"})
+		if err != nil {
+			app.logger.Error("event consumer error", zap.Error(err))
+		}
+	}()
+
+	app.logger.Info("jetstream initialized",
+		zap.String("stream", app.configs.NATS.StreamName),
+		zap.String("url", app.configs.NATS.URL),
+	)
+
+	return nil
+}
+
+func (app *App) registerEventHandlers() {
+	app.eventConsumer.RegisterHandler("book.created", func(event jetstream2.Event) error {
+		app.logger.Info("book created event",
+			zap.String("event_id", event.ID),
+			zap.Any("data", event.Data),
+		)
+		return nil
+	})
+
+	app.eventConsumer.RegisterHandler("book.updated", func(event jetstream2.Event) error {
+		app.logger.Info("book updated event",
+			zap.String("event_id", event.ID),
+			zap.Any("data", event.Data),
+		)
+		return nil
+	})
+
+	app.eventConsumer.RegisterHandler("book.deleted", func(event jetstream2.Event) error {
+		app.logger.Info("book deleted event",
+			zap.String("event_id", event.ID),
+			zap.Any("data", event.Data),
+		)
+		return nil
+	})
+}
+
 func (app *App) cleanup() {
+	if app.jetStream != nil {
+		app.jetStream.Close()
+		app.logger.Info("jetstream stopped")
+	}
+
+	if app.natsServer != nil {
+		if err := app.natsServer.Shutdown(); err != nil {
+			app.logger.Error("nats server shutdown error", zap.Error(err))
+		} else {
+			app.logger.Info("nats server stopped")
+		}
+	}
+
 	if app.repositories != nil {
 		app.repositories.Close()
 		app.logger.Info("repositories cleanup complete")

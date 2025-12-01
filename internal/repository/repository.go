@@ -4,6 +4,7 @@ import (
 	"library-service/internal/domain/author"
 	"library-service/internal/domain/book"
 	"library-service/internal/domain/member"
+	"library-service/internal/domain/user"
 	"library-service/internal/repository/memory"
 	"library-service/internal/repository/mongo"
 	"library-service/internal/repository/postgres"
@@ -19,6 +20,7 @@ type Repositories struct {
 	Author author.Repository
 	Book   book.Repository
 	Member member.Repository
+	User   user.Repository
 }
 
 func New(configs ...Configuration) (s *Repositories, err error) {
@@ -83,6 +85,7 @@ func WithPostgresStore(dataSourceName string) Configuration {
 		s.Author = postgres.NewAuthorRepository(s.postgres.Connection)
 		s.Book = postgres.NewBookRepository(s.postgres.Connection)
 		s.Member = postgres.NewMemberRepository(s.postgres.Connection)
+		s.User = postgres.NewUserRepository(s.postgres.Connection)
 
 		return
 	}

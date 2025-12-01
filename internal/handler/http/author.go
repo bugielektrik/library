@@ -41,7 +41,9 @@ func (h *AuthorHandler) Routes() chi.Router {
 // @Accept		json
 // @Produce	json
 // @Success	200			{array}		author.Response
+// @Failure	401			{object}	response.Object
 // @Failure	500			{object}	response.Object
+// @Security	BearerAuth
 // @Router		/authors 	[get]
 func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.authorService.ListAuthors(r.Context())
@@ -60,7 +62,9 @@ func (h *AuthorHandler) list(w http.ResponseWriter, r *http.Request) {
 // @Param		request	body		author.Request	true	"body param"
 // @Success	200		{object}	author.Response
 // @Failure	400		{object}	response.Object
+// @Failure	401		{object}	response.Object
 // @Failure	500		{object}	response.Object
+// @Security	BearerAuth
 // @Router		/authors [post]
 func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := author.Request{}
@@ -84,8 +88,10 @@ func (h *AuthorHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path		string	true	"path param"
 // @Success	200	{object}	author.Response
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/authors/{id} [get]
 func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -112,8 +118,10 @@ func (h *AuthorHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Param		request	body	author.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/authors/{id} [put]
 func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -141,8 +149,10 @@ func (h *AuthorHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path	string	true	"path param"
 // @Success	200
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/authors/{id} [delete]
 func (h *AuthorHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

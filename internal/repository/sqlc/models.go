@@ -4,6 +4,10 @@
 
 package sqlc
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type Author struct {
 	ID        string
 	FullName  string
@@ -27,4 +31,13 @@ type Member struct {
 type MembersAndBook struct {
 	BookID   string
 	MemberID string
+}
+
+type User struct {
+	ID           string
+	Email        string
+	PasswordHash string
+	FullName     pgtype.Text
+	CreatedAt    pgtype.Timestamp
+	UpdatedAt    pgtype.Timestamp
 }

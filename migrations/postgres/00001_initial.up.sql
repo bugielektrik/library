@@ -41,6 +41,14 @@ DO $$
         member_id   UUID NOT NULL REFERENCES members (id),
         UNIQUE (book_id, member_id)
     );
+CREATE TABLE IF NOT EXISTS users(
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    full_name TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
     -- DATA --
 --     INSERT INTO authors (full_name, pseudonym, specialty)

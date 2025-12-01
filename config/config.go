@@ -22,6 +22,8 @@ const (
 type Configs struct {
 	APP   AppConfig
 	Store StoreConfig
+	JWT   JWTConfig
+	NATS  NATSConfig
 }
 
 type AppConfig struct {
@@ -42,6 +44,20 @@ type ClientConfig struct {
 
 type StoreConfig struct {
 	DSN string
+}
+
+type JWTConfig struct {
+	AccessSecret     string        `required:"true"`
+	RefreshSecret    string        `required:"true"`
+	AccessTokenTTL   time.Duration `default:"15m"`
+	RefreshTokenTTL  time.Duration `default:"168h"`
+}
+
+type NATSConfig struct {
+	URL           string `required:"true"`
+	Subject       string `default:"library.service"`
+	StreamName    string `default:"LIBRARY_EVENTS"`
+	EnableJetStream bool   `default:"false"`
 }
 
 func New() (*Configs, error) {
@@ -78,6 +94,8 @@ func New() (*Configs, error) {
 	targets := map[string]interface{}{
 		"APP":      &cfg.APP,
 		"POSTGRES": &cfg.Store,
+		"JWT":      &cfg.JWT,
+		"NATS":     &cfg.NATS,
 	}
 
 	for p, target := range targets {

@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addAuthor = `-- name: AddAuthor :one
@@ -77,6 +79,35 @@ type AddMemberBookParams struct {
 func (q *Queries) AddMemberBook(ctx context.Context, arg AddMemberBookParams) error {
 	_, err := q.db.Exec(ctx, addMemberBook, arg.BookID, arg.MemberID)
 	return err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (id, email, password_hash, full_name, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id
+`
+
+type CreateUserParams struct {
+	ID           string
+	Email        string
+	PasswordHash string
+	FullName     pgtype.Text
+	CreatedAt    pgtype.Timestamp
+	UpdatedAt    pgtype.Timestamp
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (string, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.ID,
+		arg.Email,
+		arg.PasswordHash,
+		arg.FullName,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteAllMemberBooks = `-- name: DeleteAllMemberBooks :exec
@@ -195,6 +226,46 @@ func (q *Queries) GetMemberBooks(ctx context.Context, memberID string) ([]string
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, password_hash, full_name, created_at, updated_at
+FROM users
+WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.FullName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, email, password_hash, full_name, created_at, updated_at
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.FullName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const listAuthors = `-- name: ListAuthors :many

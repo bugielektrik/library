@@ -19,3 +19,11 @@ CREATE TABLE members_and_books(
     book_id text NOT NULL,
     member_id text NOT NULL,
     UNIQUE (book_id, member_id));
+
+CREATE TABLE users(
+    id text PRIMARY KEY NOT NULL,
+    email text UNIQUE NOT NULL,
+    password_hash text NOT NULL,
+    full_name text,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP);

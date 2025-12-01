@@ -42,7 +42,9 @@ func (h *BookHandler) Routes() chi.Router {
 // @Accept		json
 // @Produce	json
 // @Success	200		{array}		book.Response
+// @Failure	401		{object}	response.Object
 // @Failure	500		{object}	response.Object
+// @Security	BearerAuth
 // @Router		/books 	[get]
 func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.bookService.ListBooks(r.Context())
@@ -61,7 +63,9 @@ func (h *BookHandler) list(w http.ResponseWriter, r *http.Request) {
 // @Param		request	body		book.Request	true	"body param"
 // @Success	200		{object}	book.Response
 // @Failure	400		{object}	response.Object
+// @Failure	401		{object}	response.Object
 // @Failure	500		{object}	response.Object
+// @Security	BearerAuth
 // @Router		/books [post]
 func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := book.Request{}
@@ -85,8 +89,10 @@ func (h *BookHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path		string	true	"path param"
 // @Success	200	{object}	book.Response
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/books/{id} [get]
 func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -113,8 +119,10 @@ func (h *BookHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Param		request	body	book.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/books/{id} [put]
 func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -142,8 +150,10 @@ func (h *BookHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path	string	true	"path param"
 // @Success	200
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/books/{id} [delete]
 func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -159,6 +169,17 @@ func (h *BookHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary	list of authors for a specific book
+// @Tags		books
+// @Accept		json
+// @Produce	json
+// @Param		id	path		string	true	"book id"
+// @Success	200	{array}		author.Response
+// @Failure	401	{object}	response.Object
+// @Failure	404	{object}	response.Object
+// @Failure	500	{object}	response.Object
+// @Security	BearerAuth
+// @Router		/books/{id}/authors [get]
 func (h *BookHandler) listAuthors(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
