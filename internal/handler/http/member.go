@@ -42,7 +42,9 @@ func (h *MemberHandler) Routes() chi.Router {
 // @Accept		json
 // @Produce	json
 // @Success	200			{array}		member.Response
+// @Failure	401			{object}	response.Object
 // @Failure	500			{object}	response.Object
+// @Security	BearerAuth
 // @Router		/members 	[get]
 func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 	res, err := h.memberService.ListMembers(r.Context())
@@ -61,7 +63,9 @@ func (h *MemberHandler) list(w http.ResponseWriter, r *http.Request) {
 // @Param		request	body		member.Request	true	"body param"
 // @Success	200		{object}	member.Response
 // @Failure	400		{object}	response.Object
+// @Failure	401		{object}	response.Object
 // @Failure	500		{object}	response.Object
+// @Security	BearerAuth
 // @Router		/members [post]
 func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 	req := member.Request{}
@@ -85,8 +89,10 @@ func (h *MemberHandler) add(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path		string	true	"path param"
 // @Success	200	{object}	member.Response
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/members/{id} [get]
 func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -113,8 +119,10 @@ func (h *MemberHandler) get(w http.ResponseWriter, r *http.Request) {
 // @Param		request	body	member.Request	true	"body param"
 // @Success	200
 // @Failure	400	{object}	response.Object
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/members/{id} [put]
 func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -142,8 +150,10 @@ func (h *MemberHandler) update(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path	string	true	"path param"
 // @Success	200
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/members/{id} [delete]
 func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -165,8 +175,10 @@ func (h *MemberHandler) delete(w http.ResponseWriter, r *http.Request) {
 // @Produce	json
 // @Param		id	path		string	true	"path param"
 // @Success	200	{array}		book.Response
+// @Failure	401	{object}	response.Object
 // @Failure	404	{object}	response.Object
 // @Failure	500	{object}	response.Object
+// @Security	BearerAuth
 // @Router		/members/{id}/books [get]
 func (h *MemberHandler) listBooks(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

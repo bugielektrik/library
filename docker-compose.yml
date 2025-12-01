@@ -32,3 +32,18 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+
+  nats:
+    image: nats:latest
+    container_name: library-service-nats
+    ports:
+      - "4222:4222"  # Client connections
+      - "8222:8222"  # HTTP monitoring
+      - "6222:6222"  # Cluster connections
+    command: "-js -m 8222"  # Enable JetStream and monitoring
+
+  redis:
+    image: redis:latest
+    container_name: library-service-redis
+    ports:
+      - "6379:6379"

@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   author.Request:
     properties:
@@ -73,9 +74,157 @@ definitions:
       success:
         type: boolean
     type: object
+  user.AuthResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      user:
+        $ref: '#/definitions/user.UserResponse'
+    type: object
+  user.RefreshRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  user.SignInRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  user.SignUpRequest:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      password:
+        type: string
+    type: object
+  user.UserResponse:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: string
+    type: object
+host: localhost:80
 info:
-  contact: {}
+  contact:
+    email: support@library.com
+    name: API Support
+  description: Library management service with authentication
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Library Service API
+  version: "1.0"
 paths:
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: refresh access token
+      tags:
+      - auth
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: sign in existing user
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body param
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Object'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      summary: sign up a new user
+      tags:
+      - auth
   /authors:
     get:
       consumes:
@@ -89,10 +238,16 @@ paths:
             items:
               $ref: '#/definitions/author.Response'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: list of authors from the repository
       tags:
       - authors
@@ -117,10 +272,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: add a new author to the repository
       tags:
       - authors
@@ -139,6 +300,10 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -147,6 +312,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: delete the author from the repository
       tags:
       - authors
@@ -166,6 +333,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/author.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -174,6 +345,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: get the author from the repository
       tags:
       - authors
@@ -201,6 +374,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -209,6 +386,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: update the author in the repository
       tags:
       - authors
@@ -225,10 +404,16 @@ paths:
             items:
               $ref: '#/definitions/book.Response'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: list of books from the repository
       tags:
       - books
@@ -253,10 +438,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: add a new book to the repository
       tags:
       - books
@@ -275,6 +466,10 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -283,6 +478,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: delete the book from the repository
       tags:
       - books
@@ -302,6 +499,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/book.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -310,6 +511,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: get the book from the repository
       tags:
       - books
@@ -337,6 +540,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -345,7 +552,45 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: update the book in the repository
+      tags:
+      - books
+  /books/{id}/authors:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: book id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/author.Response'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Object'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
+      summary: list of authors for a specific book
       tags:
       - books
   /members:
@@ -361,10 +606,16 @@ paths:
             items:
               $ref: '#/definitions/member.Response'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: list of members from the repository
       tags:
       - members
@@ -389,10 +640,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: add a new member to the repository
       tags:
       - members
@@ -411,6 +668,10 @@ paths:
       responses:
         "200":
           description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -419,6 +680,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: delete the member from the repository
       tags:
       - members
@@ -438,6 +701,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/member.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -446,6 +713,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: get the member from the repository
       tags:
       - members
@@ -473,6 +742,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Object'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -481,6 +754,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: update the member in the repository
       tags:
       - members
@@ -503,6 +778,10 @@ paths:
             items:
               $ref: '#/definitions/book.Response'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Object'
         "404":
           description: Not Found
           schema:
@@ -511,7 +790,15 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.Object'
+      security:
+      - BearerAuth: []
       summary: list of books from the repository
       tags:
       - members
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

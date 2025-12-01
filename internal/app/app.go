@@ -5,6 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"library-service/config"
+	"library-service/internal/provider/epay"
+	jetstream2 "library-service/pkg/broker/nats/jetstream"
+	natsServer "library-service/pkg/broker/nats/nats_rpc/server"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,15 +24,28 @@ import (
 )
 
 type App struct {
-	logger       *zap.Logger
-	configs      *config.Configs
-	repositories *repository.Repositories
-	caches       *cache.Caches
-	services     *service.Services
-	servers      *server.Servers
-	handlers     *handler.Handlers
+	logger         *zap.Logger
+	configs        *config.Configs
+	repositories   *repository.Repositories
+	caches         *cache.Caches
+	services       *service.Services
+	servers        *server.Servers
+	handlers       *handler.Handlers
+	natsServer     *natsServer.Server
+	jetStream      *jetstream2.JetStream
+	eventPublisher *jetstream2.Publisher
+	eventConsumer  *jetstream2.Consumer
 }
 
+func (app *App) initEPAYClient() {
+	_ = epay.New(*app.configs, epay.Credentials{
+		Username: "",
+		Password: "",
+		Endpoint: "",
+		OAuth:    "",
+		JS:       "",
+	})
+}
 func Run() {
 	logger := log.GetLogger()
 	app, err := initApp(logger)
@@ -115,6 +131,14 @@ func (app *App) waitForShutdown(timeout time.Duration) {
 
 func (app *App) shutdown() {
 	app.logger.Info("running cleanup tasks")
+
+	if app.natsServer != nil {
+		if err := app.natsServer.Shutdown(); err != nil {
+			app.logger.Error("nats server shutdown error", zap.Error(err))
+		} else {
+			app.logger.Info("nats server stopped")
+		}
+	}
 
 	if app.repositories != nil {
 		app.repositories.Close()

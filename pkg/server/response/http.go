@@ -92,6 +92,34 @@ func NotFound(w http.ResponseWriter, r *http.Request, err error) {
 	render.JSON(w, r, v)
 }
 
+func Unauthorized(w http.ResponseWriter, r *http.Request, err error) {
+	msg := "unauthorized"
+	if err != nil {
+		msg = err.Error()
+	}
+
+	render.Status(r, http.StatusUnauthorized)
+	v := Object{
+		Success: false,
+		Message: msg,
+	}
+	render.JSON(w, r, v)
+}
+
+func Conflict(w http.ResponseWriter, r *http.Request, err error) {
+	msg := "resource conflict"
+	if err != nil {
+		msg = err.Error()
+	}
+
+	render.Status(r, http.StatusConflict)
+	v := Object{
+		Success: false,
+		Message: msg,
+	}
+	render.JSON(w, r, v)
+}
+
 func InternalServerError(w http.ResponseWriter, r *http.Request, err error, data any) {
 	msg := "internal server error"
 	if err != nil {
