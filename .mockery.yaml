@@ -19,3 +19,59 @@ packages:
         config:
           filename: "AuthorCache.go"
           mockname: "MockAuthorCache"
+
+  library-service/internal/domain/book:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+    interfaces:
+      Repository:
+        config:
+          filename: "BookRepository.go"
+          mockname: "MockBookRepository"
+      Cache:
+        config:
+          filename: "BookCache.go"
+          mockname: "MockBookCache"
+
+  library-service/internal/domain/member:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+    interfaces:
+      Repository:
+        config:
+          filename: "MemberRepository.go"
+          mockname: "MockMemberRepository"
+
+  library-service/internal/service/interfaces:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+    interfaces:
+      BookService:
+        config:
+          filename: "BookService.go"
+          mockname: "MockBookService"
+      AuthorService:
+        config:
+          filename: "AuthorService.go"
+          mockname: "MockAuthorService"
+      MemberService:
+        config:
+          filename: "MemberService.go"
+          mockname: "MockMemberService"
+      AuthService:
+        config:
+          filename: "AuthService.go"
+          mockname: "MockAuthService"
+
+  library-service/internal/domain/user:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+    interfaces:
+      Repository:
+        config:
+          filename: "UserRepository.go"
+          mockname: "MockUserRepository"

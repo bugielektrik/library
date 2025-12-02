@@ -2,7 +2,8 @@ package handler
 
 import (
 	"library-service/config"
-	authmw "library-service/internal/handler/middleware"
+	authmw "library-service/internal/handler/http/middleware"
+	"library-service/internal/handler/http/v1"
 
 	chiprometheus "github.com/766b/chi-prometheus"
 	"github.com/go-chi/chi/v5"
@@ -12,7 +13,6 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"library-service/docs"
-	"library-service/internal/handler/http"
 	"library-service/internal/service"
 	"library-service/pkg/server/router"
 )
@@ -72,10 +72,10 @@ func WithHTTPHandler() Configuration {
 		docs.SwaggerInfo.BasePath = h.dependencies.Configs.APP.Path
 		h.HTTP.Get("/swagger/*", httpSwagger.WrapHandler)
 
-		authorHandler := http.NewAuthorHandler(h.dependencies.Services.Author)
-		bookHandler := http.NewBookHandler(h.dependencies.Services.Book)
-		memberHandler := http.NewMemberHandler(h.dependencies.Services.Member)
-		authHandler := http.NewAuthHandler(h.dependencies.Services.Auth)
+		authorHandler := v1.NewAuthorHandler(h.dependencies.Services.Author)
+		bookHandler := v1.NewBookHandler(h.dependencies.Services.Book)
+		memberHandler := v1.NewMemberHandler(h.dependencies.Services.Member)
+		authHandler := v1.NewAuthHandler(h.dependencies.Services.Auth)
 
 		authMiddleware := authmw.NewAuthMiddleware(h.dependencies.Configs.JWT)
 

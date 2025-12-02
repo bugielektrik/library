@@ -1,7 +1,11 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "internal/repository/sqlc/query/queries.sql"
+    queries:
+      - "internal/repository/sqlc/query/authors.sql"
+      - "internal/repository/sqlc/query/books.sql"
+      - "internal/repository/sqlc/query/members.sql"
+      - "internal/repository/sqlc/query/users.sql"
     schema: "internal/repository/sqlc/schema/schema.sql"
     gen:
       go:

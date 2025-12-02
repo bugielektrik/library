@@ -88,9 +88,16 @@ func (app *App) initializeRepositories() error {
 		zap.Duration("db startup delay", dbStartupDelay))
 	time.Sleep(dbStartupDelay)
 
-	repositories, err := repository.New(
+	configs := []repository.Configuration{
 		repository.WithPostgresStore(app.configs.Store.DSN),
-	)
+	}
+
+	if app.configs.ClickHouse.DSN != "" {
+		configs = append(configs, repository.WithClickHouseStore())
+		app.logger.Info("clickhouse enabled", zap.String("dsn", app.configs.ClickHouse.DSN))
+	}
+
+	repositories, err := repository.New(configs...)
 	if err != nil {
 		app.logger.Error("repository init error", zap.Error(err))
 		return err
