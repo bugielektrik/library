@@ -6,6 +6,7 @@ import (
 	"library-service/internal/domain/book"
 )
 
+//go:generate mockery --name=BookService --output=../../../mocks --outpkg=mocks --filename=BookService.go
 type BookService interface {
 	ListBooks(ctx context.Context) ([]book.Response, error)
 	CreateBook(ctx context.Context, req book.Request) (book.Response, error)

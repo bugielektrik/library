@@ -1,6 +1,7 @@
 package epay
 
 import (
+	"errors"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -188,3 +189,5 @@ type StatusResponse struct {
 		CardID            string          `json:"cardID"`
 	} `json:"transaction"`
 }
+
+var ErrFromEpay = errors.New("Произошла ошибка при попытке оплаты, проверьте статус")

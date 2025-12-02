@@ -4,6 +4,7 @@ import (
 	"context"
 )
 
+//go:generate mockery --name=Repository --output=../../../mocks --outpkg=mocks --filename=MemberRepository.go
 type Repository interface {
 	List(ctx context.Context) ([]Entity, error)
 	Add(ctx context.Context, data Entity) (string, error)

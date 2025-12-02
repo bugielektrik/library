@@ -20,10 +20,11 @@ const (
 )
 
 type Configs struct {
-	APP   AppConfig
-	Store StoreConfig
-	JWT   JWTConfig
-	NATS  NATSConfig
+	APP        AppConfig
+	Store      StoreConfig
+	ClickHouse ClickHouseConfig
+	JWT        JWTConfig
+	NATS       NATSConfig
 }
 
 type AppConfig struct {
@@ -43,6 +44,10 @@ type ClientConfig struct {
 }
 
 type StoreConfig struct {
+	DSN string
+}
+
+type ClickHouseConfig struct {
 	DSN string
 }
 
@@ -92,10 +97,11 @@ func New() (*Configs, error) {
 	}
 
 	targets := map[string]interface{}{
-		"APP":      &cfg.APP,
-		"POSTGRES": &cfg.Store,
-		"JWT":      &cfg.JWT,
-		"NATS":     &cfg.NATS,
+		"APP":        &cfg.APP,
+		"POSTGRES":   &cfg.Store,
+		"CLICKHOUSE": &cfg.ClickHouse,
+		"JWT":        &cfg.JWT,
+		"NATS":       &cfg.NATS,
 	}
 
 	for p, target := range targets {

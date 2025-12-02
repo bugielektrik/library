@@ -14,8 +14,9 @@ import (
 type Configuration func(r *Repositories) error
 
 type Repositories struct {
-	mongo    *store.Mongo
-	postgres *store.SQL
+	mongo      *store.Mongo
+	postgres   *store.SQL
+	clickhouse *store.ClickHouse
 
 	Author author.Repository
 	Book   book.Repository
@@ -38,6 +39,10 @@ func New(configs ...Configuration) (s *Repositories, err error) {
 func (r *Repositories) Close() {
 	if r.postgres != nil && r.postgres.Connection != nil {
 		r.postgres.Connection.Close()
+	}
+
+	if r.clickhouse != nil && r.clickhouse.Connection != nil {
+		r.clickhouse.Close()
 	}
 
 	if r.mongo != nil && r.mongo.Connection != nil {
@@ -86,6 +91,17 @@ func WithPostgresStore(dataSourceName string) Configuration {
 		s.Book = postgres.NewBookRepository(s.postgres.Connection)
 		s.Member = postgres.NewMemberRepository(s.postgres.Connection)
 		s.User = postgres.NewUserRepository(s.postgres.Connection)
+
+		return
+	}
+}
+
+func WithClickHouseStore() Configuration {
+	return func(s *Repositories) (err error) {
+		s.clickhouse, err = store.New()
+		if err != nil {
+			return
+		}
 
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,6 +30,10 @@ func NewSQL(dsn string) (*SQL, error) {
 	}
 
 	config.MaxConns = defaultMaxOpenConns
+	config.MinConns = 5
+	config.MaxConnLifetime = 1 * time.Hour
+	config.MaxConnIdleTime = 30 * time.Minute
+	config.HealthCheckPeriod = 1 * time.Minute
 
 	db, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
