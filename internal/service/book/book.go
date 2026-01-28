@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 
 	"library-service/internal/domain/author"
@@ -17,10 +19,15 @@ type BookService struct {
 	bookCache      book.Cache
 }
 
-func NewBookService(r book.Repository, c book.Cache) *BookService {
-	return &BookService{bookRepository: r, bookCache: c}
+func NewBookService(
+	r book.Repository,
+	c book.Cache,
+) *BookService {
+	return &BookService{
+		bookRepository: r,
+		bookCache:      c,
+	}
 }
-
 func (s *BookService) ListBooks(ctx context.Context) ([]book.Response, error) {
 	logger := log.FromContext(ctx).Named("list_books")
 
@@ -33,20 +40,37 @@ func (s *BookService) ListBooks(ctx context.Context) ([]book.Response, error) {
 }
 
 func (s *BookService) CreateBook(ctx context.Context, req book.Request) (book.Response, error) {
-	logger := log.FromContext(ctx).Named("create_book").With(zap.Any("book", req))
+	tracer := otel.Tracer("library-service")
+	ctx, span := tracer.Start(ctx, "book-service.create-book")
+	defer span.End()
 
+	span.SetAttributes(
+		attribute.String("book.name", req.Name),
+		attribute.String("book.isbn", req.ISBN),
+	)
+
+	// Создаем книгу
 	newBook := book.New(req)
-
 	id, err := s.bookRepository.Add(ctx, newBook)
 	if err != nil {
-		logger.Error("failed to create book", zap.Error(err))
+		span.RecordError(err)
 		return book.Response{}, err
 	}
 	newBook.ID = id
 
-	if err := s.bookCache.Set(ctx, id, newBook); err != nil {
-		logger.Warn("failed to cache new book", zap.Error(err))
-	}
+	// Кешируем
+	//if err := s.bookCache.Set(ctx, id, newBook); err != nil {
+	//	logger.Warn("failed to cache", zap.Error(err))
+	//}
+	//
+	//// ВЫЗЫВАЕМ ВНЕШНИЙ СЕРВИС!
+	//if s.notificationClient != nil {
+	//	err = s.notificationClient.NotifyBookCreated(ctx, "admin", req.Name)
+	//	if err != nil {
+	//		span.RecordError(err)
+	//		logger.Warn("notification failed", zap.Error(err))
+	//	}
+	//}
 
 	return book.ParseFromEntity(newBook), nil
 }

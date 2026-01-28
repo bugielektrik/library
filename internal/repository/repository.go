@@ -18,10 +18,11 @@ type Repositories struct {
 	postgres   *store.SQL
 	clickhouse *store.ClickHouse
 
-	Author author.Repository
-	Book   book.Repository
-	Member member.Repository
-	User   user.Repository
+	Author   author.Repository
+	Book     book.Repository
+	Member   member.Repository
+	User     user.Repository
+	TxManger postgres.TxManager
 }
 
 func New(configs ...Configuration) (s *Repositories, err error) {
@@ -91,7 +92,7 @@ func WithPostgresStore(dataSourceName string) Configuration {
 		s.Book = postgres.NewBookRepository(s.postgres.Connection)
 		s.Member = postgres.NewMemberRepository(s.postgres.Connection)
 		s.User = postgres.NewUserRepository(s.postgres.Connection)
-
+		s.TxManger = postgres.NewTxManager(s.postgres.Connection)
 		return
 	}
 }

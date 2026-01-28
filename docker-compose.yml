@@ -12,6 +12,11 @@ services:
     depends_on:
       - mongo
       - postgres
+      - clickhouse
+      - nats
+      - redis
+      - tempo
+      - grafana
     env_file:
       - .env
 
@@ -58,3 +63,41 @@ services:
     container_name: library-service-redis
     ports:
       - "6379:6379"
+
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+      - tempo-data:/var/tempo
+    ports:
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+      - "3200:3200"  # Tempo HTTP
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+
+  rabbitmq:
+    image: rabbitmq:3-management # Use the image with the management plugin
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # Port for the AMQP protocol (client connections)
+      - "15672:15672" # Port for the management web UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_log:/var/log/rabbitmq/
+
+volumes:
+  tempo-data:

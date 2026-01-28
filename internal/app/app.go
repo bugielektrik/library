@@ -35,6 +35,7 @@ type App struct {
 	jetStream      *jetstream2.JetStream
 	eventPublisher *jetstream2.Publisher
 	eventConsumer  *jetstream2.Consumer
+	tracerShutdown func(context.Context) error
 }
 
 func (app *App) initEPAYClient() {
@@ -131,6 +132,16 @@ func (app *App) waitForShutdown(timeout time.Duration) {
 
 func (app *App) shutdown() {
 	app.logger.Info("running cleanup tasks")
+
+	if app.tracerShutdown != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := app.tracerShutdown(ctx); err != nil {
+			app.logger.Error("tracer shutdown error", zap.Error(err))
+		} else {
+			app.logger.Info("tracer stopped")
+		}
+	}
 
 	if app.natsServer != nil {
 		if err := app.natsServer.Shutdown(); err != nil {

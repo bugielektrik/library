@@ -14,14 +14,14 @@ import (
 )
 
 type BookRepository struct {
-	db      *pgxpool.Pool
-	queries *sqlc.Queries
+	queries   *sqlc.Queries
+	txManager TxManager
 }
 
-func NewBookRepository(db *pgxpool.Pool) *BookRepository {
+func NewBookRepository(db *pgxpool.Pool, txManager TxManager) *BookRepository {
 	return &BookRepository{
-		db:      db,
-		queries: sqlc.New(db),
+		queries:   sqlc.New(db),
+		txManager: txManager,
 	}
 }
 

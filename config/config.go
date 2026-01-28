@@ -25,6 +25,7 @@ type Configs struct {
 	ClickHouse ClickHouseConfig
 	JWT        JWTConfig
 	NATS       NATSConfig
+	Telemetry  TelemetryConfig
 }
 
 type AppConfig struct {
@@ -52,17 +53,25 @@ type ClickHouseConfig struct {
 }
 
 type JWTConfig struct {
-	AccessSecret     string        `required:"true"`
-	RefreshSecret    string        `required:"true"`
-	AccessTokenTTL   time.Duration `default:"15m"`
-	RefreshTokenTTL  time.Duration `default:"168h"`
+	AccessSecret    string        `required:"true"`
+	RefreshSecret   string        `required:"true"`
+	AccessTokenTTL  time.Duration `default:"15m"`
+	RefreshTokenTTL time.Duration `default:"168h"`
 }
 
 type NATSConfig struct {
-	URL           string `required:"true"`
-	Subject       string `default:"library.service"`
-	StreamName    string `default:"LIBRARY_EVENTS"`
+	URL             string `required:"true"`
+	Subject         string `default:"library.service"`
+	StreamName      string `default:"LIBRARY_EVENTS"`
 	EnableJetStream bool   `default:"false"`
+}
+
+type TelemetryConfig struct {
+	Enabled        bool   `default:"true"`
+	ServiceName    string `default:"library-service"`
+	ServiceVersion string `default:"1.0.0"`
+	Environment    string `default:"dev"`
+	TempoEndpoint  string `default:"localhost:4317"`
 }
 
 func New() (*Configs, error) {
@@ -102,6 +111,7 @@ func New() (*Configs, error) {
 		"CLICKHOUSE": &cfg.ClickHouse,
 		"JWT":        &cfg.JWT,
 		"NATS":       &cfg.NATS,
+		"TELEMETRY":  &cfg.Telemetry,
 	}
 
 	for p, target := range targets {
