@@ -44,14 +44,17 @@ func New(dependencies Dependencies, configs ...Configuration) (s *Services, err 
 
 func WithLibraryService() Configuration {
 	return func(s *Services) (err error) {
+
 		s.Author = author.NewAuthorService(
 			s.dependencies.Repositories.Author,
 			s.dependencies.Caches.Author,
 		)
+
 		s.Book = book.NewBookService(
 			s.dependencies.Repositories.Book,
 			s.dependencies.Caches.Book,
 		)
+
 		return nil
 	}
 }

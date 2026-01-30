@@ -21,3 +21,5 @@
 *.bin
 *.log
 .env
+
+vendor

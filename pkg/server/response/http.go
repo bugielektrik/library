@@ -120,6 +120,15 @@ func Conflict(w http.ResponseWriter, r *http.Request, err error) {
 	render.JSON(w, r, v)
 }
 
+func Forbidden(w http.ResponseWriter, r *http.Request) {
+	render.Status(r, http.StatusForbidden)
+	v := Object{
+		Success: false,
+		Message: "forbidden",
+	}
+	render.JSON(w, r, v)
+}
+
 func InternalServerError(w http.ResponseWriter, r *http.Request, err error, data any) {
 	msg := "internal server error"
 	if err != nil {

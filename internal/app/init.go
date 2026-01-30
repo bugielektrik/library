@@ -4,6 +4,7 @@ import (
 	"context"
 	"library-service/config"
 	jetstream2 "library-service/pkg/broker/nats/jetstream"
+	"library-service/pkg/telemetry"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -25,6 +26,11 @@ func initApp(logger *zap.Logger) (*App, error) {
 	app := &App{logger: logger}
 
 	if err := app.loadConfiguration(); err != nil {
+		return nil, err
+	}
+
+	if err := app.initializeTracer(); err != nil {
+		app.cleanup()
 		return nil, err
 	}
 
@@ -78,6 +84,28 @@ func (app *App) loadConfiguration() error {
 	app.logger.Info("configuration loaded",
 		zap.String("mode", configs.APP.Mode),
 		zap.String("port", configs.APP.Port),
+	)
+
+	return nil
+}
+
+func (app *App) initializeTracer() error {
+	tracerShutdown, err := telemetry.InitTracer(context.Background(), telemetry.Config{
+		ServiceName:    app.configs.Telemetry.ServiceName,
+		ServiceVersion: app.configs.Telemetry.ServiceVersion,
+		Environment:    app.configs.Telemetry.Environment,
+		TempoEndpoint:  app.configs.Telemetry.TempoEndpoint,
+		Enabled:        app.configs.Telemetry.Enabled,
+	}, app.logger)
+	if err != nil {
+		app.logger.Error("tracer init error", zap.Error(err))
+		return err
+	}
+
+	app.tracerShutdown = tracerShutdown
+	app.logger.Info("tracer initialized",
+		zap.Bool("enabled", app.configs.Telemetry.Enabled),
+		zap.String("service", app.configs.Telemetry.ServiceName),
 	)
 
 	return nil

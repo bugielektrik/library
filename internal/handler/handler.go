@@ -4,13 +4,18 @@ import (
 	"library-service/config"
 	authmw "library-service/internal/handler/http/middleware"
 	"library-service/internal/handler/http/v1"
+	"library-service/pkg/server/response"
+	"net/http"
 
 	chiprometheus "github.com/766b/chi-prometheus"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/trace"
 
 	"library-service/docs"
 	"library-service/internal/service"
@@ -69,6 +74,28 @@ func WithHTTPHandler() Configuration {
 
 		h.HTTP.Use(prometheusMiddleware)
 
+		// OpenTelemetry tracing middleware
+		h.HTTP.Use(func(next http.Handler) http.Handler {
+			return otelhttp.NewHandler(next, "http-server",
+				otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+					return r.Method + " " + r.URL.Path
+				}),
+			)
+		})
+
+		// Middleware для добавления trace ID в response header
+		h.HTTP.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if span := trace.SpanFromContext(r.Context()); span.SpanContext().IsValid() {
+					w.Header().Set("X-Trace-Id", span.SpanContext().TraceID().String())
+				}
+				next.ServeHTTP(w, r)
+			})
+		})
+
+		h.HTTP.Get("/health", response.Health)
+		h.HTTP.Handle("/metrics", promhttp.Handler())
+
 		docs.SwaggerInfo.BasePath = h.dependencies.Configs.APP.Path
 		h.HTTP.Get("/swagger/*", httpSwagger.WrapHandler)
 
@@ -76,12 +103,14 @@ func WithHTTPHandler() Configuration {
 		bookHandler := v1.NewBookHandler(h.dependencies.Services.Book)
 		memberHandler := v1.NewMemberHandler(h.dependencies.Services.Member)
 		authHandler := v1.NewAuthHandler(h.dependencies.Services.Auth)
+		testTraceHandler := v1.NewTestTraceHandler()
 
 		authMiddleware := authmw.NewAuthMiddleware(h.dependencies.Configs.JWT)
 
 		h.HTTP.Route("/api/v1", func(r chi.Router) {
 			// Public routes
 			r.Mount("/auth", authHandler.Routes())
+			r.Mount("/test", testTraceHandler.Routes())
 
 			// Protected routes
 			r.Group(func(r chi.Router) {
